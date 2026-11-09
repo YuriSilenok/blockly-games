@@ -271,5 +271,8 @@
 	"Pond.helpText4": "Instructions.  Do not translate the word 'swim'.",
 	"Pond.helpText5": "Instructions.  Do not translate the word 'stop'.",
 	"Pond.helpText6": "Instructions.",
+	"Pond.helpText01": "Instructions. Do not translate the word 'cannon'.",
+	"Pond.helpText02": "Instructions. Do not translate the words 'scan' and 'cannon'.",
+	"Pond.helpText03": "Instructions for creating and using a variable.",
 	"Gallery": "Display of art created by user's programs.\n{{Identical|Gallery}}"
 }

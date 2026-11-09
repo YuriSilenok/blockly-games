@@ -1035,6 +1035,18 @@
     "desc": "Instructions.",
     "msg": "This opponent will move away when it is hit. Swim towards it if it is out of range (70 meters)."
   },
+  "Pond.helpText01": {
+  "desc": "Instructions. Do not translate the word 'cannon'.",
+  "msg": "Use the 'cannon' command to hit the target. The first parameter is the angle, the second parameter is the range. Find the right combination."
+  },
+  "Pond.helpText02": {
+    "desc": "Instructions. Do not translate the words 'scan' and 'cannon'.",
+    "msg": "Use the 'scan' command to get the distance to the target. The first parameter of 'scan' is the angle. Feed it into 'cannon'."
+  },
+  "Pond.helpText03": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Create a variable. Store the distance to the target in it. Use the variable to hit the target."
+  },
   "Gallery": {
     "desc": "Display of art created by user's programs.\n{{Identical|Gallery}}",
     "msg": "Gallery"

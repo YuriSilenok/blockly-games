@@ -104,7 +104,7 @@ Pond.Tutor.html.toolbox_ = function(level) {
 
     xml += `
       <category name="${BlocklyGames.getMsg('Games.catVariables', true)}" custom="VARIABLE">
-        <variable type="" id="xVar">x</variable>
+
       </category>`;
 
 
@@ -184,7 +184,7 @@ ${BlocklyGames.getMsg('Pond.helpText01', true)}
       break;
     case 2:
       content = `
-${BlocklyGames.getMsg('Pond.helpText1', true)}
+${BlocklyGames.getMsg('Pond.helpText02', true)}
 <br><br>
 <svg height="60" width="400" class="geras-renderer classic-theme">
   <g class="blocklyDraggable">
@@ -241,12 +241,30 @@ ${BlocklyGames.getMsg('Pond.helpText1', true)}
       break;
     case 3:
       content = `
-${BlocklyGames.getMsg('Pond.helpText2', true)}
+${BlocklyGames.getMsg('Pond.helpText03', true)}
 <br><br>
 <svg width="360" height="140" class="geras-renderer classic-theme">
   <g transform="translate(10,10) scale(1)">
     <g class="blocklyBlockCanvas">
-      
+      <g class="blocklyDraggable blocklySelected" transform="translate(1,1)"><path class="blocklyPathDark" transform="translate(1,1)" fill="#844966" d=" m 0,0  m 0,8 a 8 8 0 0,1 8,-8  h 7  l 6,4  3,0  6,-4  h 236.37217712402344  v 5  H 266.37217712402344  V 5  H 266.37217712402344  V 43  H 266.37217712402344  V 43  V 47  h -236.87217712402344  l -6,4  -3,0  -6,-4  h -14.5  H 0 z
+ M 99.40013122558594,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 18  h 142.89903259277344  v -38 z"></path><path class="blocklyPath" stroke="none" fill="#a55b80" d=" m 0,0  m 0,8 a 8 8 0 0,1 8,-8  h 7  l 6,4  3,0  6,-4  h 236.37217712402344  v 5  H 266.37217712402344  V 5  H 266.37217712402344  V 43  H 266.37217712402344  V 43  V 47  h -236.87217712402344  l -6,4  -3,0  -6,-4  h -14.5  H 0 z
+ M 99.40013122558594,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 18  h 142.89903259277344  v -38 z"></path><path class="blocklyPathLight" stroke="#c08ca6" d=" m 0,0  m 0.5,8 a 7.5 7.5 0 0,1 8,-7.5  H 14.5  h 0.5  l 6,4  3,0  6,-4  H 265.87217712402344  H 265.87217712402344  M 0.5,46.5  V 8 
+ M 242.79916381835938,5.5  v 38  h -142.89903259277344  M 99.40013122558594,10  m -5,14.3  l 3.68,-2.1 "></path><g style="display: block;" class="blocklyDraggable" transform="translate(92.40013122558594,6)"><path class="blocklyPathDark" transform="translate(1,1)" fill="#7a4984" d=" m 8,0  h 140.89903259277344  v 5  H 148.89903259277344  V 5  H 148.89903259277344  V 32  H 148.89903259277344  V 32  V 36  h -140.89903259277344  H 8  V 20  c 0,-10  -8,8  -8,-7.5  s 8,2.5  8,-7.5 z
+ M 79.84822082519531,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 7  h 44.16893005371094  v -27 z"></path><path class="blocklyPath" stroke="none" fill="#995ba5" d=" m 8,0  h 140.89903259277344  v 5  H 148.89903259277344  V 5  H 148.89903259277344  V 32  H 148.89903259277344  V 32  V 36  h -140.89903259277344  H 8  V 20  c 0,-10  -8,8  -8,-7.5  s 8,2.5  8,-7.5 z
+ M 79.84822082519531,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 7  h 44.16893005371094  v -27 z"></path><path class="blocklyPathLight" stroke="#b88cc0" d=" m 8,0  m 0.5,0.5  H 148.39903259277344  H 148.39903259277344  M 8.5,35.5  M 8.5,35.5  V 20  v -1.5  m -7.36,-0.5  q -1.52,-5.5  0,-11  m 7.36,1  V 0.5 
+ M 124.51715087890625,5.5  v 27  h -44.16893005371094  M 79.84822082519531,10  m -5,14.3  l 3.68,-2.1 "></path><g style="display: block;" transform="translate(72.84822082519531,6)"><path class="blocklyPathDark" transform="translate(1,1)" fill="#bdc2db" d=" m 8,0  h 42.16893005371094  v 5  H 50.16893005371094  V 5  H 50.16893005371094  V 21  H 50.16893005371094  V 21  V 25  h -42.16893005371094  H 8  V 20  c 0,-10  -8,8  -8,-7.5  s 8,2.5  8,-7.5 z
+"></path><path class="blocklyPath" stroke="none" fill="#bdc2db" d=" m 8,0  h 42.16893005371094  v 5  H 50.16893005371094  V 5  H 50.16893005371094  V 21  H 50.16893005371094  V 21  V 25  h -42.16893005371094  H 8  V 20  c 0,-10  -8,8  -8,-7.5  s 8,2.5  8,-7.5 z
+"></path><path class="blocklyPathLight" stroke="#8c95c0" style="display: none;" d=" m 8,0  m 0.5,0.5  H 49.66893005371094  H 49.66893005371094  M 8.5,24.5  M 8.5,24.5  V 20  v -1.5  m -7.36,-0.5  q -1.52,-5.5  0,-11  m 7.36,1  V 0.5 
+"></path><g class="blocklyEditableText" transform="translate(13,5)" style="cursor: text;"><rect rx="4" ry="4" x="0" y="0" height="16" width="32.16893005371094" class="blocklyFieldRect"></rect><text class="blocklyText" x="5" y="13">45<tspan>°</tspan></text></g></g><g transform="translate(18,10)"><text class="blocklyText" x="0" y="13">scan</text></g><g transform="translate(58.966339111328125,10)"><text class="blocklyText" x="0" y="13">(</text></g><g transform="translate(134.01715087890625,10)"><text class="blocklyText" x="0" y="13">)</text></g></g><g class="blocklyDraggable" transform="translate(0,48)"><path class="blocklyPathDark" transform="translate(1,1)" fill="#7a4984" d=" m 0,0  h 15  l 6,4  3,0  6,-4  h 208.64849853515625  v 5  H 238.64849853515625  V 5  H 238.64849853515625  V 32  H 238.64849853515625  V 32  V 36  h -209.14849853515625  l -6,4  -3,0  -6,-4  h -6.5 a 8 8 0 0,1 -8,-8 z
+ M 88.977783203125,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 7  h 44.16893005371094  v -27 z M 163.2197265625,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 7  h 46.473876953125  v -27 z"></path><path class="blocklyPath" stroke="none" fill="#995ba5" d=" m 0,0  h 15  l 6,4  3,0  6,-4  h 208.64849853515625  v 5  H 238.64849853515625  V 5  H 238.64849853515625  V 32  H 238.64849853515625  V 32  V 36  h -209.14849853515625  l -6,4  -3,0  -6,-4  h -6.5 a 8 8 0 0,1 -8,-8 z
+ M 88.977783203125,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 7  h 44.16893005371094  v -27 z M 163.2197265625,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 7  h 46.473876953125  v -27 z"></path><path class="blocklyPathLight" stroke="#b88cc0" d=" m 0,0  m 0.5,0.5  H 14.5  h 0.5  l 6,4  3,0  6,-4  H 238.14849853515625  H 238.14849853515625  M 0,36  m 2.6966991411008934,-2.6966991411008934 a 7.5 7.5 0 0,1 -2.1966991411008934,-5.303300858899107  V 0.5 
+ M 133.64671325683594,5.5  v 27  h -44.16893005371094  M 88.977783203125,10  m -5,14.3  l 3.68,-2.1  M 210.193603515625,5.5  v 27  h -46.473876953125  M 163.2197265625,10  m -5,14.3  l 3.68,-2.1 "></path><g style="display: block;" transform="translate(81.977783203125,6)"><path class="blocklyPathDark" transform="translate(1,1)" fill="#bdc2db" d=" m 8,0  h 42.16893005371094  v 5  H 50.16893005371094  V 5  H 50.16893005371094  V 21  H 50.16893005371094  V 21  V 25  h -42.16893005371094  H 8  V 20  c 0,-10  -8,8  -8,-7.5  s 8,2.5  8,-7.5 z
+"></path><path class="blocklyPath" stroke="none" fill="#bdc2db" d=" m 8,0  h 42.16893005371094  v 5  H 50.16893005371094  V 5  H 50.16893005371094  V 21  H 50.16893005371094  V 21  V 25  h -42.16893005371094  H 8  V 20  c 0,-10  -8,8  -8,-7.5  s 8,2.5  8,-7.5 z
+"></path><path class="blocklyPathLight" stroke="#8c95c0" d=" m 8,0  m 0.5,0.5  H 49.66893005371094  H 49.66893005371094  M 8.5,24.5  M 8.5,24.5  V 20  v -1.5  m -7.36,-0.5  q -1.52,-5.5  0,-11  m 7.36,1  V 0.5 
+" style="display: none;"></path><g class="blocklyEditableText" transform="translate(13,5)" style="cursor: text;"><rect rx="4" ry="4" x="0" y="0" height="16" width="32.16893005371094" class="blocklyFieldRect"></rect><text class="blocklyText" x="5" y="13">45<tspan>°</tspan></text></g></g><g class="blocklyDraggable" style="display: block;" transform="translate(156.2197265625,6)"><path class="blocklyPathDark" transform="translate(1,1)" fill="#844966" d=" m 8,0  h 44.473876953125  v 5  H 52.473876953125  V 5  H 52.473876953125  V 21  H 52.473876953125  V 21  V 25  h -44.473876953125  H 8  V 20  c 0,-10  -8,8  -8,-7.5  s 8,2.5  8,-7.5 z
+"></path><path class="blocklyPath" stroke="none" fill="#a55b80" d=" m 8,0  h 44.473876953125  v 5  H 52.473876953125  V 5  H 52.473876953125  V 21  H 52.473876953125  V 21  V 25  h -44.473876953125  H 8  V 20  c 0,-10  -8,8  -8,-7.5  s 8,2.5  8,-7.5 z
+"></path><path class="blocklyPathLight" stroke="#c08ca6" d=" m 8,0  m 0.5,0.5  H 51.973876953125  H 51.973876953125  M 8.5,24.5  M 8.5,24.5  V 20  v -1.5  m -7.36,-0.5  q -1.52,-5.5  0,-11  m 7.36,1  V 0.5 
+"></path><g class="blocklyEditableText" transform="translate(13,5)" style="cursor: default;"><rect rx="4" ry="4" x="0" y="0" height="16" width="34.473876953125" class="blocklyFieldRect blocklyDropdownRect" stroke="#c08ca6" fill="transparent"></rect><text class="blocklyText blocklyDropdownText" text-anchor="start" x="5" y="13">a<tspan style="fill: rgb(165, 91, 128);"> ▾</tspan></text><image style="display: none;"></image></g></g><g transform="translate(10,10)"><text class="blocklyText" x="0" y="13">cannon</text></g><g transform="translate(68.09590148925781,10)"><text class="blocklyText" x="0" y="13">(</text></g><g transform="translate(143.14671325683594,10)"><text class="blocklyText" x="0" y="13">,</text></g><g transform="translate(219.693603515625,10)"><text class="blocklyText" x="0" y="13">);</text></g></g><g transform="translate(10,10)"><text class="blocklyText" x="0" y="13">var</text></g><g class="blocklyEditableText" transform="translate(35.36505126953125,10)" style="cursor: default;"><rect rx="4" ry="4" x="0" y="0" height="16" width="34.473876953125" class="blocklyFieldRect blocklyDropdownRect" stroke="#c08ca6" fill="transparent"></rect><text class="blocklyText blocklyDropdownText" text-anchor="start" x="5" y="13">a<tspan style="fill: rgb(165, 91, 128);"> ▾</tspan></text><image style="display: none;"></image></g><g transform="translate(74.83892822265625,10)"><text class="blocklyText" x="0" y="13">=</text></g><g transform="translate(252.29916381835938,10)"><text class="blocklyText" x="0" y="13">;</text></g></g>
     </g>
   </g>
 </svg>

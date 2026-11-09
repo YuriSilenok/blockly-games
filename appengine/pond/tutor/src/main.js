@@ -13,6 +13,7 @@
 goog.provide('Pond.Tutor');
 
 goog.require('Blockly.JavaScript');
+goog.require('Blockly.FlyoutButton');
 goog.require('Blockly.utils.Coordinate');
 goog.require('BlocklyAce');
 goog.require('BlocklyCode');
@@ -60,6 +61,7 @@ function init() {
   const blocklyDiv = BlocklyGames.getElementById('blockly');
   const editorDiv = BlocklyGames.getElementById('editor');
   const visualization = BlocklyGames.getElementById('visualization');
+  
   let onresize;
 
   if (blocklyDiv) {
@@ -221,8 +223,8 @@ function getAvatarData() {
         code: null,
       },
       {
-        start: new Blockly.utils.Coordinate(20 + 42.4264, 20 + 42.4264),
-        damage: 0,
+        start: new Blockly.utils.Coordinate(60, 60),
+        damage: 99,
         name: targetName,
         code: 'playerTarget',
       }

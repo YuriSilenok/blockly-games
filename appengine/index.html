@@ -1,16 +1,57 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <meta name="google" value="notranslate">
-  <meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1.0, user-scalable=no">
-  <meta name="description" content="Games for tomorrow's programmers.  Block-based programming lessons for beginners.  Free from Google.">
+  <meta charset='utf-8'>
+  <meta name='google' value='notranslate'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
   <title>Blockly Games</title>
-  <link rel="stylesheet" href="common/common.css">
-  <link rel="stylesheet" href="index/style.css">
-  <script src="common/boot.js"></script>
+  <style>
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{font-family:Arial,Helvetica,sans-serif;background:#eef3fa;color:#333;display:flex;align-items:center;justify-content:center}
+    .wrap{width:min(920px,92vw);text-align:center}
+    h1{font-size:36px;margin:0 0 6px}
+    .sub{margin:0 0 36px;color:#666}
+    .cards{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+    .card{flex:1 1 300px;max-width:420px;background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 8px 24px rgba(0,0,0,.10);text-decoration:none;color:#333;border:2px solid transparent;transition:transform .15s,box-shadow .15s,border-color .15s}
+    .card:hover{transform:translateY(-5px);box-shadow:0 14px 32px rgba(0,0,0,.16);border-color:#4285f4}
+    .card h2{margin:0 0 10px;font-size:26px}
+    .card p{margin:0;font-size:15px;line-height:1.5;color:#555}
+    .icon{font-size:48px;display:block;margin-bottom:14px}
+    #langSel{position:fixed;top:14px;right:18px;font-size:14px;padding:4px 6px;z-index:10}
+  </style>
 </head>
 <body>
-  <noscript>Blockly Games requires JavaScript.</noscript>
+  <div class='wrap'>
+    <h1>Blockly Games</h1>
+    <p class='sub' id='subtitle'></p>
+    <div class='cards'>
+      <a id='cardTrain' class='card' href='pond-tutor.html'>
+        <span class='icon'>&#127891;</span><h2 id='tTitle'></h2><p id='tDesc'></p>
+      </a>
+      <a id='cardTour' class='card' href='pond-duck.html'>
+        <span class='icon'>&#127942;</span><h2 id='t2Title'></h2><p id='t2Desc'></p>
+      </a>
+    </div>
+  </div>
+  <select id='langSel'></select>
+<script>
+(function(){
+  var L=['am','ar','be','be-tarask','bg','bn','br','ca','cs','da','de','el','en','eo','es','eu','fa','fi','fo','fr','gl','ha','he','hi','hr','hu','hy','ia','id','ig','is','it','ja','kab','kn','ko','lt','lv','ms','my','nb','nl','pl','pms','pt','pt-br','ro','ru','sc','sk','sl','sq','sr','sr-latn','sv','th','ti','tr','uk','ur','vi','yo','zh-hans','zh-hant'];
+  var m={en:{sub:'Block programming lessons for beginners. Pick a mode to start.',train:'Training',tDesc:'Step by step levels in the Blockly editor with hints.',tour:'Tournament',t2Desc:'Solve tasks in a timed competition.'},ru:{sub:'\u0411\u043b\u043e\u0447\u043d\u043e\u0435 \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435 \u0434\u043b\u044f \u043d\u0430\u0447\u0438\u043d\u0430\u044e\u0449\u0438\u0445. \u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0440\u0435\u0436\u0438\u043c \u0434\u043b\u044f \u0441\u0442\u0430\u0440\u0442\u0430.',train:'\u0422\u0440\u0435\u043d\u0438\u0440\u043e\u0432\u043a\u0430',tDesc:'\u041f\u043e\u0448\u0430\u0433\u043e\u0432\u044b\u0435 \u0443\u0440\u043e\u0432\u043d\u0438 \u0432 \u0431\u043b\u043e\u0447\u043d\u043e\u043c \u0440\u0435\u0434\u0430\u043a\u0442\u043e\u0440\u0435 Blockly \u0441 \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0430\u043c\u0438.',tour:'\u0422\u0443\u0440\u043d\u0438\u0440',t2Desc:'\u0420\u0435\u0448\u0435\u043d\u0438\u0435 \u0437\u0430\u0434\u0430\u0447 \u0432 \u0444\u043e\u0440\u043c\u0430\u0442\u0435 \u0441\u043e\u0440\u0435\u0432\u043d\u043e\u0432\u0430\u043d\u0438\u044f \u043d\u0430 \u0432\u0440\u0435\u043c\u044f.'};
+  function pick(){var p=location.search.match(/[?&]lang=([^&]+)/);if(p)return decodeURIComponent(p[1]);var c=document.cookie.match(/(^|;)\s*lang=([\w\-]+)/);if(c)return unescape(c[2]);if(L.indexOf(navigator.language)!==-1)return navigator.language;var s=(navigator.language||'en').split('-')[0];return L.indexOf(s)!==-1?s:'en';}
+  var lang=pick();var base=lang.split('-')[0];var d=m[lang]||m[base]||m.en;
+  document.getElementById('subtitle').textContent=d.sub;
+  document.getElementById('tTitle').textContent=d.train;
+  document.getElementById('tDesc').textContent=d.tDesc;
+  document.getElementById('t2Title').textContent=d.tour;
+  document.getElementById('t2Desc').textContent=d.t2Desc;
+  document.getElementById('cardTrain').href='pond-tutor.html?lang='+lang;
+  document.getElementById('cardTour').href='pond-duck.html?lang='+lang;
+  var sel=document.getElementById('langSel');
+  L.forEach(function(l){var o=document.createElement('option');o.value=l;o.textContent=l;if(l===lang)o.selected=true;sel.appendChild(o);});
+  sel.onchange=function(){var s=sel.value;var exp=new Date(Date.now()+2*31536000000).toUTCString();document.cookie='lang='+escape(s)+'; expires='+exp+'; path=/';location.href=location.pathname.split('/').pop()+'?lang='+s;};
+})();
+</script>
 </body>
 </html>

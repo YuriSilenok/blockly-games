@@ -27,7 +27,9 @@ goog.require('Pond.Visualization');
 
 
 BlocklyGames.storageName = 'pond-tutor';
-
+BlocklyGames.MAX_LEVEL = 20;
+BlocklyGames.LEVEL =
+    BlocklyGames.getIntegerParamFromUrl('level', 1, BlocklyGames.MAX_LEVEL);
 /**
  * Initialize Blockly xor Ace, and the pond.  Called on page load.
  */
@@ -43,11 +45,15 @@ function init() {
 
   Pond.init(BlocklyGames.getMsg('Games.pondTutor', false));
 
-  BlocklyGames.bindClick('helpButton', Pond.showHelp);
-  if (location.hash.length < 2 &&
-      !BlocklyGames.loadFromLocalStorage(BlocklyGames.storageName,
-                                         BlocklyGames.LEVEL)) {
-    setTimeout(Pond.showHelp, 1000);
+  // Levels 11-20 are empty levels with no specific help text, so their
+  // help button is not rendered and no help dialog is shown on load.
+  if (BlocklyGames.LEVEL <= 10) {
+    BlocklyGames.bindClick('helpButton', Pond.showHelp);
+    if (location.hash.length < 2 &&
+        !BlocklyGames.loadFromLocalStorage(BlocklyGames.storageName,
+                                           BlocklyGames.LEVEL)) {
+      setTimeout(Pond.showHelp, 1000);
+    }
   }
 
   const rtl = BlocklyGames.IS_RTL;
@@ -326,7 +332,8 @@ function getAvatarData() {
         code: 'playerScared',
       }
     ],
-  ][BlocklyGames.LEVEL - 1];
+  // Levels 11-20 are empty levels: no avatars are placed on the pond.
+  ][BlocklyGames.LEVEL - 1] || [];
 }
 
 /**

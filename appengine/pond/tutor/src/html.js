@@ -24,12 +24,12 @@ goog.require('Pond.html');
  */
 Pond.Tutor.html.start = function(ij) {
   return `
-${BlocklyGames.html.headerBar(ij, BlocklyGames.getMsg('Games.pondTutor', true), '', true, true, '')}
+${BlocklyGames.html.headerBar(ij, BlocklyGames.getMsg('Games.pondTutor', true), '', true, ij.level <= 10, '')}
 
 ${Pond.html.visualization()}
 
 ${Pond.Tutor.html.toolbox_(ij.level)}
-<div id="${ij.level % 2 ? 'blockly' : 'editor'}"></div>
+<div id="blockly"></div>
 
 ${Pond.Tutor.html.playerTarget_()}
 ${Pond.Tutor.html.playerPendulum_()}
@@ -51,71 +51,89 @@ ${Pond.Tutor.html.helpDialogs_(ij.level)}
  */
 Pond.Tutor.html.toolbox_ = function(level) {
   let xml;
-  const scanBlock = level >= 5 ? `
-  <block type="pond_scan">
-    <value name="DEGREE">
-      <shadow type="pond_math_number">
-        <mutation angle_field="true"></mutation>
-        <field name="NUM">0</field>
-      </shadow>
-    </value>
-  </block>
-` : '';
+  const scanBlock = level >= 2 ? `
+    <block type="pond_scan">
+      <value name="DEGREE">
+        <shadow type="pond_math_number">
+          <mutation angle_field="true"></mutation>
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+    </block>
+  ` : '';
+
   const swimBlock = level >= 7 ? `
-  <block type="pond_swim">
-    <value name="DEGREE">
-      <shadow type="pond_math_number">
-        <mutation angle_field="true"></mutation>
-        <field name="NUM">0</field>
-      </shadow>
-    </value>
-  </block>
-` : '';
+    <block type="pond_swim">
+      <value name="DEGREE">
+        <shadow type="pond_math_number">
+          <mutation angle_field="true"></mutation>
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+    </block>
+  ` : '';
+
   const stopBlock = level >= 9 ? '<block type="pond_stop"></block>' : '';
+
   const getXYBlocks = level >= 9 ? '<block type="pond_getX"></block><block type="pond_getY"></block>' : '';
+
   xml = `
-<category name="${BlocklyGames.getMsg('Games.pond', true)}">
-  <block type="pond_cannon">
-    <value name="DEGREE">
-      <shadow type="pond_math_number">
-        <mutation angle_field="true"></mutation>
-        <field name="NUM">0</field>
-      </shadow>
-    </value>
-    <value name="RANGE">
-      <shadow type="pond_math_number">
-        <mutation angle_field="false"></mutation>
-        <field name="NUM">70</field>
-      </shadow>
-    </value>
-  </block>
-  ${scanBlock}
-  ${swimBlock}
-  ${stopBlock}
-  ${getXYBlocks}
-</category>
-`;
+    <category name="${BlocklyGames.getMsg('Games.pond', true)}">
+      <block type="pond_cannon">
+        <value name="DEGREE">
+          <shadow type="pond_math_number">
+            <mutation angle_field="true"></mutation>
+            <field name="NUM">0</field>
+          </shadow>
+        </value>
+        <value name="RANGE">
+          <shadow type="pond_math_number">
+            <mutation angle_field="false"></mutation>
+            <field name="NUM">70</field>
+          </shadow>
+        </value>
+      </block>
+      ${scanBlock}
+      ${swimBlock}
+      ${stopBlock}
+      ${getXYBlocks}
+    </category>
+  `;
+
   if (level >= 3) {
-    const ifBlock = level >= 9 ? '<block type="controls_if"></block>' : '';
-    const compareBlock = level >= 9 ? '<block type="logic_compare"></block>' : '';
+
     xml += `
-<category name="${BlocklyGames.getMsg('Games.catLogic', true)}">
-  ${ifBlock}
-  ${compareBlock}
-  <block type="logic_boolean"></block>
-</category>
-<category name="${BlocklyGames.getMsg('Games.catLoops', true)}">
-  <block type="controls_whileUntil"></block>
-</category>
-`;
+      <category name="${BlocklyGames.getMsg('Games.catVariables', true)}" custom="VARIABLE">
+        <variable type="" id="xVar">x</variable>
+      </category>`;
+
+
+  //   // Математика
+  //   xml += `
+  //     <category name="${BlocklyGames.getMsg('Games.catMath', true)}">
+  //       <block type="pond_math_number">
+  //         <mutation angle_field="false"></mutation>
+  //       </block>
+  //     </category>
+  //   `;
+  // }
+
+    // const ifBlock = level >= 9 ? '<block type="controls_if"></block>' : '';
+
+    // const compareBlock = level >= 9 ? '<block type="logic_compare"></block>' : '';
+
+    // xml += `
+    //   <category name="${BlocklyGames.getMsg('Games.catLogic', true)}">
+    //     ${ifBlock}
+    //     ${compareBlock}
+    //     <block type="logic_boolean"></block>
+    //   </category>
+    //   <category name="${BlocklyGames.getMsg('Games.catLoops', true)}">
+    //     <block type="controls_whileUntil"></block>
+    //   </category>
+    // `;
   }
-  xml += `
-<category name="${BlocklyGames.getMsg('Games.catMath', true)}">
-  <block type="pond_math_number">
-    <mutation angle_field="false"></mutation>
-  </block>
-</category>
-`;
+
   return `<xml id="toolbox" xmlns="https://developers.google.com/blockly/xml">${xml}</xml>`;
 };
 
@@ -130,7 +148,7 @@ Pond.Tutor.html.helpDialogs_ = function(level) {
   switch (level) {
     case 1:
       content = `
-${BlocklyGames.getMsg('Pond.helpText1', true)}
+${BlocklyGames.getMsg('Pond.helpText01', true)}
 <br><br>
 <svg height=41 width=250 class="geras-renderer classic-theme">
   <g>
@@ -167,30 +185,68 @@ ${BlocklyGames.getMsg('Pond.helpText1', true)}
     case 2:
       content = `
 ${BlocklyGames.getMsg('Pond.helpText1', true)}
-<pre>cannon(0, 70);</pre>
+<br><br>
+<svg height="60" width="400" class="geras-renderer classic-theme">
+  <g class="blocklyDraggable">
+    <path class="blocklyPathDark" transform="translate(1,1)" fill="#7a4984" d=" m 0,0  m 0,8 a 8 8 0 0,1 8,-8  h 7  l 6,4  3,0  6,-4  h 288.7672882080078  v 5  H 318.7672882080078  V 5  H 318.7672882080078  V 43  H 318.7672882080078  V 43  V 47  h -289.2672882080078  l -6,4  -3,0  -6,-4  h -6.5 a 8 8 0 0,1 -8,-8 z
+ M 88.977783203125,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 7  h 36.0157470703125  v -27 z M 155.06654357910156,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 18  h 134.745849609375  v -38 z"></path>
+    <path class="blocklyPath" stroke="none" fill="#995ba5" d=" m 0,0  m 0,8 a 8 8 0 0,1 8,-8  h 7  l 6,4  3,0  6,-4  h 288.7672882080078  v 5  H 318.7672882080078  V 5  H 318.7672882080078  V 43  H 318.7672882080078  V 43  V 47  h -289.2672882080078  l -6,4  -3,0  -6,-4  h -6.5 a 8 8 0 0,1 -8,-8 z
+ M 88.977783203125,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 7  h 36.0157470703125  v -27 z M 155.06654357910156,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 18  h 134.745849609375  v -38 z"></path>
+    <path class="blocklyPathLight" stroke="#b88cc0" d=" m 0,0  m 0.5,8 a 7.5 7.5 0 0,1 8,-7.5  H 14.5  h 0.5  l 6,4  3,0  6,-4  H 318.2672882080078  H 318.2672882080078  M 0,47  m 2.6966991411008934,-2.6966991411008934 a 7.5 7.5 0 0,1 -2.1966991411008934,-5.303300858899107  V 8 
+ M 125.4935302734375,5.5  v 27  h -36.0157470703125  M 88.977783203125,10  m -5,14.3  l 3.68,-2.1  M 290.31239318847656,5.5  v 38  h -134.745849609375  M 155.06654357910156,10  m -5,14.3  l 3.68,-2.1 "></path>
+
+    <g transform="translate(10,10)"><text class="blocklyText" x="0" y="13">cannon</text></g>
+    <g transform="translate(68.09590148925781,10)"><text class="blocklyText" x="0" y="13">(</text></g>
+    <g transform="translate(134.9935302734375,10)"><text class="blocklyText" x="0" y="13">,</text></g>
+    <g transform="translate(299.81239318847656,10)"><text class="blocklyText" x="0" y="13">);</text></g>
+
+    <!-- Первый параметр: 0° -->
+    <g transform="translate(81.977783203125,6)">
+      <path class="blocklyPathDark" transform="translate(1,1)" fill="#bdc2db" d=" m 8,0  h 34.0157470703125  v 5  H 42.0157470703125  V 5  H 42.0157470703125  V 21  H 42.0157470703125  V 21  V 25  h -34.0157470703125  H 8  V 20  c 0,-10  -8,8  -8,-7.5  s 8,2.5  8,-7.5 z"></path>
+      <path class="blocklyPath" stroke="none" fill="#bdc2db" d=" m 8,0  h 34.0157470703125  v 5  H 42.0157470703125  V 5  H 42.0157470703125  V 21  H 42.0157470703125  V 21  V 25  h -34.0157470703125  H 8  V 20  c 0,-10  -8,8  -8,-7.5  s 8,2.5  8,-7.5 z"></path>
+      <path class="blocklyPathLight" stroke="#8c95c0" style="display: none;" d=" m 8,0  m 0.5,0.5  H 41.5157470703125  H 41.5157470703125  M 8.5,24.5  M 8.5,24.5  V 20  v -1.5  m -7.36,-0.5  q -1.52,-5.5  0,-11  m 7.36,1  V 0.5 "></path>
+      <g class="blocklyEditableText" transform="translate(13,5)" style="cursor: text;">
+        <rect rx="4" ry="4" x="0" y="0" height="16" width="24.0157470703125" class="blocklyFieldRect"></rect>
+        <text class="blocklyText" x="5" y="13">0<tspan>°</tspan></text>
+      </g>
+    </g>
+
+    <!-- Второй параметр: вложенный блок scan(0°) -->
+    <g class="blocklyDraggable" transform="translate(148.06654357910156,6)">
+      <path class="blocklyPathDark" transform="translate(1,1)" fill="#7a4984" d=" m 8,0  h 132.745849609375  v 5  H 140.745849609375  V 5  H 140.745849609375  V 32  H 140.745849609375  V 32  V 36  h -132.745849609375  H 8  V 20  c 0,-10  -8,8  -8,-7.5  s 8,2.5  8,-7.5 z
+ M 79.84822082519531,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 7  h 36.0157470703125  v -27 z"></path>
+      <path class="blocklyPath" stroke="none" fill="#995ba5" d=" m 8,0  h 132.745849609375  v 5  H 140.745849609375  V 5  H 140.745849609375  V 32  H 140.745849609375  V 32  V 36  h -132.745849609375  H 8  V 20  c 0,-10  -8,8  -8,-7.5  s 8,2.5 8,-7.5 z
+ M 79.84822082519531,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 7  h 36.0157470703125  v -27 z"></path>
+      <path class="blocklyPathLight" stroke="#b88cc0" d=" m 8,0  m 0.5,0.5  H 140.245849609375  H 140.245849609375  M 8.5,35.5  M 8.5,35.5  V 20  v -1.5  m -7.36,-0.5  q -1.52,-5.5  0,-11  m 7.36,1  V 0.5 
+ M 116.36396789550781,5.5  v 27  h -36.0157470703125  M 79.84822082519531,10  m -5,14.3  l 3.68,-2.1 "></path>
+
+      <!-- Поле 0° внутри scan -->
+      <g transform="translate(72.84822082519531,6)">
+        <path class="blocklyPathDark" transform="translate(1,1)" fill="#bdc2db" d=" m 8,0  h 34.0157470703125  v 5  H 42.0157470703125  V 5  H 42.0157470703125  V 21  H 42.0157470703125  V 21  V 25  h -34.0157470703125  H 8  V 20  c 0,-10  -8,8  -8,-7.5  s 8,2.5  8,-7.5 z"></path>
+        <path class="blocklyPath" stroke="none" fill="#bdc2db" d=" m 8,0  h 34.0157470703125  v 5  H 42.0157470703125  V 5  H 42.0157470703125  V 21  H 42.0157470703125  V 21  V 25  h -34.0157470703125  H 8  V 20  c 0,-10  -8,8  -8,-7.5  s 8,2.5 8,-7.5 z"></path>
+        <path class="blocklyPathLight" stroke="#8c95c0" style="display: none;" d=" m 8,0  m 0.5,0.5  H 41.5157470703125  H 41.5157470703125  M 8.5,24.5  M 8.5,24.5  V 20  v -1.5  m -7.36,-0.5  q -1.52,-5.5  0,-11  m 7.36,1  V 0.5 "></path>
+        <g class="blocklyEditableText" transform="translate(13,5)" style="cursor: text;">
+          <rect rx="4" ry="4" x="0" y="0" height="16" width="24.0157470703125" class="blocklyFieldRect"></rect>
+          <text class="blocklyText" x="5" y="13">0<tspan>°</tspan></text>
+        </g>
+      </g>
+
+      <g transform="translate(18,10)"><text class="blocklyText" x="0" y="13">scan</text></g>
+      <g transform="translate(58.966339111328125,10)"><text class="blocklyText" x="0" y="13">(</text></g>
+      <g transform="translate(125.86396789550781,10)"><text class="blocklyText" x="0" y="13">)</text></g>
+    </g>
+  </g>
+</svg>
 `;
       break;
     case 3:
       content = `
 ${BlocklyGames.getMsg('Pond.helpText2', true)}
 <br><br>
-<svg height=92 width=250 class="geras-renderer classic-theme">
-  <g>
-    <path transform="translate(1,1)" fill="#498449" d="m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 50 H 162.94 v 36 H 50 l -6,4 -3,0 -6,-4 h -7 a 8,8 0 0,0 -8,8 v 9 a 8,8 0 0,0 8,8 H 50 H 50 v 25 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z M 129.08,5 h -60.71 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 60.71 z"></path>
-    <path fill="#5ba55b" d="m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 50 H 162.94 v 36 H 50 l -6,4 -3,0 -6,-4 h -7 a 8,8 0 0,0 -8,8 v 9 a 8,8 0 0,0 8,8 H 50 H 50 v 25 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z M 129.08,5 h -60.71 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 60.71 z"></path>
-    <path class="blocklyPathLight" stroke="#8cc08c" d="m 0.5,7.5 A 7.5,7.5 0 0,1 8,0.5 H 15 l 6,4 3,0 6,-4 H 49.5 M 49.5,0.5 H 162.44 M 49.5,36.5 M 21.98,59.01 a 8.5,8.5 0 0,0 6.01,2.48 H 49.5 M 49.5,61.5 H 49.5 M 2.69,83.3 A 7.5,7.5 0 0,1 0.5,78 V 8 M 129.58,5.5 v 27 h -60.71 M 63.27,24.3 l 3.68,-2.1"></path>
-    <text class="blocklyText" y="12.5" transform="translate(10,10)">while&#160;(</text>
-    <text class="blocklyText" y="12.5" transform="translate(139.08,10)">)&#160;{</text>
-    <text class="blocklyText" y="12.5" transform="translate(10,66)">}</text>
-    <g transform="translate(69.37,6)">
-      <path transform="translate(1,1)" fill="#496684" d="m 0,0 H 58.71 v 25 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z"></path>
-      <path fill="#5b80a5" d="m 0,0 H 58.71 v 25 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z"></path>
-      <path class="blocklyPathLight" stroke="#8ca6c0" d="m 0.5,0.5 H 58.21 M 58.21,0.5 M 0.5,24.5 V 18.5 m -7.36,-0.5 q -1.52,-5.5 0,-11 m 7.36,1 V 0.5 H 1"></path>
-      <g class="blocklyEditableText" transform="translate(10,5)" style="cursor: default;">
-        <rect rx="4" ry="4" x="-5" y="0" height="16" width="48.71"></rect>
-        <text class="blocklyText" y="12.5" text-anchor="start" x="0">true
-        <tspan style="fill: rgb(91, 128, 165);"> ▾</tspan></text>
-      </g>
+<svg width="360" height="140" class="geras-renderer classic-theme">
+  <g transform="translate(10,10) scale(1)">
+    <g class="blocklyBlockCanvas">
+      
     </g>
   </g>
 </svg>

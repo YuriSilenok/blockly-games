@@ -447,7 +447,7 @@ ${BlocklyGames.getMsg('Pond.helpText4', true)}
       break;
     case 8:
       content = `
-${BlocklyGames.getMsg('Pond.helpText4', true)}
+${BlocklyGames.getMsg('Pond.helpText08', true)}
 <pre>swim(0);</pre>
 `;
       break;

@@ -421,7 +421,7 @@ ${BlocklyGames.getMsg('Pond.helpText06', true)}
       break;
     case 7:
       content = `
-${BlocklyGames.getMsg('Pond.helpText4', true)}
+${BlocklyGames.getMsg('Pond.helpText07', true)}
 <br><br>
 <svg height=41 width=250 class="geras-renderer classic-theme">
   <g>
@@ -485,16 +485,6 @@ ${BlocklyGames.getMsg('Pond.helpText5', true)}
   </g>
 </svg>
 <br><br>
-<svg height=31 width=250 class="geras-renderer classic-theme">
-  <g>
-    <path transform="translate(1,1)" fill="#7a4984" d="m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 81.56 v 24 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z"></path>
-    <path fill="#995ba5" d="m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 81.56 v 24 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z"></path>
-    <path class="blocklyPathLight" stroke="#b88cc0" d="m 0.5,7.5 A 7.5,7.5 0 0,1 8,0.5 H 15 l 6,4 3,0 6,-4 H 81.06 M 81.06,0.5 M 2.69,21.3 A 7.5,7.5 0 0,1 0.5,16 V 8"></path>
-    <text class="blocklyText" y="12.5" transform="translate(10,5)">stop</text>
-    <text class="blocklyText" y="12.5" transform="translate(47.71,5)">(</text>
-    <text class="blocklyText" y="12.5" transform="translate(62.6,5)">);</text>
-  </g>
-</svg>
 `;
       break;
     case 10:

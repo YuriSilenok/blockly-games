@@ -94,6 +94,10 @@ const logBlock = `
 
 const speedBlock = `<block type="pond_speed"></block>`;
 const stopBlock = '<block type="pond_stop"></block>';
+const getXYBlocks = `
+  <block type="pond_getX"></block>
+  <block type="pond_getY"></block>`;
+
 
 // Логика
 
@@ -131,6 +135,7 @@ Pond.Tutor.html.toolbox_ = function(level) {
       ${level >= 5 ? swimBlock : ''}
       ${level >= 6 ? stopBlock : ''}
       ${level >= 7 ? speedBlock : ''}
+      ${level >= 8 ? getXYBlocks : ''}
     </category>`;
 
   const varCategory = `
@@ -163,9 +168,6 @@ Pond.Tutor.html.toolbox_ = function(level) {
     ${level >= 5 ? loopCategory : ''}
   </xml>`;
   
-
-
-  // const getXYBlocks = level >= 9 ? '<block type="pond_getX"></block><block type="pond_getY"></block>' : '';
 
 };
 
@@ -572,6 +574,7 @@ Pond.Tutor.html.playerScared_ = function() {
   return `
 <div id="playerScared" style="display: none">
 /* Moves south-west when hit.  Does not fire. */
+
 var d = damage();
 while (true) {
   if (d != damage()) {
@@ -595,29 +598,14 @@ while (true) {
 Pond.Tutor.html.playerDefense_ = function() {
   return `
 <div id="playerDefense" style="display: none">
-/* Moves south-west when hit.  Does not fire. */
+/* If the hero fires a cannon, attack the hero. */
 
+var kill = false;
 while (true) {
-  if (damage() > 80) {
-    if (getX() <= 10 && getY() <= 10) {swim(90, 100);}
-    else if (getX() <= 10 && getY() >= 90) {swim(0, 100);}
-    else if (getX() >= 90 && getY() >= 90) {swim(270, 100);}
-    else if (getX() >= 90 && getY() <= 10) {swim(180, 100);}
-    else {
-      if (getX() <= 10) {swim(90, 100);}
-      if (getY() <= 10) {swim(180, 100);}
-      if (getX() >= 90) {swim(270, 100);}
-      if (getY() >= 90) {swim(0, 100);}
-    }
-    var angle = 0;
-    while (angle < 360){
-      var distance = scan(angle);
-      if (distance <= 70 && distance >= 10){
-        cannon(angle, distance-5);
-      }else{
-        angle += 5;
-      }
-    }
+  if (hero_fired()) {kill= true;}
+  if (kill == true) {
+    swim(hero_bearing());
+    cannon(hero_bearing(), hero_distance());
   }
 }
 </div>

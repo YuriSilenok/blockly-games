@@ -154,8 +154,12 @@ function init() {
         avatarDatum.damage, !avatarDatum.code, Pond.Battle);
     if (avatarDatum.code) {
       const div = BlocklyGames.getElementById(avatarDatum.code);
-      const code = div.textContent;
-      avatar.setCode(undefined, code, code);
+      // If the strategy div is missing, skip it rather than aborting the loop
+      // which would prevent the remaining avatars from being created.
+      if (div) {
+        const code = div.textContent;
+        avatar.setCode(undefined, code, code);
+      }
     } else {
       Pond.currentAvatar = avatar;
     }
@@ -299,19 +303,19 @@ function getAvatarData() {
       },
       {
         start: new Blockly.utils.Coordinate(10, 90),
-        damage: 80,
+        damage: 70,
         name: targetName,
         code: 'playerDefense',
       },
       {
         start: new Blockly.utils.Coordinate(90, 90),
-        damage: 80,
+        damage: 70,
         name: pendulumName,
         code: 'playerDefense',
       },
       {
         start: new Blockly.utils.Coordinate(90, 10),
-        damage: 80,
+        damage: 70,
         name: scaredName,
         code: 'playerDefense',
       }

@@ -136,6 +136,10 @@ def generate_uncompressed(gameName):
       '--root=appengine/src/',
       '--exclude=',
       '--namespace=%s' % gameName.replace('/', '.').title()]
+  # On Windows the closurebuilder python script cannot be executed directly;
+  # prepend the current python interpreter.
+  if sys.platform == 'win32':
+    cmd = [sys.executable] + cmd
   directory = gameName
   while directory:
     subdir = 'appengine/%s/generated/' % directory
@@ -144,7 +148,7 @@ def generate_uncompressed(gameName):
     subdir = 'appengine/%s/src/' % directory
     if os.path.isdir(subdir):
       cmd.append('--root=%s' % subdir)
-    (directory, sep, fragment) = directory.rpartition(os.path.sep)
+    (directory, sep, fragment) = directory.rpartition('/')
   try:
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
   except:
@@ -159,6 +163,8 @@ def generate_uncompressed(gameName):
   srcs = []
   for file in files:
     file = file.strip()
+    # Normalize Windows path separators so they match the Linux-style prefix.
+    file = file.replace('\\', '/')
     if file[:len(prefix)] == prefix:
       file = file[len(prefix):]
     else:
@@ -212,7 +218,7 @@ def generate_compressed(gameName):
   directory = gameName
   while directory:
     cmd.append("--js='appengine/%s/src/*.js'" % directory)
-    (directory, sep, fragment) = directory.rpartition(os.path.sep)
+    (directory, sep, fragment) = directory.rpartition('/')
   try:
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
   except:

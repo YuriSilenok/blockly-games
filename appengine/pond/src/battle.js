@@ -104,6 +104,12 @@ Pond.Battle.endTime_ = 0;
 Pond.Battle.ticks = 0;
 
 /**
+ * Time the hero last fired (in milliseconds).
+ * @private
+ */
+Pond.Battle.heroLastFire_ = -Infinity;
+
+/**
  * Time limit of game (in milliseconds).
  */
 Pond.Battle.TIME_LIMIT = 5 * 60 * 1000;
@@ -123,6 +129,7 @@ Pond.Battle.reset = function() {
   Pond.Battle.MISSILES.length = 0;
   Pond.Battle.RANK.length = 0;
   Pond.Battle.ticks = 0;
+  Pond.Battle.heroLastFire_ = -Infinity;
   for (const avatar of Pond.Battle.AVATARS) {
     avatar.reset();
   }
@@ -327,7 +334,12 @@ Pond.Battle.initInterpreter = function(interpreter, globalObject) {
   wrap('scan');
 
   wrapper = function(degree, range) {
-    return Pond.Battle.currentAvatar.cannon(degree, range);
+    const fired = Pond.Battle.currentAvatar.cannon(degree, range);
+    if (fired && Pond.Battle.currentAvatar === Pond.currentAvatar) {
+      // Remember when the hero fired so that enemies can respond.
+      Pond.Battle.heroLastFire_ = Date.now();
+    }
+    return fired;
   };
   wrap('cannon');
 
@@ -368,6 +380,39 @@ Pond.Battle.initInterpreter = function(interpreter, globalObject) {
   };
   wrap('loc_y');
   wrap('getY');
+
+  wrapper = function() {
+    // True if the hero fired within the last second.
+    return Date.now() - Pond.Battle.heroLastFire_ < 1000;
+  };
+  wrap('hero_fired');
+
+  wrapper = function() {
+    if (!Pond.currentAvatar) return 0;
+    return Pond.currentAvatar.loc.x;
+  };
+  wrap('hero_x');
+
+  wrapper = function() {
+    if (!Pond.currentAvatar) return 0;
+    return Pond.currentAvatar.loc.y;
+  };
+  wrap('hero_y');
+
+  wrapper = function() {
+    if (!Pond.currentAvatar) return 0;
+    return Pond.Avatar.pointsToAngle(
+        Pond.Battle.currentAvatar.loc.x, Pond.Battle.currentAvatar.loc.y,
+        Pond.currentAvatar.loc.x, Pond.currentAvatar.loc.y);
+  };
+  wrap('hero_bearing');
+
+  wrapper = function() {
+    if (!Pond.currentAvatar) return Infinity;
+    return Blockly.utils.Coordinate.distance(Pond.Battle.currentAvatar.loc,
+        Pond.currentAvatar.loc);
+  };
+  wrap('hero_distance');
 
   function wrap(name) {
     interpreter.setProperty(globalObject, name,

@@ -601,11 +601,26 @@ Pond.Tutor.html.playerDefense_ = function() {
 /* If the hero fires a cannon, attack the hero. */
 
 var kill = false;
+var i = 0;
 while (true) {
   if (hero_fired()) {kill= true;}
   if (kill == true) {
     swim(hero_bearing());
     cannon(hero_bearing(), hero_distance());
+  }
+  else{
+    if (getY() >= 90 && getX() >= 90) {
+      swim(270, 10);
+    }
+    else if (getY() <= 10 && getX() >= 90) {
+      swim(180, 10);
+    }
+    else if (getY() <= 10 && getX() <= 10) {
+      swim(90, 10);
+    }
+    else if (getY() >= 90 && getX() <= 10) {
+      swim(0, 10);
+    }    
   }
 }
 </div>

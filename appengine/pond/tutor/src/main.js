@@ -114,7 +114,9 @@ function init() {
           '</block>' +
         '</xml>';
     }
-    BlocklyInterface.loadBlocks(defaultXml);
+    // Inherit the blocks saved from the previous level so that the player's
+    // solution carries over when advancing to a new level.
+    BlocklyInterface.loadBlocks(defaultXml, true);
   }
 
   if (editorDiv) {
@@ -130,7 +132,8 @@ function init() {
       defaultCode = 'cannon(0, 70);';
     }
     BlocklyAce.makeAceSession();
-    BlocklyInterface.loadBlocks(defaultCode + '\n');
+    // Inherit the code saved from the previous level (see the blockly branch).
+    BlocklyInterface.loadBlocks(defaultCode + '\n', true);
 
     onresize = function(_e) {
       const top = visualization.offsetTop;

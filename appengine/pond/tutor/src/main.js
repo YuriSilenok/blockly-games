@@ -300,25 +300,25 @@ function getAvatarData() {
     [
       {
         start: new Blockly.utils.Coordinate(10, 10),
-        damage: 0,
+        damage: 90,
         name: playerName,
         code: null,
       },
       {
         start: new Blockly.utils.Coordinate(10, 90),
-        damage: 70,
+        damage: 99,
         name: targetName,
         code: 'playerDefense',
       },
       {
         start: new Blockly.utils.Coordinate(90, 90),
-        damage: 70,
+        damage: 99,
         name: pendulumName,
         code: 'playerDefense',
       },
       {
         start: new Blockly.utils.Coordinate(90, 10),
-        damage: 70,
+        damage: 99,
         name: scaredName,
         code: 'playerDefense',
       }

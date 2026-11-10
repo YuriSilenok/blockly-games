@@ -614,6 +614,7 @@ while (true) {
     else if (getY() >= 90) {swim(0, 20);}
     else if (getX() >= 90) {swim(270, 20);}
     else if (getY() <= 10) {swim(180, 20);}
+
   }
 }
 </div>

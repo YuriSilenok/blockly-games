@@ -598,19 +598,22 @@ while (true) {
     swim(hero_bearing());
     cannon(hero_bearing(), hero_distance());
   }
-  else{
-    if (getY() >= 90 && getX() >= 90) {
-      swim(270, 10);
-    }
-    else if (getY() <= 10 && getX() >= 90) {
-      swim(180, 10);
-    }
-    else if (getY() <= 10 && getX() <= 10) {
-      swim(90, 10);
-    }
-    else if (getY() >= 90 && getX() <= 10) {
-      swim(0, 10);
-    }    
+  else {
+
+    if (scan(0) < 40) {swim(180, 20);}
+    else if (scan(180) < 40) {swim(0, 20);}
+    else if (scan(90) < 40) {swim(270, 20);}
+    else if (scan(270) < 40) {swim(90, 20);}
+
+    else if (getY() >= 90 && getX() >= 90) {swim(270, 20);}
+    else if (getY() <= 10 && getX() >= 90) {swim(180, 20);}
+    else if (getY() <= 10 && getX() <= 10) {swim(90, 20);}
+    else if (getY() >= 90 && getX() <= 10) {swim(0, 20);}
+
+    else if (getX() <= 10) {swim(90, 20);}
+    else if (getY() >= 90) {swim(0, 20);}
+    else if (getX() >= 90) {swim(270, 20);}
+    else if (getY() <= 10) {swim(180, 20);}
   }
 }
 </div>

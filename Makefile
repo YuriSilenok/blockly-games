@@ -53,7 +53,10 @@ deps:
 	$(foreach bin,$(REQUIRED_BINS),\
 	    $(if $(shell command -v $(bin) 2> /dev/null),$(info Found `$(bin)`),$(error Please install `$(bin)`)))
 	mkdir -p build/third-party-downloads
-	wget -N https://unpkg.com/google-closure-compiler-java/compiler.jar;
+	# Pin the Closure Compiler version: unpkg 'latest' now ships jars built for
+	# Java 21 (class file v65), which fails on the Java 17 runners. 20240317.0.0
+	# runs on Java 11+ and is a known-good version for the Blockly Games build.
+	wget -N https://unpkg.com/google-closure-compiler-java@20240317.0.0/compiler.jar;
 	mv -f compiler.jar build/third-party-downloads/closure-compiler.jar;
 
 	mkdir -p appengine/third-party

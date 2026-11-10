@@ -1,0 +1,39 @@
+name: Build and Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:   # manual trigger from the Actions tab
+
+permissions:
+  contents: write      # needed to create/push the gh-pages branch
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools (Java, Subversion, Python)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y subversion openjdk-17-jre-headless python-is-python3
+
+      - name: Download third-party deps (Closure, Babel, Blockly, Ace, SoundJS, JS-Interpreter)
+        run: make deps
+
+      - name: Build messages and games
+        run: make common pond-tutor pond-duck
+
+      - name: Deploy appengine to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: appengine
+          publish_branch: gh-pages
+          force_orphan: true
+          enable_jekyll: false

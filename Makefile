@@ -2,7 +2,7 @@
 # Definitions
 ##############################
 
-REQUIRED_BINS = svn wget java python
+REQUIRED_BINS = git wget java python
 
 ##############################
 # Rules
@@ -59,15 +59,27 @@ deps:
 	mkdir -p appengine/third-party
 	wget -N https://unpkg.com/@babel/standalone@7.14.8/babel.min.js
 	mv babel.min.js appengine/third-party/
-	@# GitHub doesn't support git archive, so download files using svn.
-	svn export --force https://github.com/ajaxorg/ace-builds/trunk/src-min-noconflict/ appengine/third-party/ace
+	@# GitHub no longer supports the svn:// bridge, so fetch tarballs via shallow
+	@# git clones instead of 'svn export'.
+	rm -rf /tmp/ace-builds
+	git clone -q --depth 1 https://github.com/ajaxorg/ace-builds.git /tmp/ace-builds
+	mkdir -p appengine/third-party/ace
+	cp -R /tmp/ace-builds/src-min-noconflict/* appengine/third-party/ace/
+	rm -rf /tmp/blockly-for-BG
+	git clone -q --depth 1 https://github.com/NeilFraser/blockly-for-BG.git /tmp/blockly-for-BG
 	mkdir -p appengine/third-party/blockly
-	svn export --force https://github.com/NeilFraser/blockly-for-BG/trunk/ appengine/third-party/blockly
-	svn export --force https://github.com/CreateJS/SoundJS/trunk/lib/ appengine/third-party/SoundJS
+	cp -R /tmp/blockly-for-BG/* appengine/third-party/blockly/
+	rm -rf /tmp/SoundJS
+	git clone -q --depth 1 https://github.com/CreateJS/SoundJS.git /tmp/SoundJS
+	mkdir -p appengine/third-party/SoundJS
+	cp -R /tmp/SoundJS/lib/* appengine/third-party/SoundJS/
 	cp third-party/base.js appengine/third-party/
 	cp -R third-party/soundfonts appengine/third-party/
 
-	svn export --force https://github.com/NeilFraser/JS-Interpreter/trunk/ appengine/third-party/JS-Interpreter
+	rm -rf /tmp/JS-Interpreter
+	git clone -q --depth 1 https://github.com/NeilFraser/JS-Interpreter.git /tmp/JS-Interpreter
+	mkdir -p appengine/third-party/JS-Interpreter
+	cp /tmp/JS-Interpreter/acorn.js /tmp/JS-Interpreter/interpreter.js appengine/third-party/JS-Interpreter/
 	@# Compile JS-Interpreter using SIMPLE_OPTIMIZATIONS because the Music game needs to mess with the stack.
 	java -jar build/third-party-downloads/closure-compiler.jar\
 	  --language_out ECMASCRIPT5\

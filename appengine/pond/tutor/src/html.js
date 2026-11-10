@@ -184,7 +184,7 @@ Pond.Tutor.html.helpDialogs_ = function(level) {
       content = `
         ${BlocklyGames.getMsg('Pond.helpText01', true)}
         <br><br>
-        <svg height=41 width=250 class="geras-renderer classic-theme">
+        <svg height=400 width=250 class="geras-renderer classic-theme">
           <g>
             <path transform="translate(1,1)" fill="#7a4984" d="m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 40 H 222.36 v 36 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z M 125.01,5 h -36.02 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 36.02 z M 193.4,5 h -38.31 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 38.31 z"></path>
             <path fill="#995ba5" d="m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 40 H 222.36 v 36 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z M 125.01,5 h -36.02 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 36.02 z M 193.4,5 h -38.31 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 38.31 z"></path>
@@ -220,7 +220,7 @@ Pond.Tutor.html.helpDialogs_ = function(level) {
       content = `
         ${BlocklyGames.getMsg('Pond.helpText02', true)}
         <br><br>
-        <svg height="60" width="400" class="geras-renderer classic-theme">
+        <svg height="400" width="400" class="geras-renderer classic-theme">
 <g class="blocklyDraggable" transform="translate(7,10)"><path class="blocklyPathDark" transform="translate(1,1)" fill="#7a4984" d=" m 0,0  m 0,8 a 8 8 0 0,1 8,-8  h 7  l 6,4  3,0  6,-4  h 305.0736541748047  v 5  H 335.0736541748047  V 5  H 335.0736541748047  V 43  H 335.0736541748047  V 43  V 47  h -305.5736541748047  l -6,4  -3,0  -6,-4  h -6.5 a 8 8 0 0,1 -8,-8 z
  M 88.977783203125,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 7  h 44.16893005371094  v -27 z M 163.2197265625,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 18  h 142.89903259277344  v -38 z"></path><path class="blocklyPath" stroke="none" fill="#995ba5" d=" m 0,0  m 0,8 a 8 8 0 0,1 8,-8  h 7  l 6,4  3,0  6,-4  h 305.0736541748047  v 5  H 335.0736541748047  V 5  H 335.0736541748047  V 43  H 335.0736541748047  V 43  V 47  h -305.5736541748047  l -6,4  -3,0  -6,-4  h -6.5 a 8 8 0 0,1 -8,-8 z
  M 88.977783203125,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 7  h 44.16893005371094  v -27 z M 163.2197265625,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 18  h 142.89903259277344  v -38 z"></path><path class="blocklyPathLight" stroke="#b88cc0" d=" m 0,0  m 0.5,8 a 7.5 7.5 0 0,1 8,-7.5  H 14.5  h 0.5  l 6,4  3,0  6,-4  H 334.5736541748047  H 334.5736541748047  M 0,47  m 2.6966991411008934,-2.6966991411008934 a 7.5 7.5 0 0,1 -2.1966991411008934,-5.303300858899107  V 8 
@@ -241,7 +241,7 @@ Pond.Tutor.html.helpDialogs_ = function(level) {
       content = `
 ${BlocklyGames.getMsg('Pond.helpText03', true)}
 <br><br>
-<svg width="360" height="240" class="geras-renderer classic-theme">
+<svg width="400" height="240" class="geras-renderer classic-theme">
 <g class="blocklyDraggable" transform="translate(12,-1)"><path class="blocklyPathDark" transform="translate(1,1)" fill="#844966" d=" m 0,0  m 0,8 a 8 8 0 0,1 8,-8  h 7  l 6,4  3,0  6,-4  h 151.3428497314453  v 5  H 181.3428497314453  V 5  H 181.3428497314453  V 32  H 181.3428497314453  V 32  V 36  h -151.8428497314453  l -6,4  -3,0  -6,-4  h -14.5  H 0 z
  M 127.11665344238281,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 7  h 30.153182983398438  v -27 z"></path><path class="blocklyPath" stroke="none" fill="#a55b80" d=" m 0,0  m 0,8 a 8 8 0 0,1 8,-8  h 7  l 6,4  3,0  6,-4  h 151.3428497314453  v 5  H 181.3428497314453  V 5  H 181.3428497314453  V 32  H 181.3428497314453  V 32  V 36  h -151.8428497314453  l -6,4  -3,0  -6,-4  h -14.5  H 0 z
  M 127.11665344238281,5  v 5  c 0,10  -8,-8  -8,7.5  s 8,-2.5  8,7.5  v 7  h 30.153182983398438  v -27 z"></path><path class="blocklyPathLight" stroke="#c08ca6" d=" m 0,0  m 0.5,8 a 7.5 7.5 0 0,1 8,-7.5  H 14.5  h 0.5  l 6,4  3,0  6,-4  H 180.8428497314453  H 180.8428497314453  M 0.5,35.5  V 8 

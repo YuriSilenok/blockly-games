@@ -187,13 +187,13 @@ function getAvatarData() {
     // Level 1.
     [
       {
-        start: new Blockly.utils.Coordinate(50, 30),
+        start: new Blockly.utils.Coordinate(10, 10),
         damage: 0,
         name: playerName,
         code: null,
       },
       {
-        start: new Blockly.utils.Coordinate(50, 70),
+        start: new Blockly.utils.Coordinate(20, 20),
         damage: 99,
         name: targetName,
         code: 'playerTarget',
@@ -202,13 +202,13 @@ function getAvatarData() {
     // Level 2.
     [
       {
-        start: new Blockly.utils.Coordinate(70, 50),
+        start: new Blockly.utils.Coordinate(10, 10),
         damage: 0,
         name: playerName,
         code: null,
       },
       {
-        start: new Blockly.utils.Coordinate(20, 50),
+        start: new Blockly.utils.Coordinate(30, 30),
         damage: 99,
         name: targetName,
         code: 'playerTarget',
@@ -217,7 +217,37 @@ function getAvatarData() {
     // Level 3.
     [
       {
-        start: new Blockly.utils.Coordinate(20, 20),
+        start: new Blockly.utils.Coordinate(10, 10),
+        damage: 0,
+        name: playerName,
+        code: null,
+      },
+      {
+        start: new Blockly.utils.Coordinate(40, 40),
+        damage: 99,
+        name: targetName,
+        code: 'playerTarget',
+      }
+    ],
+    // Level 4.
+    [
+      {
+        start: new Blockly.utils.Coordinate(10, 10),
+        damage: 0,
+        name: playerName,
+        code: null,
+      },
+      {
+        start: new Blockly.utils.Coordinate(50, 50),
+        damage: 99,
+        name: targetName,
+        code: 'playerTarget',
+      }
+    ],
+    // Level 5.
+    [
+      {
+        start: new Blockly.utils.Coordinate(10, 10),
         damage: 0,
         name: playerName,
         code: null,
@@ -227,81 +257,63 @@ function getAvatarData() {
         damage: 99,
         name: targetName,
         code: 'playerTarget',
-      }
-    ],
-    // Level 4.
-    [
-      {
-        start: new Blockly.utils.Coordinate(50, 80),
-        damage: 0,
-        name: playerName,
-        code: null,
-      },
-      {
-        start: new Blockly.utils.Coordinate(50, 20),
-        damage: 0,
-        name: targetName,
-        code: 'playerTarget',
-      }
-    ],
-    // Level 5.
-    [
-      {
-        start: new Blockly.utils.Coordinate(90, 50),
-        damage: 0,
-        name: playerName,
-        code: null,
-      },
-      {
-        start: new Blockly.utils.Coordinate(50, 50),
-        damage: 0,
-        name: pendulumName,
-        code: 'playerPendulum',
-      }
+      },      
     ],
     // Level 6.
     [
       {
-        start: new Blockly.utils.Coordinate(10, 50),
-        damage: 0,
+        start: new Blockly.utils.Coordinate(10, 10),
+        damage: 99,
         name: playerName,
         code: null,
       },
       {
-        start: new Blockly.utils.Coordinate(50, 50),
+        start: new Blockly.utils.Coordinate(70, 70),
         damage: 0,
-        name: pendulumName,
-        code: 'playerPendulum',
-      }
+        name: targetName,
+        code: 'playerTarget',
+      },      
     ],
     // Level 7.
     [
       {
-        start: new Blockly.utils.Coordinate(20, 80),
-        damage: 0,
+        start: new Blockly.utils.Coordinate(0, 0),
+        damage: 99,
         name: playerName,
         code: null,
       },
       {
-        start: new Blockly.utils.Coordinate(80, 20),
-        damage: 99,
-        name: targetName,
-        code: 'playerTarget',
-      }
+        start: new Blockly.utils.Coordinate(10, 10),
+        damage: 0,
+        name: scaredName,
+        code: 'playerScared',
+      },      
     ],
     // Level 8.
     [
       {
-        start: new Blockly.utils.Coordinate(50, 90),
+        start: new Blockly.utils.Coordinate(10, 10),
         damage: 0,
         name: playerName,
         code: null,
       },
       {
-        start: new Blockly.utils.Coordinate(50, 10),
-        damage: 99,
+        start: new Blockly.utils.Coordinate(10, 90),
+        damage: 80,
+        name: targetName,
+        code: 'playerDefense',
+      },
+      {
+        start: new Blockly.utils.Coordinate(90, 90),
+        damage: 80,
         name: pendulumName,
-        code: 'playerPendulum',
+        code: 'playerDefense',
+      },
+      {
+        start: new Blockly.utils.Coordinate(90, 10),
+        damage: 80,
+        name: scaredName,
+        code: 'playerDefense',
       }
     ],
     // Level 9.

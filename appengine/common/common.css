@@ -155,6 +155,23 @@ button:hover:not(:disabled) {
   background-color: #ddd;
   cursor: move;
 }
+/* Панель справки: текст растягивается и прокручивается, кнопка внизу */
+#dialog #help {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;           /* позволяет скроллить внутри flex-контейнера */
+}
+#dialog #help > div:first-child {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;        /* текст прокручивается, если не влезает */
+  margin-bottom: 10px;
+}
+#dialog #help button {
+  flex: 0 0 auto;
+  align-self: flex-end;
+}
 #dialog button {
   min-width: 4em;
 }

@@ -1,6 +1,6 @@
 {
 	"@metadata": {
-		"lastupdated": "2026-11-09 22:15:28.753392",
+		"lastupdated": "2026-11-10 09:34:12.787164",
 		"locale": "en",
 		"messagedocumentation": "qqq"
 	},
@@ -266,5 +266,22 @@
 	"Pond.helpText01": "Use the 'cannon' command to hit the target. The first parameter is the angle, the second parameter is the range. Find the right combination.",
 	"Pond.helpText02": "Use the 'scan' command to get the distance to the target. The first parameter of 'scan' is the angle. Feed it into 'cannon'.",
 	"Pond.helpText03": "Create a variable. Store the distance to the target in it. Use the variable to hit the target.",
+	"Pond.helpText04": "Test.",
+	"Pond.helpText05": "Test.",
+	"Pond.helpText06": "Test.",
+	"Pond.helpText07": "Test.",
+	"Pond.helpText08": "Test.",
+	"Pond.helpText09": "Test.",
+	"Pond.helpText10": "Test.",
+	"Pond.helpText11": "Test.",
+	"Pond.helpText12": "Test.",
+	"Pond.helpText13": "Test.",
+	"Pond.helpText14": "Test.",
+	"Pond.helpText15": "Test.",
+	"Pond.helpText16": "Test.",
+	"Pond.helpText17": "Test.",
+	"Pond.helpText18": "Test.",
+	"Pond.helpText19": "Test.",
+	"Pond.helpText20": "Test.",
 	"Gallery": "Gallery"
 }

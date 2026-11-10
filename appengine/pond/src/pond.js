@@ -200,8 +200,25 @@ Pond.showHelp = function() {
     width: '50%',
     left: '25%',
     top: '5em',
+    height: '70vh',
+    display: 'flex',
+    flexDirection: 'column',
   };
   BlocklyDialogs.showDialog(help, button, true, true, style,
       BlocklyDialogs.stopDialogKeyDown);
+
+  // Инлайн-стили: раскладка панели больше не зависит от common.css и кэша.
+  help.style.flex = '1';
+  help.style.minHeight = '0';
+  const textEl = help.firstElementChild;   // обёртка <div> с текстом справки
+  textEl.style.flex = '1 1 auto';
+  textEl.style.minHeight = '0';            // БЕЗ ЭТОГО скролл не заработает
+  textEl.style.overflowY = 'auto';
+  textEl.style.marginBottom = '10px';
+  const okButton = help.querySelector('button');  // кнопка «OK»
+  okButton.style.flex = '0 0 auto';
+  okButton.style.alignSelf = 'flex-end';
+
   BlocklyDialogs.startDialogKeyDown();
 };
+

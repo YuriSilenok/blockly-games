@@ -1047,6 +1047,74 @@
     "desc": "Instructions for creating and using a variable.",
     "msg": "Create a variable. Store the distance to the target in it. Use the variable to hit the target."
   },
+  "Pond.helpText04": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText05": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText06": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText07": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText08": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText09": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText10": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText11": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText12": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText13": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText14": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText15": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText16": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText17": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText18": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText19": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
+  "Pond.helpText20": {
+    "desc": "Instructions for creating and using a variable.",
+    "msg": "Test."
+  },
   "Gallery": {
     "desc": "Display of art created by user's programs.\n{{Identical|Gallery}}",
     "msg": "Gallery"

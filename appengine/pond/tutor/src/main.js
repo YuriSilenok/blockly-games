@@ -255,7 +255,7 @@ function getAvatarData() {
     [
       {
         start: new Blockly.utils.Coordinate(10, 10),
-        damage: 0,
+        damage: 50,
         name: playerName,
         code: null,
       },

@@ -1,39 +1,23 @@
-name: Build and Deploy to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [ master ]
-  workflow_dispatch:   # manual trigger from the Actions tab
+  workflow_dispatch:
 
 permissions:
-  contents: write      # needed to create/push the gh-pages branch
+  contents: write
 
 concurrency:
   group: github-pages
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Java (Temurin 17) for Closure Compiler
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Wire Python3 as python
-        run: sudo ln -sf /usr/bin/python3 /usr/bin/python
-
-      - name: Download third-party deps (Closure, Babel, Blockly, Ace, SoundJS, JS-Interpreter)
-        run: make deps
-
-      - name: Build messages and games
-        run: make common pond-tutor pond-duck
-
-      - name: Deploy appengine to gh-pages
+      - name: Deploy saved static files to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

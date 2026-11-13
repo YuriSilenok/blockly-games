@@ -54,32 +54,14 @@ if (location.host === 'blockly-games.appspot.com') {
   }
   window['BlocklyGamesLang'] = lang;
 
-  var debug = false;
-  try {
-    debug = !!sessionStorage.getItem('debug');
-    if (debug) {
-      console.info('Loading uncompressed JavaScript.');
-    }
-  } catch (e) {
-    // Don't even think of throwing an error.
-  }
-
-  // Load the chosen language pack.
+  // Load the saved language pack and game bundle.
   var script = document.createElement('script');
-  if (debug) {
-    script.src = 'generated/msg/' + lang + '.js';
-  } else {
-    script.src = appName + '/generated/msg/' + lang + '.js';
-  }
+  script.src = appName + '/generated/msg/' + lang + '.js';
   script.type = 'text/javascript';
   document.head.appendChild(script);
-  // Load the code bundle for the chosen game.
+
   var script = document.createElement('script');
-  if (debug) {
-    script.src = appName + '/generated/uncompressed.js';
-  } else {
-    script.src = appName + '/generated/compressed.js';
-  }
+  script.src = appName + '/generated/compressed.js';
   script.type = 'text/javascript';
   document.head.appendChild(script);
 })();

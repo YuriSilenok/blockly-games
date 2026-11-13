@@ -855,6 +855,21 @@ k}}finally{ba(e,f)}Z.reset();On()});
       repeat.innerHTML = '<value name="TIMES"><shadow type="pond_math_number"><field name="NUM">4</field></shadow></value>';
       loopCategory.appendChild(repeat);
     }
+    if (nm === 7 || nm === 8) {
+      var levelToolbox = root.querySelector('#toolbox');
+      var allowed = nm === 7
+        ? ['pond_swim', 'pond_speed', 'controls_repeat_ext', 'controls_whileUntil', 'logic_compare', 'pond_math_number']
+        : ['pond_swim', 'pond_getX', 'pond_getY', 'controls_whileUntil', 'logic_compare', 'pond_math_number'];
+      Array.prototype.forEach.call(levelToolbox.querySelectorAll('category[custom]'), function (category) {
+        if (nm !== 7 || category.getAttribute('custom') !== 'VARIABLE') category.parentNode.removeChild(category);
+      });
+      Array.prototype.forEach.call(levelToolbox.querySelectorAll('category > block'), function (block) {
+        if (allowed.indexOf(block.getAttribute('type')) === -1) block.parentNode.removeChild(block);
+      });
+      Array.prototype.forEach.call(levelToolbox.querySelectorAll('category'), function (category) {
+        if (!category.hasAttribute('custom') && !category.querySelector('block')) category.parentNode.removeChild(category);
+      });
+    }
     var helpButton = root.querySelector('#helpButton');
     if (helpButton) {
       var resetButton = document.createElement('button');

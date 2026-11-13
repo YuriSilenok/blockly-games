@@ -1073,24 +1073,7 @@ k}}finally{ba(e,f)}Z.reset();On()});
         var first = movements.filter(function (block) { return nextStatement(block) === loop; })[0];
         var second = nextStatement(loop);
         if (!first || first.parentNode.nodeName !== 'xml' || !second || second.getAttribute('type') !== 'pond_swim' || nextStatement(second)) return 'Соедини блоки в одну цепочку: swim, цикл ожидания, swim в обратную сторону.';
-        var firstAngle = input(first, 'DEGREE');
-        var secondAngle = input(second, 'DEGREE');
-        if (signature(firstAngle).indexOf('number:') !== 0 || signature(secondAngle).indexOf('number:') !== 0) return 'Укажи 0° в первом swim и 180° во втором swim.';
-        var firstDegrees = ((Number(field(firstAngle, 'NUM')) % 360) + 360) % 360;
-        var secondDegrees = ((Number(field(secondAngle, 'NUM')) % 360) + 360) % 360;
-        if (firstDegrees !== 0 || secondDegrees !== 180) return 'Сначала поставь swim(0), а после цикла — swim(180).';
-        var condition = input(loop, 'BOOL');
-        var speedLeft = condition && input(condition, 'A');
-        var speedRight = condition && input(condition, 'B');
-        var positiveSpeed = condition && condition.getAttribute('type') === 'logic_compare' && (
-          field(condition, 'OP') === 'GT' && speedLeft && speedLeft.getAttribute('type') === 'pond_speed' && signature(speedRight) === 'number:0'
-        );
-        if (field(loop, 'MODE') !== 'WHILE' || !positiveSpeed) return 'Условие цикла: «пока speed() > 0». Цикл должен ждать остановки утки.';
         if (Array.prototype.some.call(loop.querySelectorAll('statement block'), active)) return 'Оставь тело цикла пустым: движение уже запущено, нужно только проверять скорость.';
-        var extra = Array.prototype.filter.call(xml.querySelectorAll('block'), active).filter(function (block) {
-          return block !== first && block !== second && block !== loop && block !== condition && block !== speedLeft && block !== speedRight && block !== firstAngle && block !== secondAngle;
-        });
-        if (extra.length) return 'Нужны только два swim и пустой цикл с проверкой скорости больше нуля.';
         break;
       case 7:
         var branches = blocks('controls_if').some(function (block) {

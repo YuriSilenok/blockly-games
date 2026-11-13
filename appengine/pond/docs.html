@@ -1,24 +1,29 @@
 <!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Игры Blockly — справка по Пруду</title>
-  <link rel="stylesheet" href="../common/common.css">
-  <link rel="stylesheet" href="docs/style.css">
-</head>
-<body>
-  <script src="docs/docs.js"></script>
-  <h1>Справка по игре «Пруд»</h1>
-  <p>Управляй уткой с помощью блоков или программы на JavaScript. Названия команд, например <code>cannon</code> и <code>scan</code>, нужно писать латинскими буквами.</p>
-  <h2 id="pond">Управление уткой</h2>
-  <div id="pond-content">
-    <h3>Углы и направления</h3>
-<p><img alt="Направления: 0° — вправо, 90° — вверх, 180° — влево, 270° — вниз" src="docs/compass.png" height=145 width=150 style="padding: 0 2em;"></p>
-    <p>Направление задаётся углом в градусах. 0° (или 360°) — вправо, 90° — вверх, 180° — влево, 270° — вниз. Углы увеличиваются против часовой стрелки. Направление отсчитывается относительно поля, независимо от того, куда повёрнута утка.</p>
-    <p>После полного оборота направления повторяются: −90° означает вниз, а 450° — вверх.</p>
-    <h3>Выстрел — cannon</h3>
-<p class="blocks">
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="google" value="notranslate">
+    <title>Игры Blockly: документация по Пруду</title>
+    <link rel="stylesheet" href="../common/common.css">
+    <link rel="stylesheet" href="docs/style.css">
+  </head>
+  <body>
+    <script src="docs/docs.js"></script>
+    <h1>Документация по игре «Пруд»</h1>
+
+    <h2 id="pond">Пруд</h2>
+
+    <div id="pond-content">
+      <h3>Углы</h3>
+
+      <p>Направления на поле: 0° — вправо (восток), 90° — вверх (север), 180° — влево (запад), 270° — вниз (юг). Углы отсчитываются против часовой стрелки и повторяются через полный оборот: −90° — вниз, 450° — вверх.</p>
+
+      <p><img src="docs/compass.png" height=145 width=150 style="padding: 0 2em;"></p>
+
+
+      <h3>Выстрел — cannon</h3>
+
+      <p class="blocks">
         <svg height=41 width=250>
           <g>
             <path transform="translate(1,1)" fill="#7a4984" d="m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 40 H 222.36 v 36 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z M 125.01,5 h -36.02 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 36.02 z M 193.4,5 h -38.31 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 38.31 z"></path>
@@ -50,13 +55,19 @@
           </g>
         </svg>
       </p>
-    <pre class="pondSpec spec">cannon(угол, расстояние)</pre>
-    <p>Первый параметр задаёт направление выстрела, второй — расстояние от утки до точки попадания. Допустимая дальность — от 0 до 70 метров. Значение больше 70 ограничивается до 70.</p>
-    <p>Например, <code>cannon(90, 35)</code> стреляет вверх на расстояние 35. После выстрела пушка перезаряжается примерно секунду. Во время перезарядки команда не стреляет.</p>
-    <p class="js">Функция возвращает <code>true</code>, если выстрел произошёл, и <code>false</code>, если пушка ещё перезаряжается.</p>
-    <div class="level5">
-      <h3>Поиск противника — scan</h3>
-<p class="blocks">
+      <pre class="js pondSpec spec">cannon(<i>angle</i>, <i>range</i>)</pre>
+
+      <p>Функция<code>cannon()</code>стреляет в заданном направлении на заданное расстояние. Первый параметр — угол, второй — расстояние до точки попадания. Направление выстрела не зависит от поворота утки. Дальность — от 0 до 70 метров; большее значение ограничивается до 70.</p>
+
+      <p>После выстрела пушка перезаряжается примерно секунду. Если вызвать<code>cannon()</code>в это время, выстрела не будет.<span class="js">
+        <code>cannon()</code>Результат<code>true</code>при успешном выстреле и<code>false</code>во время перезарядки.</span>
+      </p>
+
+
+      <div class="level5">
+        <h3>Поиск противника — scan</h3>
+
+        <p class="blocks">
           <svg height=37 width=250>
             <g transform="translate(8,0)">
               <path transform="translate(1,1)" fill="#7a4984" d="m 0,0 H 20 H 132.76 v 36 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z M 107.88,5 h -36.02 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 36.02 z"></path>
@@ -79,13 +90,19 @@
 
           </svg>
         </p>
-      <pre class="pondSpec spec">scan(угол)</pre>
-      <p>Радар ищет ближайшего противника в указанном направлении и возвращает расстояние до него. Потонувшие утки не учитываются. Если цель не найдена, результат — <code>Infinity</code> (бесконечность). Полученное расстояние можно передать вторым параметром в <code>cannon</code>.</p>
-      <p class="js">В JavaScript доступен второй параметр: <code>scan(угол, ширина)</code>. Ширина луча — от 1° до 20°, по умолчанию 5°. Широкий луч удобен для быстрого поиска, узкий — для точного прицеливания. В блоках этого параметра нет.</p>
-    </div>
-    <div class="level7">
-      <h3>Движение — swim</h3>
-<p class="blocks">
+        <pre class="js pondSpec spec">scan(<i>angle</i>)
+scan(<i>angle</i>, <i>width</i>)</pre>
+
+        <p>Функция<code>scan()</code>включает радар и возвращает расстояние до ближайшего противника в заданном направлении. Угол не зависит от поворота утки. Потонувшие утки не обнаруживаются. Если противника нет, возвращается<code>Infinity</code>— бесконечность.</p>
+
+        <p class="js">Второй, необязательный параметр<code>scan()</code>задаёт ширину луча радара от 1° до 20°. Можно начать с 20° для быстрого поиска, а затем сужать луч для более точного прицеливания. По умолчанию ширина — 5°. Этот параметр доступен только в JavaScript.</p>
+      </div>
+
+
+      <div class="level7">
+        <h3>Движение — swim</h3>
+
+        <p class="blocks">
           <svg height=41 width=250>
             <g>
               <path transform="translate(1,1)" fill="#7a4984" d="m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 40 H 139.25 v 36 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z M 110.3,5 h -36.02 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 36.02 z"></path>
@@ -107,13 +124,21 @@
             </g>
           </svg>
         </p>
-      <pre class="pondSpec spec">swim(угол)</pre>
-      <p>Утка начинает плыть в указанном направлении и продолжает движение, пока программа не изменит команду. Столкновение с краем пруда повреждает утку. При столкновении двух уток повреждаются обе. Чем выше скорость, тем сильнее повреждения.</p>
-      <p class="js">В JavaScript можно задать скорость: <code>swim(угол, скорость)</code>. Скорость меняется от 0 до 100, по умолчанию — 50. Изменять направление можно только при скорости не выше 50. В блоках отдельного параметра скорости нет.</p>
-    </div>
-    <div class="level9">
-      <h3>Остановка — stop</h3>
-<p class="blocks">
+        <pre class="js pondSpec spec">swim(<i>angle</i>)
+swim(<i>angle</i>, <i>Скорость</i>)</pre>
+
+        <p>Функция<code>swim()</code>начинает движение утки. Она продолжает плыть в указанном направлении, пока программа не изменит команду.</p>
+
+        <p class="js">Второй, необязательный параметр<code>swim()</code>задаёт скорость от 0 (остановка) до 100 (максимум). Менять направление можно при скорости не выше 50. По умолчанию скорость — 50. Этот параметр доступен только в JavaScript.</p>
+
+        <p>Столкновение с краем пруда повреждает утку. При столкновении с другой уткой повреждаются обе. Чем выше скорость, тем сильнее повреждения.</p>
+      </div>
+
+
+      <div class="level9">
+        <h3>Остановка — stop</h3>
+
+        <p class="blocks">
           <svg height=31 width=250>
             <g>
               <path transform="translate(1,1)" fill="#7a4984" d="m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 81.56 v 24 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z"></path>
@@ -125,10 +150,16 @@
             </g>
           </svg>
         </p>
-      <pre class="pondSpec spec">stop()</pre>
-      <p>Утка постепенно замедляется до полной остановки. <span class="js">Это соответствует вызову <code>swim</code> со скоростью 0.</span></p>
-      <h3>Координаты — getX и getY</h3>
-<p class="blocks">
+        <pre class="js pondSpec spec">stop()</pre>
+
+        <p>Функция<code>stop()</code>останавливает утку. До полной остановки она некоторое время замедляется.<span class="js">Это равнозначно вызову<code>swim()</code>со скоростью 0.</span></p>
+      </div>
+
+
+      <div class="level9">
+        <h3>Координаты</h3>
+
+        <p class="blocks">
           <svg height=26 width=90>
             <g transform="translate(8,0)">
               <path transform="translate(1,1)" fill="#7a4984" d="m 0,0 H 79.93 v 24 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z"></path>
@@ -151,14 +182,19 @@
             </g>
           </svg>
         </p>
-<p><img alt="Координаты пруда: от 0 до 100 по каждой оси" src="docs/map.png" height=190 width=244 style="padding: 0 2em;"></p>
-      <pre class="pondSpec spec">getX()
+        <pre class="js pondSpec spec">getX()
 getY()</pre>
-      <p><code>getX()</code> возвращает положение по горизонтали: 0 — левый край, 100 — правый. <code>getY()</code> возвращает положение по вертикали: 0 — нижний край, 100 — верхний. Центр поля — (50, 50).</p>
-    </div>
-    <div class="level11">
-      <h3>Скорость — speed</h3>
-<p class="block">
+
+        <p>Функция<code>getX()</code>и<code>getY()</code>возвращают горизонтальную и вертикальную координаты утки. Значения — от 0 до 100, начало отсчёта — левый нижний угол. Центр поля — (50, 50).</p>
+
+        <p><img src="docs/map.png" height=190 width=244 style="padding: 0 2em;"></p>
+      </div>
+
+
+      <div class="level11">
+        <h3>Скорость</h3>
+
+        <p class="block">
           <svg height=26 width=250>
             <g transform="translate(8,0)">
               <path transform="translate(1,1)" fill="#7a4984" d="m 0,0 H 89.72 v 24 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z"></path>
@@ -170,10 +206,16 @@ getY()</pre>
             </g>
           </svg>
         </p>
-      <pre class="pondSpec spec">speed()</pre>
-      <p>Возвращает текущую скорость: от 0 (утка стоит) до 100. Резкое падение скорости до нуля может означать столкновение.</p>
-      <h3>Здоровье — health</h3>
-<p class="blocks">
+        <pre class="js pondSpec spec">speed()</pre>
+
+        <p>Функция<code>speed()</code>возвращает текущую скорость утки: от 0 (стоит) до 100 (максимум). По резкой остановке можно обнаружить столкновение.</p>
+      </div>
+
+
+      <div class="level11">
+        <h3>Здоровье</h3>
+
+        <p class="blocks">
           <svg height=26 width=250>
             <g transform="translate(8,0)">
               <path transform="translate(1,1)" fill="#7a4984" d="m 0,0 H 89.72 v 24 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z"></path>
@@ -185,10 +227,18 @@ getY()</pre>
             </g>
           </svg>
         </p>
-      <pre class="pondSpec spec">health()</pre>
-      <p>Возвращает здоровье: 100 — полное, 0 — утка потонула. Сохраняй предыдущее значение в переменной и сравнивай с текущим, чтобы заметить попадание. Восстановить здоровье нельзя.</p>
-      <h3>Отладка — log</h3>
-<p class="blocks">
+        <pre class="js pondSpec spec">health()</pre>
+
+        <p>Функция<code>health()</code>возвращает здоровье утки: от 0 (потонула) до 100 (полное здоровье). Сохраняй здоровье в переменной и сравнивай с текущим значением: уменьшение означает, что утка получила повреждения.</p>
+
+        <p>Восстановить здоровье нельзя.</p>
+      </div>
+
+
+      <div class="level11">
+        <h3>Отладка</h3>
+
+        <p class="blocks">
           <svg height=41 width=250>
             <g transform="translate(8,0)">
               <path transform="translate(1,1)" fill="#7a4984" d=" m 0,0 m 0,8 a 8 8 0 0,1 8,-8 h 7 l 6,4 3,0 6,-4 h 105.85966491699219 v 5 H 135.8596649169922 V 5 H 135.8596649169922 V 32 H 135.8596649169922 V 32 V 36 h -106.35966491699219 l -6,4 -3,0 -6,-4 h -6.5 a 8 8 0 0,1 -8,-8 z M 60.445220947265625,5 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 46.46 v -27 z"></path>
@@ -215,14 +265,20 @@ getY()</pre>
             </g>
           </svg>
         </p>
-      <pre class="pondSpec spec">log(число)</pre>
-      <p>Выводит число в консоль браузера. Используй эту команду, чтобы наблюдать за значениями и искать ошибки в программе.</p>
+        <pre class="js pondSpec spec">log()</pre>
+
+        <p>Функция<code>log()</code>выводит заданное число в консоль браузера. Это помогает наблюдать за значениями и находить ошибки в программе.</p>
+      </div>
     </div>
-  </div>
-  <h2 class="level3" id="logic">Логика</h2>
-  <div id="logic-content">
-    <h3>Условия — if, else if, else</h3>
-<p class="blocks">
+
+    <!-- ---------------------------------------------------------------------- -->
+    <h2 class="level3" id="logic">Логика</h2>
+
+    <div class="level3" id="logic-content">
+      <div class="level9">
+        <h3>Условия</h3>
+
+        <p class="blocks">
           <svg height=90 width=250>
             <g>
               <path transform="translate(1,1)" fill="#496684" d="m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 50 H 117.64 v 35 H 50 l -6,4 -3,0 -6,-4 h -7 a 8,8 0 0,0 -8,8 v 9 a 8,8 0 0,0 8,8 H 50 H 50 v 25 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z M 83.79,5 h -14.5 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 6 h 14.5 z"></path>
@@ -239,14 +295,32 @@ getY()</pre>
             </g>
           </svg>
         </p>
-    <p>Блок «если» выполняет вложенные команды, когда условие истинно. Дополнительные ветви «иначе если» проверяются по порядку. Ветвь «иначе» выполняется, если ни одно условие не подошло.</p>
-    <pre class="js logicSpec spec">if (scan(90) &lt;= 70) {
-  cannon(90, scan(90));
+        <pre class="js logicSpec spec">if (<i>condition</i>) {
+  <i>statements</i>
+}
+
+
+if (<i>condition</i>) {
+  <i>statements</i>
+} else if (<i>condition</i>) {
+  <i>statements</i>
+}
+
+
+if (<i>condition</i>) {
+  <i>statements</i>
 } else {
-  swim(90);
+  <i>statements</i>
 }</pre>
-    <h3>Сравнения</h3>
-<p class="blocks">
+
+        <p>Если условие истинно, выполняются вложенные команды. После<code>Условия</code>можно добавить несколько ветвей<code>else if</code>с другими условиями, а в конце — необязательную ветвь<code>else</code>, которая выполняется, если ни одно из предыдущих условий не подошло.</p>
+      </div>
+
+
+      <div class="level9">
+        <h3>Сравнения</h3>
+
+        <p class="blocks">
           <svg height=36 width=250>
             <g transform="translate(8,0)">
               <path transform="translate(1,1)" fill="#496684" d="m 0,0 H 20 H 111.56 v 35 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z M 30.5,5 h -14.5 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 6 h 14.5 z M 101.56,5 h -14.5 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 6 h 14.5 z"></path>
@@ -260,14 +334,68 @@ getY()</pre>
             </g>
           </svg>
         </p>
-    <table><tr><th>Оператор</th><th>Значение</th></tr>
-      <tr><td>==</td><td>Равно</td></tr><tr><td>!=</td><td>Не равно</td></tr>
-      <tr><td>&lt;</td><td>Меньше</td></tr><tr><td>&lt;=</td><td>Меньше или равно</td></tr>
-      <tr><td>&gt;</td><td>Больше</td></tr><tr><td>&gt;=</td><td>Больше или равно</td></tr>
-    </table>
-    <p>Сравнение возвращает <code>true</code> (истина) или <code>false</code> (ложь). Координаты могут быть дробными: утка может перейти с 49,4 сразу на 50,6. Поэтому для движения до отметки 50 используй условие «меньше 50», а не «не равно 50».</p>
-    <h3>«И», «или» и логические значения</h3>
-<p class="blocks">
+        <pre class="js logicSpec spec">==    !=    &lt;    &lt;=    &gt;    &gt;=</pre>
+
+        <p>Эти выражения сравнивают два числа и возвращают<code>true</code>или<code>false</code>. Доступны шесть операторов сравнения:</p>
+
+        <table>
+          <tr>
+            <th>Оператор</td>
+            <th>Пример</td>
+            <th>Результат</td>
+          </tr>
+          <tr>
+            <td>Равно</td>
+            <td><code>5 == 10</code></td>
+            <td><code>false</code></td>
+          </tr>
+          <tr>
+            <td>Не равно</td>
+            <td><code>5 != 10</code></td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td>Меньше</td>
+            <td><code>5 &lt; 10</code></td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td>Меньше или равно</td>
+            <td><code>5 &lt;= 10</code></td>
+            <td><code>true</code></td>
+          </tr>
+          <tr>
+            <td>Больше</td>
+            <td><code>5 &gt; 10</code></td>
+            <td><code>false</code></td>
+          </tr>
+          <tr>
+            <td>Больше или равно</td>
+            <td><code>5 &gt;= 10</code></td>
+            <td><code>false</code></td>
+          </tr>
+        </table>
+
+        <p>Использование<code>!=</code>может привести к ошибке при сравнении дробных чисел. Например, эта программа должна доплыть до отметки 50 и остановиться:</p>
+
+        <pre>while (getY() <b>!=</b> 50) {
+  swim(90<span class="js">, 50</span>);
+}
+stop();</pre>
+
+        <p>Программа может не остановиться: значение<code>getY()</code>может измениться с 49,4 сразу на 50,6. Точного равенства 50 не возникнет, и цикл продолжится. Лучше проверять, что координата меньше 50:</p>
+
+        <pre>while (getY() <b>&lt;</b> 50) {
+  swim(90<span class="js">, 50</span>);
+}
+stop();</pre>
+      </div>
+
+
+      <div class="level11">
+        <h3>«И» и «или»</h3>
+
+        <p class="blocks">
           <svg height=36 width=250>
             <g transform="translate(8,0)">
               <path transform="translate(1,1)" fill="#496684" d="m 0,0 H 20 H 114.0 v 35 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z M 30.5,5 h -14.5 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 6 h 14.5 z M 104.0,5 h -14.5 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 6 h 14.5 z"></path>
@@ -281,7 +409,26 @@ getY()</pre>
             </g>
           </svg>
         </p>
-<p class="blocks">
+        <pre class="js logicSpec spec">&&    ||</pre>
+
+        <p>Логическое «и» обозначается оператором<code>&&</code>. Он возвращает<code>true</code>, только если оба условия имеют значение<code>true</code>. В примере выстрел происходит, только если расстояние больше 5 и меньше 70:</p>
+
+        <pre>if (range &gt; 5 <b>&amp;&amp;</b> range &lt; 70) {
+  cannon(angle, range);
+}</pre>
+
+        <p>Логическое «или» обозначается оператором<code>||</code>. Он возвращает<code>true</code>, если хотя бы одно условие имеет значение<code>true</code>. В примере утка останавливается вблизи любого края пруда:</p>
+
+        <pre>if (getX() &lt; 10 <b>||</b> getX() &gt; 90 <b>||</b>
+    getY() &lt; 10 <b>||</b> getY() &gt; 90) {
+  stop();
+}</pre>
+      </div>
+
+
+      <h3>Логические значения</h3>
+
+      <p class="blocks">
         <svg height=26 width=250>
           <g transform="translate(8,0)">
             <path transform="translate(1,1)" fill="#496684" d="m 0,0 H 58.71 v 25 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z"></path>
@@ -295,15 +442,18 @@ getY()</pre>
           </g>
         </svg>
       </p>
-    <p><code>&amp;&amp;</code> («и») требует, чтобы оба условия были истинны. <code>||</code> («или») требует хотя бы одного истинного условия. <code>true</code> означает истину, <code>false</code> — ложь.</p>
-    <pre class="js logicSpec spec">if (getX() &lt; 10 || getX() &gt; 90) {
-  stop();
-}</pre>
-  </div>
-  <h2 class="level3" id="loops">Циклы</h2>
-  <div id="loops-content">
-    <h3>Повторение — while</h3>
-<p class="blocks">
+      <pre class="js logicSpec spec">true    false</pre>
+
+      <p>Значение<code>true</code>означает истину. В цикле while оно позволяет повторять команды бесконечно. Значение<code>false</code>означает ложь.</p>
+    </div>
+
+    <!-- ---------------------------------------------------------------------- -->
+    <h2 class="level3" id="loops">Циклы</h2>
+
+    <div class="level3" id="loops-content">
+      <h3>Цикл «пока»</h3>
+
+      <p class="blocks">
         <svg height=90 width=250>
           <g>
             <path transform="translate(1,1)" fill="#498449" d="m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 50 H 116.73 v 35 H 50 l -6,4 -3,0 -6,-4 h -7 a 8,8 0 0,0 -8,8 v 9 a 8,8 0 0,0 8,8 H 50 H 50 v 25 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z M 82.87,5 h -14.5 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 6 h 14.5 z"></path>
@@ -315,19 +465,30 @@ getY()</pre>
           </g>
         </svg>
       </p>
-    <p>Цикл «пока» повторяет вложенные команды, пока условие истинно. Условие проверяется перед каждым повторением. Цикл <code>while (true)</code> повторяется бесконечно.</p>
-    <pre class="loopsSpec spec">while (true) {
+      <pre class="js loopsSpec spec">while (<i>condition</i>) {
+  <i>statements</i>
+}</pre>
+
+      <p>Цикл повторяет вложенные команды, пока условие истинно. Например, этот цикл постоянно стреляет влево:</p>
+
+      <pre>while (true) {
   cannon(180, 50);
 }</pre>
-    <p>Этот пример постоянно стреляет влево на расстояние 50. Следующий стреляет, пока радар видит противника в пределах дальности пушки:</p>
-    <pre class="loopsSpec spec">while (scan(180) &lt;= 70) {
-  cannon(180, scan(180));
+
+      <p>А этот цикл стреляет влево, пока противник находится в пределах дальности пушки:</p>
+
+      <pre>while (scan(180<span class="js">, 5</span>) &lt;= 70) {
+  cannon(180, scan(180<span class="js">, 5</span>));
 }</pre>
-  </div>
-  <h2 id="math">Математика</h2>
-  <div id="math-content">
-    <h3>Числа</h3>
-<p class="blocks">
+    </div>
+
+    <!-- ---------------------------------------------------------------------- -->
+    <h2 id="math">Математика</h2>
+
+    <div id="math-content">
+      <h3>Числа</h3>
+
+      <p class="blocks">
         <svg height=26 width=250>
           <g transform="translate(8,0)">
             <path transform="translate(1,1)" fill="#495284" d="m 0,0 H 28.15 v 25 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z"></path>
@@ -340,9 +501,17 @@ getY()</pre>
           </g>
         </svg>
       </p>
-    <p>Числа задают углы, расстояния и счётчики. Они могут быть отрицательными и дробными. В программе дробная часть отделяется точкой: <code>3.14159</code>. Разделители тысяч не используются: пиши <code>9000</code>. <code>Infinity</code> означает бесконечность.</p>
-    <h3>Арифметика</h3>
-<p class="blocks">
+      <pre class="js mathSpec spec">123</pre>
+
+      <p>Числа задают расстояния, углы и счётчики. Они могут быть отрицательными (−360), дробными (3.14159) и большими (9007199254740992). Дробная часть в программе отделяется точкой. Особое значение бесконечности —<code>Infinity</code>.</p>
+
+      <p>Не используй разделители тысяч: пиши 9000, а не 9,000.</p>
+
+
+      <div class="level11">
+        <h3>Арифметика</h3>
+
+        <p class="blocks">
           <svg height=36 width=250>
             <g transform="translate(8,0)">
               <path transform="translate(1,1)" fill="#495284" d="m 0,0 H 20 H 134.31 v 36 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z M 46.15,5 h -30.15 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 30.15 z M 124.31,5 h -30.15 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 30.15 z"></path>
@@ -374,9 +543,44 @@ getY()</pre>
             </g>
           </svg>
         </p>
-    <p><code>+</code> складывает, <code>-</code> вычитает, <code>*</code> умножает, <code>/</code> делит. Например, <code>35 + 10</code> даёт 45.</p>
-    <h3>Тригонометрия</h3>
-<p class="blocks">
+        <pre class="js mathSpec spec">+    -    *    /</pre>
+
+        <p>Эти операторы принимают два числа и возвращают одно. Доступны четыре арифметических действия:</p>
+
+        <table>
+          <tr>
+            <th>Оператор</td>
+            <th>Пример</td>
+            <th>Результат</td>
+          </tr>
+          <tr>
+            <td>Сложение</td>
+            <td><code>3 + 4</code></td>
+            <td><code>7</code></td>
+          </tr>
+          <tr>
+            <td>Вычитание</td>
+            <td><code>3 - 4</code></td>
+            <td><code>-1</code></td>
+          </tr>
+          <tr>
+            <td>Умножение</td>
+            <td><code>3 * 4</code></td>
+            <td><code>12</code></td>
+          </tr>
+          <tr>
+            <td>Деление</td>
+            <td><code>3 / 4</code></td>
+            <td><code>0.75</code></td>
+          </tr>
+        </table>
+      </div>
+
+
+      <div class="level11">
+        <h3>Тригонометрия</h3>
+
+        <p class="blocks">
           <svg height=36 width=250>
             <g transform="translate(8,0)">
               <path transform="translate(1,1)" fill="#495284" d="m 0,0 H 20 H 170.48 v 36 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z M 145.6,5 h -30.15 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 30.15 z"></path>
@@ -401,10 +605,66 @@ getY()</pre>
             </g>
           </svg>
         </p>
-    <p>Функции <code>Math.sin</code>, <code>Math.cos</code> и <code>Math.tan</code> вычисляют синус, косинус и тангенс. <code>Math.asin</code>, <code>Math.acos</code> и <code>Math.atan</code> выполняют обратные операции. <code>Math.atan2(y, x)</code> определяет угол по двум координатам, <code>Math.sqrt</code> вычисляет квадратный корень.</p>
-    <p>В игре «Пруд» тригонометрические функции работают с градусами. В обычном JavaScript используются радианы.</p>
-    <h3>Случайные числа</h3>
-<p class="blocks">
+        <pre class="js mathSpec spec">Math.<i>operation</i>(<i>Числа</i>)</pre>
+
+        <p>Эти функции принимают число и возвращают число. Доступны восемь функций:</p>
+
+        <table>
+          <tr>
+            <th>Функция</td>
+            <th>Пример</td>
+            <th>Результат</td>
+          </tr>
+          <tr>
+            <td>Квадратный корень</td>
+            <td><code>Math.sqrt(25)</code></td>
+            <td><code>5</code></td>
+          </tr>
+          <tr>
+            <td>Модуль числа</td>
+            <td><code>Math.abs(-25)</code></td>
+            <td><code>25</code></td>
+          </tr>
+          <tr>
+            <td>Синус</td>
+            <td><code>Math.sin_deg(30)</code></td>
+            <td><code>0.5</code></td>
+          </tr>
+          <tr>
+            <td>Косинус</td>
+            <td><code>Math.cos_deg(30)</code></td>
+            <td><code>0.86</code></td>
+          </tr>
+          <tr>
+            <td>Тангенс</td>
+            <td><code>Math.tan_deg(30)</code></td>
+            <td><code>0.577</code></td>
+          </tr>
+          <tr>
+            <td>Арксинус</td>
+            <td><code>Math.asin_deg(0.5)</code></td>
+            <td><code>30</code></td>
+          </tr>
+          <tr>
+            <td>Арккосинус</td>
+            <td><code>Math.acos_deg(0.866)</code></td>
+            <td><code>30.003</code></td>
+          </tr>
+          <tr>
+            <td>Арктангенс</td>
+            <td><code>Math.atan_deg(0.577)</code></td>
+            <td><code>29.985</code></td>
+          </tr>
+        </table>
+
+        <p>Эти тригонометрические функции специально добавлены в игру «Пруд» и работают с градусами. Стандартные функции JavaScript используют радианы.</p>
+      </div>
+
+
+      <div class="level11">
+        <h3>Случайные числа</h3>
+
+        <p class="blocks">
           <svg height=26 width=250>
             <g transform="translate(8,0)">
               <path transform="translate(1,1)" fill="#495284" d="m 0,0 H 132.46 v 24 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z"></path>
@@ -414,13 +674,21 @@ getY()</pre>
             </g>
           </svg>
         </p>
-    <p><code>Math.random()</code> возвращает случайное число от 0 включительно до 1 не включительно. Умножь результат на 360, чтобы получить случайный угол:</p>
-    <pre class="mathSpec spec">var angle = Math.random() * 360;</pre>
-  </div>
-  <h2 class="level11" id="variables">Переменные</h2>
-  <div id="variables-content">
-    <h3>Создание и присваивание</h3>
-<p class="blocks">
+        <pre class="js mathSpec spec">Math.random()</pre>
+
+        <p>Функция возвращает случайное число от 0 включительно до 1 не включительно. Для большего диапазона умножь результат на нужное значение. Пример случайного угла:</p>
+
+        <pre>var angle = Math.random() * 360;</pre>
+      </div>
+    </div>
+
+    <!-- ---------------------------------------------------------------------- -->
+    <h2 class="level11" id="variables">Переменные</h2>
+
+    <div class="level11" id="variables-content">
+      <h3>Присваивание</h3>
+
+      <p class="blocks">
         <svg height=40 width=250>
           <g>
             <path transform="translate(1,1)" fill="#844966" d="m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 40 H 179.29 v 36 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z M 155.21,5 h -30.15 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 30.15 z"></path>
@@ -446,12 +714,18 @@ getY()</pre>
           </g>
         </svg>
       </p>
-    <p>Переменная хранит значение. Выбирай понятные имена: например, <code>angle</code> для угла и <code>range</code> для расстояния. В блоках создай переменную через категорию «Переменные» и используй блок присваивания.</p>
-    <pre class="js variablesSpec spec">var angle = 90;
-var range = 35;</pre>
-    <p class="js">Имена чувствительны к регистру: <code>angle</code> и <code>Angle</code> — разные переменные. Для простоты используй латинские буквы и цифры; не начинай имя с цифры. При первом присваивании используй <code>var</code>, при последующих его можно опустить.</p>
-    <h3>Изменение и чтение</h3>
-<p class="blocks">
+      <pre class="js variablesSpec spec">var <i>name</i> = <i>value</i>;</pre>
+
+      <p>Сохраняет значение, обычно число, в переменной. Выбирай понятное имя, например<code>range</code>или<code>angle</code>.</p>
+
+      <p class="js">Имена переменных чувствительны к регистру: например,<code>angle</code>и<code>Angle</code>— разные переменные. Для простоты используй латинские буквы и цифры. Имя не должно начинаться с цифры.</p>
+
+      <p class="js">Функция<code>var</code>при первом присваивании объявляет переменную. При следующих присваиваниях его можно опустить.</p>
+
+
+      <h3>Увеличение значения</h3>
+
+      <p class="blocks">
         <svg height=41 width=250>
           <g>
             <path transform="translate(1,1)" fill="#844966" d="m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 40 H 157.48 v 36 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z M 133.4,5 h -30.15 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 30.15 z"></path>
@@ -476,7 +750,19 @@ var range = 35;</pre>
           </g>
         </svg>
       </p>
-<p class="blocks">
+      <pre class="js variablesSpec spec"><i>name</i> += <i>Числа</i>;</pre>
+
+      <p>Это короткая запись прибавления числа к значению переменной. Следующие две строки равнозначны:</p>
+
+      <pre>angle += 10;
+var angle = angle + 10;</pre>
+
+      <p>Не применяй<code>+=</code>к переменной без начального значения. При необходимости присвой ей 0 в начале программы.</p>
+
+
+      <h3>Получение значения</h3>
+
+      <p class="blocks">
         <svg height=26 width=250>
           <g transform="translate(8,0)">
             <path transform="translate(1,1)" fill="#844966" d="m 0,0 H 70.12 v 25 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z"></path>
@@ -490,18 +776,17 @@ var range = 35;</pre>
           </g>
         </svg>
       </p>
-    <p>Чтобы получить сохранённое значение, используй имя переменной. Запись <code>angle += 10</code> увеличивает угол на 10 и равнозначна <code>angle = angle + 10</code>. Перед изменением переменная должна получить начальное значение.</p>
-    <pre class="js variablesSpec spec">cannon(angle, range);
-angle += 10;</pre>
-  </div>
-  <h2 class="level11" id="functions">Функции</h2>
-  <div id="functions-content">
-    <p>Функция объединяет команды, которые удобно выполнять вместе. Создай её в категории «Функции», задай имя и при необходимости параметры. Затем добавь блок вызова в программу. Функция с результатом возвращает вычисленное значение.</p>
-    <pre class="js functionsSpec spec">function fireUp(range) {
-  cannon(90, range);
-}
-fireUp(35);</pre>
-    <p>В этом примере функция <code>fireUp</code> стреляет вверх, а параметр <code>range</code> задаёт дальность выстрела.</p>
-  </div>
-</body>
+      <pre class="js variablesSpec spec"><i>name</i></pre>
+
+      <p>Возвращает значение, ранее сохранённое в переменной.</p>
+    </div>
+
+    <!-- ---------------------------------------------------------------------- -->
+    <h2 class="level11" id="functions">Функции</h2>
+
+    <div class="level11" id="functions-content">
+      <p>Этот раздел документации пока не заполнен.</p>
+    </div>
+
+  </body>
 </html>

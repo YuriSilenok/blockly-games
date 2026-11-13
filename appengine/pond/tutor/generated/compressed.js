@@ -1123,15 +1123,15 @@ k}}finally{ba(e,f)}Z.reset();On()});
           }
           return null;
         }
-        function addsQuarterTurn(block, variable) {
+        function changesAngle(block, variable) {
           if (!block || field(block, 'VAR') !== variable) return false;
           var type = block.getAttribute('type');
-          if (type === 'math_change' || type === 'pond_math_change') return signature(input(block, 'DELTA')) === 'number:90';
+          if (type === 'math_change' || type === 'pond_math_change') return true;
           if (type !== 'variables_set') return false;
           var addition = input(block, 'VALUE');
           if (!addition || ['math_arithmetic', 'pond_math_arithmetic'].indexOf(addition.getAttribute('type')) === -1 || field(addition, 'OP') !== 'ADD') return false;
           var left = signature(input(addition, 'A')), right = signature(input(addition, 'B'));
-          return (left === 'variable:' + variable && right === 'number:90') || (right === 'variable:' + variable && left === 'number:90');
+          return left === 'variable:' + variable || right === 'variable:' + variable;
         }
         var outerLoops = blocks('controls_whileUntil').concat(blocks('controls_repeat_ext'));
         var square = outerLoops.some(function (outer) {
@@ -1141,16 +1141,16 @@ k}}finally{ba(e,f)}Z.reset();On()});
           if (!angle || angle.getAttribute('type') !== 'variables_get') return false;
           var variable = field(angle, 'VAR');
           var wait = following(swim);
-          if (!wait || wait.getAttribute('type') !== 'controls_whileUntil' || field(wait, 'MODE') !== 'WHILE' || body(wait) || !conditionUses(wait, 'pond_speed')) return false;
+          if (!wait || wait.getAttribute('type') !== 'controls_whileUntil' || body(wait)) return false;
           var turn = following(wait);
-          if (!addsQuarterTurn(turn, variable) || following(turn)) return false;
+          if (!changesAngle(turn, variable) || following(turn)) return false;
           return blocks('variables_set').some(function (init) {
-            if (field(init, 'VAR') !== variable || signature(input(init, 'VALUE')).indexOf('number:') !== 0 || init.parentNode.nodeName !== 'xml') return false;
+            if (field(init, 'VAR') !== variable || init.parentNode.nodeName !== 'xml') return false;
             for (var cursor = following(init); cursor; cursor = following(cursor)) if (cursor === outer) return true;
             return false;
           });
         });
-        if (!square) return 'Задай угол переменной перед внешним циклом. Внутри него соедини: swim с переменной угла, пустой цикл ожидания со speed, затем увеличение той же переменной на 90°.';
+        if (!square) return 'Создай переменную перед внешним циклом. Внутри цикла соедини: swim с этой переменной, пустой вложенный цикл, затем блок изменения той же переменной. Значения и условия выбери самостоятельно.';
         break;
       case 8:
         if (!blocks('controls_if').some(function (block) { return conditionUses(block, 'pond_getX') && contains(block, 'pond_swim'); }) || !blocks('controls_if').some(function (block) { return conditionUses(block, 'pond_getY') && contains(block, 'pond_swim'); })) return 'Используй getX и getY в условиях if, чтобы менять направление движения swim.';

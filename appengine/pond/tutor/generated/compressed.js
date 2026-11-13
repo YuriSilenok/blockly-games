@@ -758,6 +758,14 @@ k}}finally{ba(e,f)}Z.reset();On()});
         {start: new q(20, 50), aa: 99, name: X('Pond.targetName', false) + ' 2', code: 'playerTarget'}
       ];
     }
+    if (nm === 7) {
+      return [
+        {start: new q(10, 10), aa: 0, name: X('Pond.playerName', false), code: null},
+        {start: new q(90, 10), aa: 99, name: X('Pond.targetName', false) + ' 1', code: 'playerTarget'},
+        {start: new q(90, 90), aa: 99, name: X('Pond.targetName', false) + ' 2', code: 'playerTarget'},
+        {start: new q(10, 90), aa: 99, name: X('Pond.targetName', false) + ' 3', code: 'playerTarget'}
+      ];
+    }
     return originalScene();
       } finally {
         nm = level;
@@ -776,9 +784,18 @@ k}}finally{ba(e,f)}Z.reset();On()});
         {start: new q(20, 50), aa: 99, name: X('Pond.targetName', false) + ' 2', code: 'playerTarget'}
       ];
     }
+    if (nm === 7) {
+      return [
+        {start: new q(10, 10), aa: 0, name: X('Pond.playerName', false), code: null},
+        {start: new q(90, 10), aa: 99, name: X('Pond.targetName', false) + ' 1', code: 'playerTarget'},
+        {start: new q(90, 90), aa: 99, name: X('Pond.targetName', false) + ' 2', code: 'playerTarget'},
+        {start: new q(10, 90), aa: 99, name: X('Pond.targetName', false) + ' 3', code: 'playerTarget'}
+      ];
+    }
     return originalScene();
   };
   documentationQuotes[6] = "<h3>Скорость</h3>\n\n        <p class=\"block\">\n          <svg height=26 width=250>\n            <g transform=\"translate(8,0)\">\n              <path transform=\"translate(1,1)\" fill=\"#7a4984\" d=\"m 0,0 H 89.72 v 24 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z\"></path>\n              <path fill=\"#995ba5\" d=\"m 0,0 H 89.72 v 24 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z\"></path>\n              <path class=\"blocklyPathLight\" stroke=\"#b88cc0\" d=\"m 0.5,0.5 H 89.22 M 89.22,0.5 M 0.5,23.5 V 18.5 m -7.36,-0.5 q -1.52,-5.5 0,-11 m 7.36,1 V 0.5 H 1\"></path>\n              <text class=\"blocklyText\" y=\"12.5\" transform=\"translate(10,5)\">speed</text>\n              <text class=\"blocklyText\" y=\"12.5\" transform=\"translate(59.95,5)\">(</text>\n              <text class=\"blocklyText\" y=\"12.5\" transform=\"translate(74.83,5)\">)</text>\n            </g>\n          </svg>\n        </p>\n        <pre class=\"js pondSpec spec\">speed()</pre>\n\n        <p>Функция <code>speed()</code> возвращает текущую скорость утки: от 0 (стоит) до 100 (максимум). По резкой остановке можно обнаружить столкновение.</p>\n      \n\n\n      \n        <h3>Цикл «пока»</h3>\n\n      <p class=\"blocks\">\n        <svg height=90 width=250>\n          <g>\n            <path transform=\"translate(1,1)\" fill=\"#498449\" d=\"m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 50 H 116.73 v 35 H 50 l -6,4 -3,0 -6,-4 h -7 a 8,8 0 0,0 -8,8 v 9 a 8,8 0 0,0 8,8 H 50 H 50 v 25 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z M 82.87,5 h -14.5 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 6 h 14.5 z\"></path>\n            <path fill=\"#5ba55b\" d=\"m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 50 H 116.73 v 35 H 50 l -6,4 -3,0 -6,-4 h -7 a 8,8 0 0,0 -8,8 v 9 a 8,8 0 0,0 8,8 H 50 H 50 v 25 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z M 82.87,5 h -14.5 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 6 h 14.5 z\"></path>\n            <path class=\"blocklyPathLight\" stroke=\"#8cc08c\" d=\"m 0.5,7.5 A 7.5,7.5 0 0,1 8,0.5 H 15 l 6,4 3,0 6,-4 H 49.5 M 49.5,0.5 H 116.23 M 49.5,35.5 M 21.98,58.01 a 8.5,8.5 0 0,0 6.01,2.48 H 49.5 M 49.5,60.5 H 49.5 M 2.69,82.3 A 7.5,7.5 0 0,1 0.5,77 V 8 M 83.37,5.5 v 26 h -14.5 M 63.27,24.3 l 3.68,-2.1\"></path>\n            <text class=\"blocklyText\" y=\"12.5\" transform=\"translate(10,10)\">while&#160;(</text>\n            <text class=\"blocklyText\" y=\"12.5\" transform=\"translate(92.87,10)\">)&#160;{</text>\n            <text class=\"blocklyText\" y=\"12.5\" transform=\"translate(10,65)\">}</text>\n          </g>\n        </svg>\n      </p>\n      <pre class=\"js loopsSpec spec\">while (<i>condition</i>) {\n  <i>statements</i>\n}</pre>\n\n      <p>Цикл повторяет вложенные команды, пока условие истинно. Например, этот цикл постоянно стреляет влево:</p>\n\n      <pre>while (true) {\n  cannon(180, 50);\n}</pre>\n\n      <p>А этот цикл стреляет влево, пока противник находится в пределах дальности пушки:</p>\n\n      <pre>while (scan(180 <span class=\"js\">, 5</span>) &lt;= 70) {\n  cannon(180, scan(180 <span class=\"js\">, 5</span>));\n}</pre>\n    \n\n    \n    <h3>Сравнения</h3>\n\n        <p class=\"blocks\">\n          <svg height=36 width=250>\n            <g transform=\"translate(8,0)\">\n              <path transform=\"translate(1,1)\" fill=\"#496684\" d=\"m 0,0 H 20 H 111.56 v 35 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z M 30.5,5 h -14.5 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 6 h 14.5 z M 101.56,5 h -14.5 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 6 h 14.5 z\"></path>\n              <path fill=\"#5b80a5\" d=\"m 0,0 H 20 H 111.56 v 35 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z M 30.5,5 h -14.5 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 6 h 14.5 z M 101.56,5 h -14.5 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 6 h 14.5 z\"></path>\n              <path class=\"blocklyPathLight\" stroke=\"#8ca6c0\" d=\"m 0.5,0.5 H 19.5 M 19.5,0.5 H 111.06 M 0.5,34.5 V 18.5 m -7.36,-0.5 q -1.52,-5.5 0,-11 m 7.36,1 V 0.5 H 1 M 31,5.5 v 26 h -14.5 M 10.9,24.3 l 3.68,-2.1 M 102.06,5.5 v 26 h -14.5 M 81.96,24.3 l 3.68,-2.1\"></path>\n              <g class=\"blocklyEditableText\" transform=\"translate(40.5,10)\" style=\"cursor: default;\">\n                <rect rx=\"4\" ry=\"4\" x=\"-5\" y=\"0\" height=\"16\" width=\"40.56\"></rect>\n                <text class=\"blocklyText\" y=\"12.5\" text-anchor=\"start\" x=\"0\">==\n                <tspan style=\"fill: rgb(91, 128, 165);\"> ▾</tspan></text>\n              </g>\n            </g>\n          </svg>\n        </p>\n        <pre class=\"js logicSpec spec\">==    !=    &lt;    &lt;=    &gt;    &gt;=</pre>\n\n        <p>Эти выражения сравнивают два числа и возвращают <code>true</code> или <code>false</code>. Доступны шесть операторов сравнения:</p>\n\n        <table>\n          <tr>\n            <th>Оператор</td>\n            <th>Пример</td>\n            <th>Результат</td>\n          </tr>\n          <tr>\n            <td>Равно</td>\n            <td><code>5 == 10</code></td>\n            <td><code>false</code></td>\n          </tr>\n          <tr>\n            <td>Не равно</td>\n            <td><code>5 != 10</code></td>\n            <td><code>true</code></td>\n          </tr>\n          <tr>\n            <td>Меньше</td>\n            <td><code>5 &lt; 10</code></td>\n            <td><code>true</code></td>\n          </tr>\n          <tr>\n            <td>Меньше или равно</td>\n            <td><code>5 &lt;= 10</code></td>\n            <td><code>true</code></td>\n          </tr>\n          <tr>\n            <td>Больше</td>\n            <td><code>5 &gt; 10</code></td>\n            <td><code>false</code></td>\n          </tr>\n          <tr>\n            <td>Больше или равно</td>\n            <td><code>5 &gt;= 10</code></td>\n            <td><code>false</code></td>\n          </tr>\n        </table>\n\n        <p>Использование <code>!=</code> может привести к ошибке при сравнении дробных чисел. Например, эта программа должна доплыть до отметки 50 и остановиться:</p>\n\n        <pre>while (getY() <b>!=</b> 50) {\n  swim(90 <span class=\"js\">, 50</span>);\n}\nstop();</pre>\n\n        <p>Программа может не остановиться: значение <code>getY()</code> может измениться с 49,4 сразу на 50,6. Точного равенства 50 не возникнет, и цикл продолжится. Лучше проверять, что координата меньше 50:</p>\n\n        <pre>while (getY() <b>&lt;</b> 50) {\n  swim(90 <span class=\"js\">, 50</span>);\n}\nstop();</pre>\n      \n\n\n      \n        ";
+  documentationQuotes[7] = "<h3>Увеличение значения</h3>\n\n      <p class=\"blocks\">\n        <svg height=41 width=250>\n          <g>\n            <path transform=\"translate(1,1)\" fill=\"#844966\" d=\"m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 40 H 157.48 v 36 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z M 133.4,5 h -30.15 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 30.15 z\"></path>\n            <path fill=\"#a55b80\" d=\"m 0,8 A 8,8 0 0,1 8,0 H 15 l 6,4 3,0 6,-4 H 40 H 157.48 v 36 H 29.5 l -6,4 -3,0 -6,-4 H 8 a 8,8 0 0,1 -8,-8 z M 133.4,5 h -30.15 v 5 c 0,10 -8,-8 -8,7.5 s 8,-2.5 8,7.5 v 7 h 30.15 z\"></path>\n            <path class=\"blocklyPathLight\" stroke=\"#c08ca6\" d=\"m 0.5,7.5 A 7.5,7.5 0 0,1 8,0.5 H 15 l 6,4 3,0 6,-4 H 39.5 M 39.5,0.5 H 156.98 M 2.69,33.3 A 7.5,7.5 0 0,1 0.5,28 V 8 M 133.9,5.5 v 27 h -30.15 M 98.15,24.3 l 3.68,-2.1\"></path>\n            <g class=\"blocklyEditableText\" transform=\"translate(10,10)\" style=\"cursor: default;\">\n              <rect rx=\"4\" ry=\"4\" x=\"-5\" y=\"0\" height=\"16\" width=\"60.12\"></rect>\n              <text class=\"blocklyText\" y=\"12.5\" text-anchor=\"start\" x=\"0\">name\n              <tspan style=\"fill: rgb(165, 91, 128);\"> ▾</tspan></text>\n            </g>\n            <text class=\"blocklyText\" y=\"12.5\" transform=\"translate(70.12,10)\">+=</text>\n            <text class=\"blocklyText\" y=\"12.5\" transform=\"translate(143.4,10)\">;</text>\n            <g transform=\"translate(104.25,6)\">\n              <path transform=\"translate(1,1)\" fill=\"#495284\" d=\"m 0,0 H 28.15 v 25 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z\"></path>\n              <path fill=\"#5b67a5\" d=\"m 0,0 H 28.15 v 25 H 0 V 20 c 0,-10 -8,8 -8,-7.5 s 8,2.5 8,-7.5 z\"></path>\n              <path class=\"blocklyPathLight\" stroke=\"#8c95c0\" d=\"m 0.5,0.5 H 27.65 M 27.65,0.5 M 0.5,24.5 V 18.5 m -7.36,-0.5 q -1.52,-5.5 0,-11 m 7.36,1 V 0.5 H 1\"></path>\n              <g class=\"blocklyEditableText\" transform=\"translate(10,5)\">\n                <rect rx=\"4\" ry=\"4\" x=\"-5\" y=\"0\" height=\"16\" width=\"18.15\"></rect>\n                <text class=\"blocklyText\" y=\"12.5\">1</text>\n              </g>\n            </g>\n          </g>\n        </svg>\n      </p>\n      <pre class=\"js variablesSpec spec\"><i>name</i> += <i>Числа</i>;</pre>\n\n      <p>Это короткая запись прибавления числа к значению переменной. Следующие две строки равнозначны:</p>\n\n      <pre>angle += 10;\nvar angle = angle + 10;</pre>\n\n      <p>Не применяй <code>+=</code> к переменной без начального значения. При необходимости присвой ей 0 в начале программы.</p>\n\n\n      ";
   documentationQuotes[15] = documentationQuotes[5];
   // Only movement is new here; loops and logic are not needed for one command.
   var movementQuote = documentationQuotes[5];
@@ -810,6 +827,14 @@ k}}finally{ba(e,f)}Z.reset();On()});
       Array.prototype.forEach.call(toolboxSix.querySelectorAll('category'), function (category) {
         if (!category.querySelector('block')) category.parentNode.removeChild(category);
       });
+    }
+    if (nm === 7) {
+      var toolboxSeven = root.querySelector('#toolbox');
+      var loopCategory = toolboxSeven.querySelector('block[type="controls_whileUntil"]').parentNode;
+      var repeat = document.createElement('block');
+      repeat.setAttribute('type', 'controls_repeat_ext');
+      repeat.innerHTML = '<value name="TIMES"><shadow type="pond_math_number"><field name="NUM">4</field></shadow></value>';
+      loopCategory.appendChild(repeat);
     }
     var helpButton = root.querySelector('#helpButton');
     if (helpButton) {
@@ -1076,11 +1101,56 @@ k}}finally{ba(e,f)}Z.reset();On()});
         if (Array.prototype.some.call(loop.querySelectorAll('statement block'), active)) return 'Оставь тело цикла пустым: движение уже запущено, нужно только проверять скорость.';
         break;
       case 7:
-        var branches = blocks('controls_if').some(function (block) {
-          var mutation = block.querySelector('mutation');
-          return mutation && Number(mutation.getAttribute('elseif')) > 0 && mutation.getAttribute('else') === '1' && contains(block, 'pond_swim') && contains(block, 'pond_stop') && contains(block, 'pond_cannon');
+        if (cannons.length || has('pond_stop')) return 'Пройди квадрат тараном. Не используй cannon и stop: поворачивай после остановки от столкновения.';
+        function following(block) {
+          if (!block) return null;
+          for (var child = block.firstElementChild; child; child = child.nextElementSibling) {
+            if (child.nodeName === 'next') {
+              for (var next = child.firstElementChild; next; next = next.nextElementSibling) {
+                if (next.nodeName === 'block' && active(next)) return next;
+              }
+            }
+          }
+          return null;
+        }
+        function body(block) {
+          for (var child = block.firstElementChild; child; child = child.nextElementSibling) {
+            if (child.nodeName === 'statement' && child.getAttribute('name') === 'DO') {
+              for (var entry = child.firstElementChild; entry; entry = entry.nextElementSibling) {
+                if (entry.nodeName === 'block' && active(entry)) return entry;
+              }
+            }
+          }
+          return null;
+        }
+        function addsQuarterTurn(block, variable) {
+          if (!block || field(block, 'VAR') !== variable) return false;
+          var type = block.getAttribute('type');
+          if (type === 'math_change' || type === 'pond_math_change') return signature(input(block, 'DELTA')) === 'number:90';
+          if (type !== 'variables_set') return false;
+          var addition = input(block, 'VALUE');
+          if (!addition || ['math_arithmetic', 'pond_math_arithmetic'].indexOf(addition.getAttribute('type')) === -1 || field(addition, 'OP') !== 'ADD') return false;
+          var left = signature(input(addition, 'A')), right = signature(input(addition, 'B'));
+          return (left === 'variable:' + variable && right === 'number:90') || (right === 'variable:' + variable && left === 'number:90');
+        }
+        var outerLoops = blocks('controls_whileUntil').concat(blocks('controls_repeat_ext'));
+        var square = outerLoops.some(function (outer) {
+          var swim = body(outer);
+          if (!swim || swim.getAttribute('type') !== 'pond_swim') return false;
+          var angle = input(swim, 'DEGREE');
+          if (!angle || angle.getAttribute('type') !== 'variables_get') return false;
+          var variable = field(angle, 'VAR');
+          var wait = following(swim);
+          if (!wait || wait.getAttribute('type') !== 'controls_whileUntil' || field(wait, 'MODE') !== 'WHILE' || body(wait) || !conditionUses(wait, 'pond_speed')) return false;
+          var turn = following(wait);
+          if (!addsQuarterTurn(turn, variable) || following(turn)) return false;
+          return blocks('variables_set').some(function (init) {
+            if (field(init, 'VAR') !== variable || signature(input(init, 'VALUE')).indexOf('number:') !== 0 || init.parentNode.nodeName !== 'xml') return false;
+            for (var cursor = following(init); cursor; cursor = following(cursor)) if (cursor === outer) return true;
+            return false;
+          });
         });
-        if (!branches || !has('pond_swim') || !has('pond_stop') || !cannons.length) return 'Используй ветви if, else if и else для погони, остановки и стрельбы: swim, stop и cannon.';
+        if (!square) return 'Задай угол переменной перед внешним циклом. Внутри него соедини: swim с переменной угла, пустой цикл ожидания со speed, затем увеличение той же переменной на 90°.';
         break;
       case 8:
         if (!blocks('controls_if').some(function (block) { return conditionUses(block, 'pond_getX') && contains(block, 'pond_swim'); }) || !blocks('controls_if').some(function (block) { return conditionUses(block, 'pond_getY') && contains(block, 'pond_swim'); })) return 'Используй getX и getY в условиях if, чтобы менять направление движения swim.';

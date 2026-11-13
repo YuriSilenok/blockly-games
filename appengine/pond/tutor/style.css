@@ -54,3 +54,36 @@
 #resetProgressButton {
   margin-inline-start: 8px;
 }
+
+/* Documentation SVGs need their own field styles outside the Blockly renderer. */
+#help .level-help-documentation .blocklyPathLight {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 1;
+}
+#help .level-help-documentation .blocklyText {
+  fill: #fff;
+  font-family: sans-serif;
+  font-size: 11pt;
+}
+#help .level-help-documentation .blocklyEditableText > rect,
+#help .level-help-documentation .blocklyNonEditableText > rect {
+  fill: #fff;
+  fill-opacity: .6;
+  stroke: none;
+}
+#help .level-help-documentation .blocklyEditableText > text,
+#help .level-help-documentation .blocklyNonEditableText > text {
+  fill: #000;
+}
+#help .level-help-documentation .blocklyIconGroup {
+  opacity: .6;
+}
+#help .level-help-documentation .blocklyIconShape {
+  fill: #00f;
+  stroke: #fff;
+  stroke-width: 1px;
+}
+#help .level-help-documentation .blocklyIconSymbol {
+  fill: #fff;
+}

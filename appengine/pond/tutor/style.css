@@ -14,3 +14,16 @@
 #help svg {
   direction: ltr;
 }
+
+/* New blocks precede the task; each illustration keeps its original size. */
+#help .level-help-blocks {
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+#help .level-help-blocks svg {
+  display: block;
+  margin-bottom: 8px;
+}
+#help .level-help-task {
+  line-height: 1.5;
+}

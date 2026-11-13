@@ -702,7 +702,7 @@ t.pond_math_number={init:function(){ei(this,{message0:"%1",args0:[{type:"field_n
 this.A.J.Me){var a=rd(this,"NUM");this.A.J.Me.includes("Angle")?a.constructor!==vo&&this.To(!0):a.constructor!==no&&this.To(!1)}},To:function(a){w++;var b=this.C[0],c=rd(this,"NUM"),d=c.kb();a?(Xh(b,"NUM"),c=new vo(""),P(b,c,"NUM"),ud(c,d)):(Xh(b,"NUM"),P(b,new no(d),"NUM"));this.I&&this.R();w--}};
 t.pond_math_single={init:function(){ei(this,{message0:"%1 (%2)",args0:[{type:"field_dropdown",name:"OP",options:[["Math.sqrt","ROOT"],["Math.abs","ABS"],["Math.sin_deg","SIN"],["Math.cos_deg","COS"],["Math.tan_deg","TAN"],["Math.asin_deg","ASIN"],["Math.acos_deg","ACOS"],["Math.atan_deg","ATAN"]]},{type:"input_value",name:"NUM",check:"Number"}],inputsInline:!0,output:"Number",colour:"%{BKY_MATH_HUE}",helpUrl:"%{BKY_MATH_SINGLE_HELPURL}",extensions:["math_op_tooltip"]})}};
 R.pond_math_single=function(a){var b=T(R,a,"NUM",R.Za)||"0";return["Math."+{ROOT:"sqrt",ABS:"abs",SIN:"sin_deg",COS:"cos_deg",TAN:"tan_deg",ASIN:"asin_deg",ACOS:"acos_deg",ATAN:"atan_deg"}[I(a,"OP")]+"("+b+")",R.pb]};R.pond_math_number=R.math_number;t.pond_loc_x=t.pond_getX;R.pond_loc_x=R.pond_getX;t.pond_loc_y=t.pond_getY;R.pond_loc_y=R.pond_getY;t.pond_controls_if=t.controls_if;R.pond_controls_if=R.controls_if;t.pond_loops_while=t.controls_whileUntil;R.pond_loops_while=R.controls_whileUntil;
-t.pond_math_arithmetic=t.math_arithmetic;R.pond_math_arithmetic=R.math_arithmetic;t.pond_math_change=t.math_change;R.pond_math_change=R.math_change;function Mo(){return'\n<div class="farSide" style="padding: 1ex 3ex 0">\n  <button class="secondary addHideHandler">'+um(v.DIALOG_OK)+"</button>\n</div>\n"};function No(){var a=nm,b=mm,c=X("Games.pondTutor",!0),d=a<=10,e="";var f='\n&nbsp;\n<button id="linkButton" title="'+X("Games.linkTooltip",!0)+'">\n  <img src="common/1x1.gif" class="link icon21">\n</button>\n';var h="";d&&(h='\n&nbsp;\n<button id="helpButton">'+X("Games.help",!0)+"</button>\n");e&&(e=" &nbsp; "+e);c='\n<span id="title">\n  <a href="'+(jm?"index.html":"./")+"?lang="+gm+'">'+X("Games.name",!0)+"</a> : "+c+"\n</span>\n";if(a){d=" &nbsp ";for(var k=1;k<=b;k++){var m="?lang="+gm+"&level="+
+t.pond_math_arithmetic=t.math_arithmetic;R.pond_math_arithmetic=R.math_arithmetic;t.pond_math_change=t.math_change;R.pond_math_change=R.math_change;function Mo(){return'\n<div class="farSide" style="padding: 1ex 3ex 0">\n  <button class="secondary addHideHandler">'+um(v.DIALOG_OK)+"</button>\n</div>\n"};function No(){var a=nm,b=mm,c=X("Games.pondTutor",!0),d=a<=10||a===15,e="";var f='\n&nbsp;\n<button id="linkButton" title="'+X("Games.linkTooltip",!0)+'">\n  <img src="common/1x1.gif" class="link icon21">\n</button>\n';var h="";d&&(h='\n&nbsp;\n<button id="helpButton">'+X("Games.help",!0)+"</button>\n");e&&(e=" &nbsp; "+e);c='\n<span id="title">\n  <a href="'+(jm?"index.html":"./")+"?lang="+gm+'">'+X("Games.name",!0)+"</a> : "+c+"\n</span>\n";if(a){d=" &nbsp ";for(var k=1;k<=b;k++){var m="?lang="+gm+"&level="+
 k;d+=" ";d=k===a?d+('<span class="level_number level_done" id="level'+k+'">'+k+"</span>"):k===b?d+('<a class="level_number" id="level'+k+'" href="'+m+'">'+k+"</a>"):d+('<a class="level_dot" id="level'+k+'" href="'+m+'"></a>')}b=d}else b="";e='\n\n<table width="100%">\n  <tr>\n    <td>\n      <h1>\n        '+(c+"\n        "+b+'\n      </h1>\n    </td>\n    <td id="header_cta" class="farSide">\n      <select id="languageMenu"></select>\n      '+f+"\n      "+h+"\n      "+e+'\n    </td>\n  </tr>\n</table>\n\n\n\n<div id="visualization">\n  <canvas id="scratch" width=400 height=400 style="display: none"></canvas>\n  <canvas id="display" width=400 height=400></canvas>\n</div>\n\n<table id="avatarStatTable">\n  <tbody>\n    <tr id="avatarStatRow1"></tr>\n    <tr id="avatarStatRow2"></tr>\n  </tbody>\n</table>\n\n<table width=400>\n  <tr>\n    <td style="width: 190px; text-align: center; vertical-align: top;">\n      <button id="docsButton" title="')+
 (X("Pond.docsTooltip",!0)+'">\n        '+X("Pond.documentation",!0)+'\n      </button>\n    </td>\n    <td>\n      <button id="runButton" class="primary" title="'+X("Games.runTooltip",!0)+'">\n        <img src="common/1x1.gif" class="run icon21"> '+X("Games.runProgram",!0)+'\n      </button>\n      <button id="resetButton" class="primary" style="display: none" title="'+X("Games.resetTooltip",!0)+'">\n        <img src="common/1x1.gif" class="stop icon21"> '+X("Games.resetProgram",!0)+'\n      </button>\n    </td>\n  </tr>\n</table>\n\n<div id="dialogDocs">\n  <img src="common/1x1.gif" class="close icon21" id="closeDocs">\n  <iframe id="frameDocs"></iframe>\n</div>\n\n\n');
 f='\n    <category name="'+X("Games.pond",!0)+'">\n      \n  <block type="pond_cannon">\n    <value name="DEGREE">\n      <shadow type="pond_math_number">\n        <mutation angle_field="true"></mutation>\n        <field name="NUM">0</field>\n      </shadow>\n    </value>\n    <value name="RANGE">\n      <shadow type="pond_math_number">\n        <mutation angle_field="false"></mutation>\n        <field name="NUM">70</field>\n      </shadow>\n    </value>\n  </block>\n      '+(a>=2?'\n  <block type="pond_scan">\n    <value name="DEGREE">\n      <shadow type="pond_math_number">\n        <mutation angle_field="true"></mutation>\n        <field name="NUM">0</field>\n      </shadow>\n    </value>\n  </block>':
@@ -726,8 +726,8 @@ code:"playerDefense"}],[{start:new q(5,50),aa:99,name:a,code:null},{start:new q(
 (function(a){function b(){window.BlocklyGamesMsg?(window.BlocklyMsg&&(v=window.BlocklyMsg),a()):setTimeout(b,99)}window.addEventListener("load",b)})(function(){Wk([{type:"pond_scan",message0:"%1(%2)",args0:["scan",{type:"input_value",name:"DEGREE",check:["Number","Angle"]}],inputsInline:!0,output:"Number",colour:290,tooltip:X("Pond.scanTooltip",!1)},{type:"pond_cannon",message0:"%1(%2, %3);",args0:["cannon",{type:"input_value",name:"DEGREE",check:["Number","Angle"]},{type:"input_value",name:"RANGE",
 check:"Number"}],inputsInline:!0,previousStatement:null,nextStatement:null,colour:290,tooltip:X("Pond.cannonTooltip",!1)},{type:"pond_swim",message0:"%1(%2);",args0:["swim",{type:"input_value",name:"DEGREE",check:["Number","Angle"]}],inputsInline:!0,previousStatement:null,nextStatement:null,colour:290,tooltip:X("Pond.swimTooltip",!1)},{type:"pond_stop",message0:"%1(%2);",args0:["stop",""],previousStatement:null,nextStatement:null,colour:290,tooltip:X("Pond.stopTooltip",!1)},{type:"pond_health",message0:"%1(%2)",
 args0:["health",""],output:"Number",colour:290,tooltip:X("Pond.healthTooltip",!1)},{type:"pond_speed",message0:"%1(%2)",args0:["speed",""],output:"Number",colour:290,tooltip:X("Pond.speedTooltip",!1)},{type:"pond_getX",message0:"%1(%2)",args0:["getX",""],output:"Number",colour:290,tooltip:X("Pond.locXTooltip",!1)},{type:"pond_getY",message0:"%1(%2)",args0:["getY",""],output:"Number",colour:290,tooltip:X("Pond.locYTooltip",!1)},{type:"pond_log",message0:"%1(%2);",args0:["log",{type:"input_value",name:"VALUE"}],
-inputsInline:!0,previousStatement:null,nextStatement:null,colour:290,tooltip:X("Pond.logTooltip",!1)}]);document.body.innerHTML=No();Xn();nm<=10&&(sm("helpButton",eo),location.hash.length<2&&!pm(nm)&&setTimeout(eo,1E3));var a=W("blockly"),b=W("editor"),c=W("visualization");if(a){var d=function(){a.style.top=Math.max(10,c.offsetTop-window.pageYOffset)+"px";a.style.left=im?"10px":"420px";a.style.width=window.innerWidth-440+"px"};window.addEventListener("scroll",function(){d(null);kk(li)});d(null);Lm();
-ri("scan,cannon,drive,swim,stop,speed,damage,health,loc_x,getX,loc_y,getY,");Hm(nm===7?'<xml><block type="pond_swim" x="70" y="70"><value name="DEGREE"><shadow type="pond_math_number"><mutation angle_field="true"></mutation><field name="NUM">0</field></shadow></value></block></xml>':'<xml><block type="pond_cannon" x="70" y="70"><value name="DEGREE"><shadow type="pond_math_number"><mutation angle_field="true"></mutation><field name="NUM">0</field></shadow></value><value name="RANGE"><shadow type="pond_math_number"><mutation angle_field="false"></mutation><field name="NUM">70</field></shadow></value></block></xml>')}if(b){Fm=
+inputsInline:!0,previousStatement:null,nextStatement:null,colour:290,tooltip:X("Pond.logTooltip",!1)}]);document.body.innerHTML=No();Xn();(nm<=10||nm===15)&&(sm("helpButton",eo),location.hash.length<2&&!pm(nm)&&setTimeout(eo,1E3));var a=W("blockly"),b=W("editor"),c=W("visualization");if(a){var d=function(){a.style.top=Math.max(10,c.offsetTop-window.pageYOffset)+"px";a.style.left=im?"10px":"420px";a.style.width=window.innerWidth-440+"px"};window.addEventListener("scroll",function(){d(null);kk(li)});d(null);Lm();
+ri("scan,cannon,drive,swim,stop,speed,damage,health,loc_x,getX,loc_y,getY,");Hm(nm===5||nm===7||nm===15?'<xml><block type="pond_swim" x="70" y="70"><value name="DEGREE"><shadow type="pond_math_number"><mutation angle_field="true"></mutation><field name="NUM">0</field></shadow></value></block></xml>':'<xml><block type="pond_cannon" x="70" y="70"><value name="DEGREE"><shadow type="pond_math_number"><mutation angle_field="true"></mutation><field name="NUM">0</field></shadow></value><value name="RANGE"><shadow type="pond_math_number"><mutation angle_field="false"></mutation><field name="NUM">70</field></shadow></value></block></xml>')}if(b){Fm=
 !0;var e=W("containerCode");e.parentNode.removeChild(e);e=nm===8?"swim(0);":"cannon(0, 70);";Tm();Hm(e+"\n");d=function(){b.style.top=Math.max(10,c.offsetTop-window.pageYOffset)+"px";b.style.left=im?"10px":"420px";b.style.width=window.innerWidth-440+"px"};window.addEventListener("scroll",d);Sm()}sm("runButton",Oo);window.addEventListener("resize",d);d(null);e=Po();e=l(e);var f=e.next();try{for(;!f.done;f=e.next()){var h=f.value,k=new Bn(h.name,h.start,h.aa);if(h.code){var m=W(h.code);m&&(k.Kp=m.textContent)}else En=
 k}}finally{ba(e,f)}Z.reset();On()});
 
@@ -739,13 +739,49 @@ k}}finally{ba(e,f)}Z.reset();On()});
     1: 'Попади в цель с помощью блока cannon. Укажи направление выстрела в первом параметре, а расстояние до цели — во втором.',
     2: 'Попади в цель с помощью блока cannon. Чтобы определить расстояние до цели, вставь блок scan во второй параметр cannon. Укажи одинаковое направление в обоих блоках.',
     3: 'Попади в цель с помощью блоков cannon и scan. Создай переменную для угла и присвой ей значение один раз. Используй эту переменную для направления и в cannon, и в scan. Блок scan вставь во второй параметр cannon.',
-    5: 'Порази цель тараном: направь утку к противнику с помощью swim. Не используй выстрелы — блок cannon в этом задании запрещён.',
+    5: 'Направь утку к цели с помощью одного блока swim. Укажи верный угол и запусти программу. Команда задаёт импульс движению: утка продолжит плыть после её выполнения. Повторять swim в цикле не нужно. В решении должен быть только один блок движения с числом в поле угла.',
+    15: 'Порази цель тараном: направь утку к противнику с помощью swim. Не используй выстрелы — блок cannon в этом задании запрещён.',
     4: 'Создай две переменные: одну для угла, другую для расстояния до цели. Сначала задай угол числом. Затем сохрани во второй переменной результат scan, передав в scan переменную угла. Выведи переменную расстояния в консоль с помощью log. После этого попади в цель: передай в cannon переменную угла первым параметром, а переменную расстояния — вторым. Соедини блоки в указанном порядке.'
   };
+  // Preserve the previous level-five scene for level fifteen.
+  var originalScene = Po;
+  Po = function () {
+    if (nm === 15) {
+      var level = nm;
+      try {
+        nm = 5;
+        return originalScene();
+      } finally {
+        nm = level;
+      }
+    }
+    if (nm === 5) {
+      return [
+        {start: new q(50, 20), aa: 0, name: X('Pond.playerName', false), code: null},
+        {start: new q(50, 80), aa: 99, name: X('Pond.targetName', false), code: 'playerTarget'}
+      ];
+    }
+    return originalScene();
+  };
+  documentationQuotes[15] = documentationQuotes[5];
+  // Only movement is new here; loops and logic are not needed for one command.
+  var movementQuote = documentationQuotes[5];
+  var nextHeading = movementQuote.indexOf('<h3>', 4);
+  documentationQuotes[5] = nextHeading < 0 ? movementQuote : movementQuote.substring(0, nextHeading);
+  documentationQuotes[5] += '<p>Одного вызова swim достаточно: команда запускает движение, и утка продолжает плыть после её выполнения. Для движения в одном направлении повторять команду или использовать цикл не нужно.</p>';
   var originalHtml = No;
   No = function () {
     var root = document.createElement('div');
     root.innerHTML = originalHtml();
+    if (nm === 5) {
+      var toolbox = root.querySelector('#toolbox');
+      var swim = toolbox && toolbox.querySelector('block[type="pond_swim"]');
+      if (swim) {
+        swim = swim.cloneNode(true);
+        toolbox.textContent = '';
+        toolbox.appendChild(swim);
+      }
+    }
     var helpButton = root.querySelector('#helpButton');
     if (helpButton) {
       var resetButton = document.createElement('button');
@@ -975,6 +1011,12 @@ k}}finally{ba(e,f)}Z.reset();On()});
         if (!cannons.some(usesStoredDistance)) return 'Соедини блоки по порядку: задай переменную угла; сохрани scan с этим углом в отдельную переменную расстояния; выведи расстояние через log; передай обе переменные в cannon. Каждой переменной присвой значение один раз.';
         break;
       case 5:
+        var programBlocks = Array.prototype.filter.call(xml.querySelectorAll('block'), active);
+        var swims = blocks('pond_swim');
+        if (swims.length !== 1 || programBlocks.length !== 1) return 'Оставь только один блок swim. Укажи угол числом в его поле. Циклы и другие блоки в этом задании не нужны.';
+        if (signature(input(swims[0], 'DEGREE')).indexOf('number:') !== 0) return 'Укажи направление числом в поле угла блока swim.';
+        break;
+      case 15:
         if (cannons.length) return 'В этом задании нельзя стрелять. Убери блок cannon и порази цель тараном с помощью swim.';
         if (!has('pond_swim')) return 'Используй swim, чтобы подплыть к цели и победить тараном.';
         break;

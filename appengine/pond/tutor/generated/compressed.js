@@ -740,7 +740,7 @@ k}}finally{ba(e,f)}Z.reset();On()});
     2: 'Попади в цель с помощью блока cannon. Чтобы определить расстояние до цели, вставь блок scan во второй параметр cannon. Укажи одинаковое направление в обоих блоках.',
     3: 'Попади в цель с помощью блоков cannon и scan. Создай переменную для угла и присвой ей значение один раз. Используй эту переменную для направления и в cannon, и в scan. Блок scan вставь во второй параметр cannon.',
     5: 'Направь утку к цели с помощью одного блока swim. Укажи верный угол и запусти программу. Команда задаёт импульс движению: утка продолжит плыть после её выполнения. Повторять swim в цикле не нужно. В решении должен быть только один блок движения с числом в поле угла.',
-    6: 'Протарань обе цели: справа (0°) и слева (180°). Начни движение к любой цели одним блоком swim. Затем добавь пустой цикл «пока скорость больше 0», чтобы дождаться остановки после столкновения. После цикла поставь второй swim в противоположном направлении. Не используй выстрелы и принудительную остановку.',
+    6: 'Протарань две цели. Соедини блоки в таком порядке: swim с углом 0°; цикл while с условием speed() > 0 и пустым телом; swim с углом 180°. Утка сначала плывёт вправо. Цикл ждёт, пока после тарана скорость станет равна нулю. Затем утка плывёт влево ко второй цели. Внутрь цикла ничего добавлять не нужно.',
     15: 'Порази цель тараном: направь утку к противнику с помощью swim. Не используй выстрелы — блок cannon в этом задании запрещён.',
     4: 'Создай две переменные: одну для угла, другую для расстояния до цели. Сначала задай угол числом. Затем сохрани во второй переменной результат scan, передав в scan переменную угла. Выведи переменную расстояния в консоль с помощью log. После этого попади в цель: передай в cannon переменную угла первым параметром, а переменную расстояния — вторым. Соедини блоки в указанном порядке.'
   };
@@ -798,6 +798,19 @@ k}}finally{ba(e,f)}Z.reset();On()});
         toolbox.appendChild(swim);
       }
     }
+    if (nm === 6) {
+      var toolboxSix = root.querySelector('#toolbox');
+      var allowedSix = ['pond_swim', 'pond_speed', 'controls_whileUntil', 'logic_compare', 'pond_math_number'];
+      Array.prototype.forEach.call(toolboxSix.querySelectorAll('category[custom]'), function (category) {
+        category.parentNode.removeChild(category);
+      });
+      Array.prototype.forEach.call(toolboxSix.querySelectorAll('category > block'), function (block) {
+        if (allowedSix.indexOf(block.getAttribute('type')) === -1) block.parentNode.removeChild(block);
+      });
+      Array.prototype.forEach.call(toolboxSix.querySelectorAll('category'), function (category) {
+        if (!category.querySelector('block')) category.parentNode.removeChild(category);
+      });
+    }
     var helpButton = root.querySelector('#helpButton');
     if (helpButton) {
       var resetButton = document.createElement('button');
@@ -837,6 +850,11 @@ k}}finally{ba(e,f)}Z.reset();On()});
       var description = document.createElement('p');
       description.textContent = tasks[nm] || previousTask;
       task.appendChild(description);
+      if (nm === 6) {
+        var sequence = document.createElement('pre');
+        sequence.textContent = 'swim(0);\nwhile (speed() > 0) {\n}\nswim(180);';
+        task.appendChild(sequence);
+      }
       content.appendChild(documentation);
       content.appendChild(task);
     }
@@ -1057,16 +1075,15 @@ k}}finally{ba(e,f)}Z.reset();On()});
         if (!first || first.parentNode.nodeName !== 'xml' || !second || second.getAttribute('type') !== 'pond_swim' || nextStatement(second)) return 'Соедини блоки в одну цепочку: swim, цикл ожидания, swim в обратную сторону.';
         var firstAngle = input(first, 'DEGREE');
         var secondAngle = input(second, 'DEGREE');
-        if (signature(firstAngle).indexOf('number:') !== 0 || signature(secondAngle).indexOf('number:') !== 0) return 'Задай направления числами: 0° и 180° — в любом порядке.';
+        if (signature(firstAngle).indexOf('number:') !== 0 || signature(secondAngle).indexOf('number:') !== 0) return 'Укажи 0° в первом swim и 180° во втором swim.';
         var firstDegrees = ((Number(field(firstAngle, 'NUM')) % 360) + 360) % 360;
         var secondDegrees = ((Number(field(secondAngle, 'NUM')) % 360) + 360) % 360;
-        if (!((firstDegrees === 0 && secondDegrees === 180) || (firstDegrees === 180 && secondDegrees === 0))) return 'Сначала плыви вправо (0°) или влево (180°), затем — в противоположную сторону.';
+        if (firstDegrees !== 0 || secondDegrees !== 180) return 'Сначала поставь swim(0), а после цикла — swim(180).';
         var condition = input(loop, 'BOOL');
         var speedLeft = condition && input(condition, 'A');
         var speedRight = condition && input(condition, 'B');
         var positiveSpeed = condition && condition.getAttribute('type') === 'logic_compare' && (
-          (field(condition, 'OP') === 'GT' && speedLeft && speedLeft.getAttribute('type') === 'pond_speed' && signature(speedRight) === 'number:0') ||
-          (field(condition, 'OP') === 'LT' && speedRight && speedRight.getAttribute('type') === 'pond_speed' && signature(speedLeft) === 'number:0')
+          field(condition, 'OP') === 'GT' && speedLeft && speedLeft.getAttribute('type') === 'pond_speed' && signature(speedRight) === 'number:0'
         );
         if (field(loop, 'MODE') !== 'WHILE' || !positiveSpeed) return 'Условие цикла: «пока speed() > 0». Цикл должен ждать остановки утки.';
         if (Array.prototype.some.call(loop.querySelectorAll('statement block'), active)) return 'Оставь тело цикла пустым: движение уже запущено, нужно только проверять скорость.';

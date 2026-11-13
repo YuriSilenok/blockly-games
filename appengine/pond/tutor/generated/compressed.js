@@ -480,7 +480,7 @@ b){var c=W("containerStorage");c.textContent="";b=l(b.split("\n"));var d=b.next(
 !1,!0,{width:"40%",left:"30%",top:"3em"},function(){document.body.removeEventListener("keydown",Y.vp,!0)});document.body.addEventListener("keydown",Y.vp,!0)}},$j:function(a){!Y.Qf||a.keyCode!==13&&a.keyCode!==27&&a.keyCode!==32||(Y.tk(!0),a.stopPropagation(),a.preventDefault())},Lo:function(){document.body.addEventListener("keydown",Y.$j,!0)},Mo:function(){document.body.removeEventListener("keydown",Y.$j,!0)},vp:function(a){Y.$j(a);a.keyCode!==13&&a.keyCode!==32||Mm()}};window.BlocklyDialogs=Y;var Vm="";function Wm(a){a=a.replace(/(,\s*)?'block_id_[^']+'\)/g,")");return a.replace(/\s+$/,"")}function Xm(){setTimeout(function(){var a=document.createElement("script");a.type="text/javascript";a.src="third-party/JS-Interpreter/compressed.js";document.head.appendChild(a)},1)}
 function Ym(){setTimeout(function(){var a=document.createElement("link");a.rel="stylesheet";a.type="text/css";a.href="common/prettify.css";document.head.appendChild(a);a=document.createElement("script");a.type="text/javascript";a.src="common/prettify.js";document.head.appendChild(a)},1)}
 function Zm(){var a=W("dialogDone");if(li){var b=W("dialogLinesText");b.textContent="";var c=Vm;c=Wm(c);var d=c.replace(/\/\/[^\n]*/g,"");d=d.replace(/\/\*.*\*\//g,"");d=d.replace(/[ \t]+\n/g,"\n");d=d.replace(/\n+/g,"\n");d=d.trim();d=d.split("\n").length;var e=W("containerCode");e.textContent=c;typeof prettyPrintOne==="function"&&(c=e.innerHTML,c=prettyPrintOne(c,"js"),e.innerHTML=c);c=d===1?X("Games.linesOfCode1",!1):X("Games.linesOfCode2",!1).replace("%1",String(d));b.appendChild(document.createTextNode(c))}b=
-nm<mm?X("Games.nextLevel",!1).replace("%1",String(nm+1)):X("Games.finalLevel",!1);c=W("doneOk");c.addEventListener("click",Om,!0);c.addEventListener("touchend",Om,!0);Y.Wi(a,null,!1,!0,{width:"40%",left:"30%",top:"3em"},function(){document.body.removeEventListener("keydown",$m,!0)});document.body.addEventListener("keydown",$m,!0);W("dialogDoneText").textContent=b}function $m(a){Y.$j(a);a.keyCode!==13&&a.keyCode!==32||Om()};function an(a,b,c){an.m.constructor.call(this,a?a.i.id:void 0);this.ka=a?a.id:null;this.Zg=b;this.Vl=c}B(an,Oe);an.prototype.type="bubble_open";an.prototype.S=function(){var a=an.m.S.call(this);a.isOpen=this.Zg;a.bubbleType=this.Vl;a.blockId=this.ka;return a};an.prototype.N=function(a){an.m.N.call(this,a);this.Zg=a.isOpen;this.Vl=a.bubbleType;this.ka=a.blockId};u(Va,"bubble_open",an);function ql(a){this.B=a;this.Sb=null}g=ql.prototype;g.Jp=!0;g.Fj=17;g.Ma=null;g.Of=null;function pj(a){a.Sb||(a.Sb=D(Gc,{"class":"blocklyIconGroup"},null),a.B.Da&&E(a.Sb,"blocklyIconGroupReadonly"),a.vm(a.Sb),a.B.V().appendChild(a.Sb),J(a.Sb,"mouseup",a,a.an),a.Ge())}g.dispose=function(){G(this.Sb);this.Sb=null;this.na(!1);this.B=null};g.Ge=function(){};g.isVisible=function(){return!!this.Ma};g.an=function(a){this.B.i.Ta()||this.B.Da||Sb(a)||this.na(!this.isVisible())};
+nm<mm?X("Games.nextLevel",!1).replace("%1",String(nm+1)):X("Games.finalLevel",!1);c=W("doneOk");c.addEventListener("click",Om,!0);c.addEventListener("touchend",Om,!0);Y.Wi(a,null,!1,!0,{width:"50%",left:"25%",top:"5em",height:"70vh",display:"flex",flexDirection:"column"},function(){document.body.removeEventListener("keydown",$m,!0)});document.body.addEventListener("keydown",$m,!0);W("dialogDoneText").textContent=b}function $m(a){Y.$j(a);a.keyCode!==13&&a.keyCode!==32||Om()};function an(a,b,c){an.m.constructor.call(this,a?a.i.id:void 0);this.ka=a?a.id:null;this.Zg=b;this.Vl=c}B(an,Oe);an.prototype.type="bubble_open";an.prototype.S=function(){var a=an.m.S.call(this);a.isOpen=this.Zg;a.bubbleType=this.Vl;a.blockId=this.ka;return a};an.prototype.N=function(a){an.m.N.call(this,a);this.Zg=a.isOpen;this.Vl=a.bubbleType;this.ka=a.blockId};u(Va,"bubble_open",an);function ql(a){this.B=a;this.Sb=null}g=ql.prototype;g.Jp=!0;g.Fj=17;g.Ma=null;g.Of=null;function pj(a){a.Sb||(a.Sb=D(Gc,{"class":"blocklyIconGroup"},null),a.B.Da&&E(a.Sb,"blocklyIconGroupReadonly"),a.vm(a.Sb),a.B.V().appendChild(a.Sb),J(a.Sb,"mouseup",a,a.an),a.Ge())}g.dispose=function(){G(this.Sb);this.Sb=null;this.na(!1);this.B=null};g.Ge=function(){};g.isVisible=function(){return!!this.Ma};g.an=function(a){this.B.i.Ta()||this.B.Da||Sb(a)||this.na(!this.isVisible())};
 g.Ja=function(){this.isVisible()&&this.Ma.hb(this.B.style.Rd)};function of(a,b){a.Of=b;a.isVisible()&&(a=a.Ma,a.Qa=b,a.uo&&Bg(a))}function sj(a){var b=a.B.ga(),c=Ob(a.Sb);b=new q(b.x+c.x+a.Fj/2,b.y+c.y+a.Fj/2);Ba(a.Of,b)||of(a,b)};function uj(a){uj.m.constructor.call(this,a);pj(this);this.De=Object.create(null)}B(uj,ql);g=uj.prototype;g.Jp=!1;g.vm=function(a){D(Jc,{"class":"blocklyIconShape",d:"M2,15Q-1,15 0.5,12L6.5,1.7Q8,-1 9.5,1.7L15.5,12Q17,15 14,15z"},a);D(Jc,{"class":"blocklyIconSymbol",d:"m7,4.8v3.16l0.27,2.27h1.46l0.27,-2.27v-3.16z"},a);D(Mc,{"class":"blocklyIconSymbol",x:"7",y:"11",height:"2",width:"2"},a)};g.na=function(a){a!=this.isVisible()&&(y(new (A("bubble_open"))(this.B,a,"warning")),a?this.Xj():this.ek())};
 g.Xj=function(){this.$f=Mg(this.Qb());this.Ma=Ng(this.$f,this.B,this.Of);this.Ja()};g.ek=function(){this.Ma.dispose();this.$f=this.Ma=null};function vj(a,b,c){a.De[c]!=b&&(b?a.De[c]=b:delete a.De[c],a.isVisible()&&(a.na(!1),a.na(!0)))}g.Qb=function(){var a=[],b;for(b in this.De)a.push(this.De[b]);return a.join("\n")};g.dispose=function(){this.B.Dc=null;ql.prototype.dispose.call(this)};function qd(a){qd.m.constructor.call(this,a);this.xb=a.mc;this.xb.text=this.xb.text||"";this.Yl="";this.Rk=this.Ok=this.Xk=this.hf=null;pj(this)}B(qd,ql);g=qd.prototype;
 g.vm=function(a){D(wc,{"class":"blocklyIconShape",r:"8",cx:"8",cy:"8"},a);D(Jc,{"class":"blocklyIconSymbol",d:"m6.8,10h2c0.003,-0.617 0.271,-0.962 0.633,-1.266 2.875,-2.4050.607,-5.534 -3.765,-3.874v1.7c3.12,-1.657 3.698,0.118 2.336,1.25-1.201,0.998 -1.201,1.528 -1.204,2.19z"},a);D(Mc,{"class":"blocklyIconSymbol",x:"6.8",y:"10.78",height:"2",width:"2"},a)};
@@ -787,6 +787,14 @@ k}}finally{ba(e,f)}Z.reset();On()});
       content.appendChild(documentation);
       content.appendChild(task);
     }
+    var victory = root.querySelector('#dialogDone');
+    if (victory) {
+      var footer = victory.querySelector('#dialogDoneButtons');
+      var body = document.createElement('div');
+      body.className = 'level-victory-content';
+      while (victory.firstChild && victory.firstChild !== footer) body.appendChild(victory.firstChild);
+      victory.insertBefore(body, footer);
+    }
     return root.innerHTML;
   };
 
@@ -821,29 +829,152 @@ k}}finally{ba(e,f)}Z.reset();On()});
     return 0;
   }
 
-  function usesScanInCannon() {
-    if (Fm || !li) return false;
+  function validateTask() {
+    if (Fm || !li) return 'Выполни задание с помощью блоков.';
     var xml = new DOMParser().parseFromString(Jm(), 'text/xml');
-    var cannons = xml.querySelectorAll('block[type="pond_cannon"]');
-    for (var i = 0; i < cannons.length; i++) {
-      var cannon = cannons[i];
-      // Detached and disabled blocks do not count as part of the program.
-      var active = true;
-      for (var ancestor = cannon; ancestor && ancestor.nodeType === 1; ancestor = ancestor.parentNode) {
-        if (ancestor.getAttribute('disabled') === 'true') active = false;
+    function active(block) {
+      for (var node = block; node && node.nodeType === 1; node = node.parentNode) {
+        if (node.getAttribute('disabled') === 'true') return false;
       }
-      var top = cannon;
+      var top = block;
       while (top.parentNode && top.parentNode.nodeName !== 'xml') top = top.parentNode;
-      if (!active || top.getAttribute('type') !== 'pond_cannon') continue;
-      for (var child = cannon.firstElementChild; child; child = child.nextElementSibling) {
-        if (child.nodeName !== 'value' || child.getAttribute('name') !== 'RANGE') continue;
-        var scan = child.querySelector('block[type="pond_scan"]');
-        if (scan && scan.getAttribute('disabled') !== 'true') return true;
-      }
+      // Loose value blocks do not execute and cannot satisfy a requirement.
+      var outputTypes = ['pond_scan', 'pond_getX', 'pond_getY', 'pond_speed', 'pond_health', 'variables_get', 'logic_compare', 'logic_boolean', 'pond_math_number', 'math_number'];
+      return outputTypes.indexOf(top.getAttribute('type')) === -1;
     }
-    return false;
+    function blocks(type) {
+      return Array.prototype.filter.call(xml.querySelectorAll('block[type="' + type + '"]'), active);
+    }
+    function input(block, name) {
+      if (!block) return null;
+      for (var child = block.firstElementChild; child; child = child.nextElementSibling) {
+        if (child.nodeName !== 'value' || child.getAttribute('name') !== name) continue;
+        var shadow = null;
+        for (var value = child.firstElementChild; value; value = value.nextElementSibling) {
+          if (value.nodeName === 'block') return active(value) ? value : null;
+          if (value.nodeName === 'shadow') shadow = value;
+        }
+        return shadow;
+      }
+      return null;
+    }
+    function field(block, name) {
+      if (!block) return '';
+      for (var child = block.firstElementChild; child; child = child.nextElementSibling) {
+        if (child.nodeName === 'field' && child.getAttribute('name') === name) {
+          return name === 'VAR' ? child.getAttribute('id') || child.textContent : child.textContent;
+        }
+      }
+      return '';
+    }
+    function signature(block) {
+      if (!block) return '';
+      var type = block.getAttribute('type');
+      if (type === 'variables_get') return 'variable:' + field(block, 'VAR');
+      if (type === 'pond_math_number' || type === 'math_number') {
+        return 'number:' + Number(field(block, 'NUM'));
+      }
+      return '';
+    }
+    function matchingDirection(cannon) {
+      var scan = input(cannon, 'RANGE');
+      if (!scan || scan.getAttribute('type') !== 'pond_scan') return false;
+      var direction = signature(input(cannon, 'DEGREE'));
+      return direction && direction === signature(input(scan, 'DEGREE'));
+    }
+    function usesSharedAngle(cannon) {
+      if (!matchingDirection(cannon)) return false;
+      var angle = input(cannon, 'DEGREE');
+      if (!angle || angle.getAttribute('type') !== 'variables_get') return false;
+      var variable = field(angle, 'VAR');
+      var writes = blocks('variables_set').concat(blocks('math_change')).filter(function (block) {
+        return field(block, 'VAR') === variable;
+      });
+      if (writes.length !== 1 || writes[0].getAttribute('type') !== 'variables_set') return false;
+      var value = input(writes[0], 'VALUE');
+      if (!value || signature(value).indexOf('number:') !== 0) return false;
+      // The one assignment must run before the shot, outside loops and branches.
+      if (writes[0].parentNode.nodeName !== 'xml') return false;
+      var cursor = writes[0];
+      while (cursor) {
+        if (cursor === cannon) return true;
+        var next = null;
+        for (var child = cursor.firstElementChild; child; child = child.nextElementSibling) {
+          if (child.nodeName === 'next') next = child.querySelector('block');
+        }
+        cursor = next;
+      }
+      return false;
+    }
+    var cannons = blocks('pond_cannon');
+    var aimed = cannons.filter(matchingDirection);
+    var shared = cannons.filter(usesSharedAngle);
+    function has(type) { return blocks(type).length > 0; }
+    function contains(block, type) {
+      return block && Array.prototype.some.call(block.querySelectorAll('block[type="' + type + '"]'), active);
+    }
+    function conditionUses(block, type) {
+      for (var child = block.firstElementChild; child; child = child.nextElementSibling) {
+        if (child.nodeName === 'value' && /^(IF\d+|BOOL)$/.test(child.getAttribute('name'))) {
+          if (contains(child, type)) return true;
+        }
+      }
+      return false;
+    }
+    switch (nm) {
+      case 1:
+        if (!cannons.length) return 'Используй блок cannon для выстрела по цели.';
+        break;
+      case 2:
+        if (!aimed.length) return 'Вставь scan во второй параметр cannon. Направление в cannon и scan должно совпадать.';
+        break;
+      case 3:
+      case 4:
+        if (!shared.length) return 'Один раз задай угол числом через переменную перед выстрелом. Используй эту переменную в cannon и во вложенном scan.';
+        if (nm === 4) {
+          var logged = blocks('pond_log').some(function (log) {
+            var scan = input(log, 'VALUE');
+            if (!scan || scan.getAttribute('type') !== 'pond_scan') return false;
+            return shared.some(function (cannon) {
+              return signature(input(scan, 'DEGREE')) === signature(input(cannon, 'DEGREE'));
+            });
+          });
+          if (!logged) return 'Выведи дальность до цели: вставь scan в блок log и используй ту же переменную угла, что и при выстреле.';
+        }
+        break;
+      case 5:
+        if (!has('pond_swim')) return 'Используй swim, чтобы подплыть к цели и победить тараном.';
+        break;
+      case 6:
+        if (!blocks('controls_if').some(function (block) { return contains(block, 'pond_stop'); }) || !has('pond_swim') || !cannons.length) return 'Используй условие if, движение swim, остановку stop и выстрел cannon.';
+        break;
+      case 7:
+        var branches = blocks('controls_if').some(function (block) {
+          var mutation = block.querySelector('mutation');
+          return mutation && Number(mutation.getAttribute('elseif')) > 0 && mutation.getAttribute('else') === '1' && contains(block, 'pond_swim') && contains(block, 'pond_stop') && contains(block, 'pond_cannon');
+        });
+        if (!branches || !has('pond_swim') || !has('pond_stop') || !cannons.length) return 'Используй ветви if, else if и else для погони, остановки и стрельбы: swim, stop и cannon.';
+        break;
+      case 8:
+        if (!blocks('controls_if').some(function (block) { return conditionUses(block, 'pond_getX') && contains(block, 'pond_swim'); }) || !blocks('controls_if').some(function (block) { return conditionUses(block, 'pond_getY') && contains(block, 'pond_swim'); })) return 'Используй getX и getY в условиях if, чтобы менять направление движения swim.';
+        break;
+      case 9:
+        var approaching = blocks('controls_whileUntil').some(function (loop) {
+          var comparison = input(loop, 'BOOL');
+          if (!comparison || comparison.getAttribute('type') !== 'logic_compare' || field(loop, 'MODE') !== 'WHILE') return false;
+          var left = input(comparison, 'A'), right = input(comparison, 'B');
+          var lessThan50 = field(comparison, 'OP') === 'LT' && left && left.getAttribute('type') === 'pond_getX' && signature(right) === 'number:50';
+          var greaterThanX = field(comparison, 'OP') === 'GT' && right && right.getAttribute('type') === 'pond_getX' && signature(left) === 'number:50';
+          return (lessThan50 || greaterThanX) && contains(loop, 'pond_swim');
+        });
+        if (!approaching || !has('pond_stop') || !cannons.length) return 'Плыви в цикле, пока координата getX меньше 50, затем используй stop и cannon.';
+        break;
+      case 10:
+        if (!blocks('controls_if').some(function (block) { return conditionUses(block, 'pond_scan') && contains(block, 'pond_swim'); }) || !aimed.length) return 'Проверяй расстояние через scan: догоняй цель с помощью swim, если она дальше 70, и стреляй с помощью cannon и scan.';
+        break;
+    }
+    return '';
   }
-
   function warn(message) {
     var button = W('runButton');
     if (button) button.title = message;
@@ -851,16 +982,17 @@ k}}finally{ba(e,f)}Z.reset();On()});
   }
 
   var originalRun = Yn;
-  var validSecondLevelRun = false;
+  var validTaskRun = false;
   Yn = function (event) {
     var incomplete = firstIncompleteLevel();
     if (incomplete) {
       warn('Сначала пройди уровень ' + incomplete + '. Этот уровень пока нельзя запустить.');
       return;
     }
-    validSecondLevelRun = nm !== 2 || usesScanInCannon();
-    if (!validSecondLevelRun) {
-      warn('Вставь блок scan во второй параметр блока cannon — расстояние до цели. Затем запусти программу.');
+    var taskError = validateTask();
+    validTaskRun = !taskError;
+    if (taskError) {
+      warn(taskError);
       return;
     }
     originalRun(event);
@@ -868,7 +1000,7 @@ k}}finally{ba(e,f)}Z.reset();On()});
 
   var originalFinish = Wn;
   Wn = function (result) {
-    if (firstIncompleteLevel() || (nm === 2 && !validSecondLevelRun)) {
+    if (firstIncompleteLevel() || !validTaskRun) {
       clearTimeout(Mn);
       return;
     }

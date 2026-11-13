@@ -763,8 +763,8 @@ k}}finally{ba(e,f)}Z.reset();On()});
       return [
         {start: new q(10, 10), aa: 0, name: X('Pond.playerName', false), code: null},
         {start: new q(90, 10), aa: 99, name: X('Pond.targetName', false) + ' 1', code: 'playerTarget'},
-        {start: new q(90, 90), aa: 99, name: X('Pond.targetName', false) + ' 2', code: 'playerTarget'},
-        {start: new q(10, 90), aa: 99, name: X('Pond.targetName', false) + ' 3', code: 'playerTarget'}
+        {start: new q(80, 90), aa: 99, name: X('Pond.targetName', false) + ' 2', code: 'playerTarget'},
+        {start: new q(10, 80), aa: 99, name: X('Pond.targetName', false) + ' 3', code: 'playerTarget'}
       ];
     }
     return originalScene();
@@ -789,8 +789,8 @@ k}}finally{ba(e,f)}Z.reset();On()});
       return [
         {start: new q(10, 10), aa: 0, name: X('Pond.playerName', false), code: null},
         {start: new q(90, 10), aa: 99, name: X('Pond.targetName', false) + ' 1', code: 'playerTarget'},
-        {start: new q(90, 90), aa: 99, name: X('Pond.targetName', false) + ' 2', code: 'playerTarget'},
-        {start: new q(10, 90), aa: 99, name: X('Pond.targetName', false) + ' 3', code: 'playerTarget'}
+        {start: new q(80, 90), aa: 99, name: X('Pond.targetName', false) + ' 2', code: 'playerTarget'},
+        {start: new q(10, 80), aa: 99, name: X('Pond.targetName', false) + ' 3', code: 'playerTarget'}
       ];
     }
     return originalScene();

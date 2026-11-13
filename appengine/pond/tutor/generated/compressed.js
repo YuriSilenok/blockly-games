@@ -749,6 +749,14 @@ k}}finally{ba(e,f)}Z.reset();On()});
   // Preserve the previous level-five scene for level fifteen.
   var originalScene = Po;
   Po = function () {
+    if (nm >= 2 && nm <= 4) {
+      var targets = {2: [15, 50], 3: [50, 15], 4: [85, 50]};
+      var target = targets[nm];
+      return [
+        {start: new q(50, 50), aa: 0, name: X('Pond.playerName', false), code: null},
+        {start: new q(target[0], target[1]), aa: 99, name: X('Pond.targetName', false), code: 'playerTarget'}
+      ];
+    }
     if (nm === 15) {
       var level = nm;
       try {

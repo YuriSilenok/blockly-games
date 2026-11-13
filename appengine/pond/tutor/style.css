@@ -2,28 +2,55 @@
   direction: ltr;
   font-size: large;
 }
-
 #help .blocklyEditableText {
   cursor: default !important;
 }
-
-#help .blocklyEditableText:hover>rect {
+#help .blocklyEditableText:hover > rect {
   stroke: none;
 }
-
 #help svg {
   direction: ltr;
 }
-
-/* New blocks precede the task; each illustration keeps its original size. */
-#help .level-help-blocks {
-  margin-bottom: 16px;
-  overflow-x: auto;
+#dialog #help {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
-#help .level-help-blocks svg {
-  display: block;
-  margin-bottom: 8px;
+#dialog #help > div:first-child {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
+#help .level-help-documentation,
 #help .level-help-task {
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #d6dce5;
+  border-radius: 6px;
   line-height: 1.5;
+}
+#help .level-help-documentation h2,
+#help .level-help-task h2 {
+  margin: 0 0 12px;
+  font-size: 1.1em;
+}
+#help .level-help-documentation h3 {
+  margin: 12px 0 8px;
+  font-size: 1em;
+}
+#help .level-help-documentation blockquote {
+  margin: 0;
+}
+#help .level-help-documentation .js {
+  display: none;
+}
+#help .level-help-documentation svg {
+  display: block;
+  margin: 8px 0;
+}
+#help .level-help-task p {
+  margin: 0;
+}
+#resetProgressButton {
+  margin-inline-start: 8px;
 }

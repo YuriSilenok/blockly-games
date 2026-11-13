@@ -739,7 +739,7 @@ k}}finally{ba(e,f)}Z.reset();On()});
     1: 'Попади в цель с помощью блока cannon. Укажи направление выстрела в первом параметре, а расстояние до цели — во втором.',
     2: 'Попади в цель с помощью блока cannon. Чтобы определить расстояние до цели, вставь блок scan во второй параметр cannon. Укажи одинаковое направление в обоих блоках.',
     3: 'Попади в цель с помощью блоков cannon и scan. Создай переменную для угла и присвой ей значение один раз. Используй эту переменную для направления и в cannon, и в scan. Блок scan вставь во второй параметр cannon.',
-    4: 'Попади в цель с помощью блоков cannon и scan, задавая направление через переменную, как в предыдущем задании. Дополнительно выведи расстояние до цели в консоль браузера: передай результат scan в блок log.'
+    4: 'Создай две переменные: одну для угла, другую для расстояния до цели. Сначала задай угол числом. Затем сохрани во второй переменной результат scan, передав в scan переменную угла. Выведи переменную расстояния в консоль с помощью log. После этого попади в цель: передай в cannon переменную угла первым параметром, а переменную расстояния — вторым. Соедини блоки в указанном порядке.'
   };
   var originalHtml = No;
   No = function () {
@@ -906,6 +906,45 @@ k}}finally{ba(e,f)}Z.reset();On()});
       }
       return false;
     }
+    function usesStoredDistance(cannon) {
+      var angle = input(cannon, 'DEGREE');
+      var distance = input(cannon, 'RANGE');
+      if (!angle || !distance || angle.getAttribute('type') !== 'variables_get' || distance.getAttribute('type') !== 'variables_get') return false;
+      var angleId = field(angle, 'VAR');
+      var distanceId = field(distance, 'VAR');
+      if (!angleId || !distanceId || angleId === distanceId) return false;
+      function singleAssignment(variable) {
+        var writes = blocks('variables_set').concat(blocks('math_change')).filter(function (block) {
+          return field(block, 'VAR') === variable;
+        });
+        return writes.length === 1 && writes[0].getAttribute('type') === 'variables_set' ? writes[0] : null;
+      }
+      var angleSet = singleAssignment(angleId);
+      var distanceSet = singleAssignment(distanceId);
+      if (!angleSet || !distanceSet || angleSet.parentNode.nodeName !== 'xml') return false;
+      if (signature(input(angleSet, 'VALUE')).indexOf('number:') !== 0) return false;
+      var scan = input(distanceSet, 'VALUE');
+      if (!scan || scan.getAttribute('type') !== 'pond_scan' || signature(input(scan, 'DEGREE')) !== 'variable:' + angleId) return false;
+      // Require a single connected sequence: angle, scan result, log, cannon.
+      var distanceReady = false;
+      var logged = false;
+      var cursor = angleSet;
+      while (cursor) {
+        if (cursor === distanceSet) distanceReady = true;
+        if (distanceReady && cursor.getAttribute('type') === 'pond_log' && signature(input(cursor, 'VALUE')) === 'variable:' + distanceId) logged = true;
+        if (cursor === cannon) return distanceReady && logged;
+        var next = null;
+        for (var child = cursor.firstElementChild; child; child = child.nextElementSibling) {
+          if (child.nodeName === 'next') {
+            for (var statement = child.firstElementChild; statement; statement = statement.nextElementSibling) {
+              if (statement.nodeName === 'block' && active(statement)) next = statement;
+            }
+          }
+        }
+        cursor = next;
+      }
+      return false;
+    }
     var cannons = blocks('pond_cannon');
     var aimed = cannons.filter(matchingDirection);
     var shared = cannons.filter(usesSharedAngle);
@@ -929,18 +968,10 @@ k}}finally{ba(e,f)}Z.reset();On()});
         if (!aimed.length) return 'Вставь scan во второй параметр cannon. Направление в cannon и scan должно совпадать.';
         break;
       case 3:
-      case 4:
         if (!shared.length) return 'Один раз задай угол числом через переменную перед выстрелом. Используй эту переменную в cannon и во вложенном scan.';
-        if (nm === 4) {
-          var logged = blocks('pond_log').some(function (log) {
-            var scan = input(log, 'VALUE');
-            if (!scan || scan.getAttribute('type') !== 'pond_scan') return false;
-            return shared.some(function (cannon) {
-              return signature(input(scan, 'DEGREE')) === signature(input(cannon, 'DEGREE'));
-            });
-          });
-          if (!logged) return 'Выведи дальность до цели: вставь scan в блок log и используй ту же переменную угла, что и при выстреле.';
-        }
+        break;
+      case 4:
+        if (!cannons.some(usesStoredDistance)) return 'Соедини блоки по порядку: задай переменную угла; сохрани scan с этим углом в отдельную переменную расстояния; выведи расстояние через log; передай обе переменные в cannon. Каждой переменной присвой значение один раз.';
         break;
       case 5:
         if (!has('pond_swim')) return 'Используй swim, чтобы подплыть к цели и победить тараном.';

@@ -65,10 +65,8 @@ function toggle(e) {
   window.addEventListener('load', init);
   var param = window.location.search.match(/[?&]mode=([^&]+)/);
   var level = param ? Number(param[1]) : 11;
-  var hide = level % 2 ? 'hideJs' : 'hideBlocks';
+  var hide = 'hideJs';
   var classes = [hide];
-  for (var i = level + 1; i <= 11; i++) {
-    classes.push('hideLevel' + i);
-  }
+  // Documentation is available in full, always with its original block images.
   document.body.className = classes.join(' ');
 })();

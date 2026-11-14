@@ -167,3 +167,4 @@ body.hideLevel10 .level10 {
 body.hideLevel11 .level11 {
   display: none;
 }
+pre { display: none !important; }

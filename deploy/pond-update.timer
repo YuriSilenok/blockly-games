@@ -1,0 +1,10 @@
+[Unit]
+Description=Check GitHub for Pond updates
+
+[Timer]
+OnBootSec=60
+OnUnitInactiveSec=60
+RandomizedDelaySec=5
+
+[Install]
+WantedBy=timers.target

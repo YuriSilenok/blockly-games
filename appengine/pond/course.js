@@ -9,7 +9,8 @@ window.installPondCourse = function () {
   function key(level) { return 'pond-course:' + (portal.user ? portal.user.id : 'preview') + ':' + level; }
   function completed(level) { return portal.user ? portal.user.completed.indexOf(level) !== -1 : !!localStorage.getItem(key(level)); }
   pm = function (level) { return completed(level) ? localStorage.getItem(key(level)) || '<xml></xml>' : null; };
-  Hm = function (fallback) { if (fallback) Im(fallback); };
+  // A new level starts empty; only this level's saved work is restored below.
+  Hm = function () { Im('<xml></xml>'); };
   function report(text) { var e = document.getElementById('course-status'); if (e) e.textContent = text; }
   function blocks(xml) {
     var root = new DOMParser().parseFromString(xml, 'text/xml');

@@ -4,7 +4,7 @@ window.installPondCourse = function () {
   mm = POND_COURSE.length;
   nm = Math.max(1, Math.min(mm, nm));
   var lesson = POND_COURSE[nm - 1], portal = PondPortal;
-  var metrics = {}, running = null, pending = false, ready = false;
+  var metrics = {}, running = null, pending = false, ready = false, checkingSession = false;
   var loops = ['controls_whileUntil','controls_repeat_ext','controls_repeat','controls_for','controls_forEach'];
   function key(level) { return 'pond-course:' + (portal.user ? portal.user.id : 'preview') + ':' + level; }
   function completed(level) { return portal.user ? portal.user.completed.indexOf(level) !== -1 : !!localStorage.getItem(key(level)); }
@@ -45,7 +45,7 @@ window.installPondCourse = function () {
     var done=container.querySelector('#dialogDone');
     done.innerHTML='<div class="course-scroll"><h2>Эксперимент удался!</h2><p id="course-result"></p></div><div class="course-buttons"><button class="addHideHandler">Продолжить эксперимент</button><button id="course-next" class="secondary">Следующий уровень</button></div>';
     var toolbar=container.querySelector('#header_cta');
-    toolbar.insertAdjacentHTML('beforeend',' <button id="course-reset">Сброс</button> <a href="portal/account.html">Учётная запись</a> <a href="portal/tournament.html">Турниры</a>');
+    toolbar.insertAdjacentHTML('beforeend',' <button id="course-reset">Сброс</button> <a href="portal/account.html">Личный кабинет</a> <a href="portal/tournament.html">Турниры</a>');
     container.querySelector('#visualization').insertAdjacentHTML('afterend','<div id="course-feedback"><div id="course-status" role="status"></div><div id="course-log" aria-label="Консоль измерений"></div></div>');
     lesson.scene.slice(1).forEach(function(a,i){var e=document.createElement('div');e.id='course-bot-'+i;e.style.display='none';e.textContent=a.code;container.appendChild(e);});
     var toolbox=container.querySelector('#toolbox');
@@ -80,7 +80,11 @@ window.installPondCourse = function () {
     });
   };
   var originalRun=Yn;
-  Yn=function(event){
+  Yn=async function(event){
+    if(checkingSession)return;
+    checkingSession=true;
+    try{await portal.refresh();}catch(error){report('Не удалось проверить вход. Повтори запуск.');return;}finally{checkingSession=false;}
+    if(!portal.user){portal.signIn();return;}
     if(!ready){report('Подожди загрузки прогресса.');return;}
     if(pending){report('Дождись сохранения результата.');return;}
     for(var i=1;i<nm;i++)if(!completed(i)){alert('Сначала пройди предыдущие уровни.');return;}
@@ -103,6 +107,7 @@ window.installPondCourse = function () {
     var solution=running;running=null;
     try{
       pending=true;
+      if(!portal.user){portal.signIn();return;}
       if(portal.user){
         report('Сохраняем результат: сервер повторяет эксперимент…');
         var job=await portal.request('/api/training/submit',{level:nm,code:solution.code,xml:solution.xml});
@@ -110,7 +115,7 @@ window.installPondCourse = function () {
         if(!result.passed){report(result.message);return;}
         await portal.refresh();
       }
-      localStorage.setItem(key(nm),solution.xml);report(portal.user?'Прогресс сохранён в учётной записи.':'Режим знакомства: прогресс хранится в этом браузере. Для участия в турнирах пройди обучение в учётной записи.');
+      localStorage.setItem(key(nm),solution.xml);report('Прогресс сохранён в учётной записи.');
       var level=W('level'+nm);if(level)level.classList.add('level_done');Zm();
     }catch(error){running=solution;report(error.message+' Нажми «Сохранить результат», чтобы повторить отправку.');var retry=document.createElement('button');retry.textContent='Сохранить результат';retry.onclick=function(){retry.remove();Wn();};W('course-status').appendChild(retry);}
     finally{pending=false;}
@@ -134,7 +139,7 @@ window.installPondCourse = function () {
       target.querySelectorAll('[id]').forEach(function(e){e.removeAttribute('id');});
     }catch(error){target.textContent='Документация не загрузилась. Открой её кнопкой «Документация» и повтори попытку позже.';}
   }
-  window.addEventListener('load',async function(){
+  portal.onLoad(async function(){
     document.title='Уровень '+nm+' — '+lesson.title+' — Пруд';
     W('course-next').onclick=function(){location.href=nm===mm?'portal/tournament.html':'?level='+(nm+1);};
     W('course-reset').onclick=async function(){
@@ -142,12 +147,13 @@ window.installPondCourse = function () {
       try{if(portal.user)await portal.request('/api/progress/reset',{});for(var i=1;i<=mm;i++){localStorage.removeItem(key(i));localStorage.removeItem(key(i)+':draft');}location.href='?level=1';}catch(error){report(error.message);}
     };
     quote();await portal.ready;
+    if(!portal.user){portal.signIn();return;}
     try{
       var saved=localStorage.getItem(key(nm)+':draft');
       if(portal.user){var data=await portal.request('/api/training/'+nm);saved=saved||data.xml;}
       if(saved)Im(saved);
       for(var i=1;i<=mm;i++){var node=W('level'+i);if(node)node.classList.toggle('level_done',completed(i));}
-      report(portal.user?'Прогресс сохраняется для '+portal.user.login+'.':'Режим знакомства. Войди в учётную запись, чтобы сохранять прогресс между устройствами и открыть турнир.');
+      report('Уровень '+nm+' · '+lesson.title+'\nПрогресс сохраняется для '+portal.user.login+'.');
       ready=true;
     }catch(error){report(error.message);}
   });

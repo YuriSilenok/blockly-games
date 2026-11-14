@@ -8,13 +8,15 @@ import os
 from pathlib import Path
 import re
 import secrets
+import sqlite3
 import threading
 import time
-from urllib.parse import unquote, urlsplit
+from urllib.parse import unquote, urlsplit, quote
 import xml.etree.ElementTree as ET
 
 from .store import ROOT, db, initialize, password_hash, password_matches
 from .worker import LESSONS, work
+from .teams import details as team_details, change as change_team, TeamProblem
 
 STATIC = ROOT / 'appengine'
 ORIGIN = os.environ.get('POND_ORIGIN', 'http://localhost:8000').rstrip('/')
@@ -50,7 +52,7 @@ class Handler(BaseHTTPRequestHandler):
         raw = jar.get('pond_session')
         token = hashlib.sha256(raw.value.encode()).hexdigest() if raw else ''
         with db() as c:
-            row = c.execute('SELECT s.token,s.csrf,u.id,u.login,u.role,u.team FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token=? AND s.expires>?', (token, time.time())).fetchone()
+            row = c.execute('SELECT s.token,s.csrf,u.id,u.login,u.role,t.name AS team,t.id AS team_id,t.captain_id FROM sessions s JOIN users u ON u.id=s.user_id LEFT JOIN team_members m ON m.user_id=u.id LEFT JOIN teams t ON t.id=m.team_id WHERE s.token=? AND s.expires>?', (token, time.time())).fetchone()
         if required and not row:
             raise Problem('Войди в учётную запись.', 401)
         return dict(row) if row else None
@@ -99,17 +101,19 @@ class Handler(BaseHTTPRequestHandler):
                 with db() as c:
                     rows = c.execute('SELECT id,name,status,seconds FROM tournaments ORDER BY id DESC').fetchall()
                 self.send_json({'tournaments': [dict(r) for r in rows]})
+            elif path == '/api/team':
+                self.send_json({'team': team_details(self.session()['id'])})
             elif re.fullmatch(r'/api/tournaments/\d+/standings', path):
                 self.session()
                 tournament_id = int(path.split('/')[3])
                 with db() as c:
-                    rows = c.execute('SELECT e.position,u.team,e.user_id,e.submission_id FROM entries e JOIN users u ON u.id=e.user_id WHERE e.tournament_id=? ORDER BY e.position', (tournament_id,)).fetchall()
+                    rows = c.execute('SELECT e.position,t.name AS team,e.team_id,e.submission_id FROM entries e JOIN teams t ON t.id=e.team_id WHERE e.tournament_id=? ORDER BY e.position', (tournament_id,)).fetchall()
                 self.send_json({'standings': [dict(r) for r in rows]})
             elif re.fullmatch(r'/api/jobs/\d+', path):
                 user = self.session()
                 with db() as c:
-                    row = c.execute('SELECT id,user_id,status,result FROM jobs WHERE id=?', (int(path.split('/')[-1]),)).fetchone()
-                if not row or (row['user_id'] != user['id'] and user['role'] != 'admin'):
+                    row = c.execute('SELECT id,user_id,team_id,status,result FROM jobs WHERE id=?', (int(path.split('/')[-1]),)).fetchone()
+                if not row or (row['user_id'] != user['id'] and user['role'] != 'admin' and not (row['team_id'] and row['team_id'] == user['team_id'])):
                     raise Problem('Задание не найдено.', 404)
                 self.send_json({'id': row['id'], 'status': row['status'], 'result': json.loads(row['result']) if row['result'] else None})
             elif re.fullmatch(r'/api/training/\d+', path):
@@ -153,15 +157,10 @@ class Handler(BaseHTTPRequestHandler):
                 with db() as c:
                     c.execute('DELETE FROM sessions WHERE token=?', (user['token'],))
                 self.send_json({'ok': True}, cookie='pond_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict')
-            elif path == '/api/profile':
-                team = str(value.get('team', '')).strip()
-                if not 2 <= len(team) <= 60:
-                    raise Problem('Название команды: от 2 до 60 символов.')
-                with db() as c:
-                    if c.execute('SELECT 1 FROM users WHERE team=? COLLATE NOCASE AND id<>?', (team, user['id'])).fetchone():
-                        raise Problem('Это название команды уже занято.')
-                    c.execute('UPDATE users SET team=? WHERE id=?', (team, user['id']))
-                self.send_json({'ok': True})
+            elif path == '/api/password':
+                self.change_password(user, value)
+            elif path in ('/api/team/create', '/api/team/rename', '/api/team/add', '/api/team/remove', '/api/team/leave'):
+                self.send_json({'team': change_team(user['id'], path.split('/')[-1], value)})
             elif path == '/api/progress/reset':
                 with db() as c:
                     if c.execute("SELECT 1 FROM jobs WHERE user_id=? AND kind='training' AND status='running'", (user['id'],)).fetchone():
@@ -191,6 +190,10 @@ class Handler(BaseHTTPRequestHandler):
                 raise Problem('Адрес не найден.', 404)
         except Problem as error:
             self.send_json({'error': error.message}, error.status)
+        except TeamProblem as error:
+            self.send_json({'error': str(error)}, 409)
+        except sqlite3.IntegrityError:
+            self.send_json({'error': 'Этот логин или название команды уже используется. Обнови страницу.'}, 409)
         except (ValueError, TypeError, ET.ParseError):
             self.send_json({'error': 'Проверь введённые данные.'}, 400)
         except (BrokenPipeError, ConnectionResetError):
@@ -207,6 +210,8 @@ class Handler(BaseHTTPRequestHandler):
         password = str(value.get('password', ''))
         if not re.fullmatch(r'[a-zA-Z0-9_.-]{3,40}', login) or not 8 <= len(password) <= 256:
             raise Problem('Логин: 3–40 латинских букв, цифр, точек, дефисов или подчёркиваний. Пароль: 8–256 символов.')
+        if path == '/api/register' and password != str(value.get('confirm_password', '')):
+            raise Problem('Пароли не совпадают.')
         with db() as c:
             c.execute('DELETE FROM auth_failures WHERE at<?', (time.time() - 900,))
             if c.execute('SELECT count(*) FROM auth_failures WHERE ip=?', (address,)).fetchone()[0] >= 15:
@@ -229,6 +234,28 @@ class Handler(BaseHTTPRequestHandler):
         cookie = 'pond_session=%s; Path=/; Max-Age=604800; HttpOnly; SameSite=Strict%s' % (raw, '; Secure' if SECURE else '')
         self.send_json({'ok': True}, cookie=cookie)
 
+    def change_password(self, user, value):
+        current = str(value.get('current_password', ''))
+        new = str(value.get('new_password', ''))
+        if not 8 <= len(new) <= 256 or not 1 <= len(current) <= 256:
+            raise Problem('Новый пароль должен содержать от 8 до 256 символов.')
+        if new != str(value.get('confirm_password', '')):
+            raise Problem('Новые пароли не совпадают.')
+        with db() as c:
+            row = c.execute('SELECT password FROM users WHERE id=?', (user['id'],)).fetchone()
+            if not password_matches(current, row['password']):
+                raise Problem('Текущий пароль указан неверно.', 403)
+            if current == new:
+                raise Problem('Новый пароль должен отличаться от текущего.')
+            encoded = password_hash(new)
+            # Reject stale concurrent changes instead of overwriting a newer password.
+            changed = c.execute('UPDATE users SET password=? WHERE id=? AND password=?', (encoded, user['id'], row['password'])).rowcount
+            if not changed:
+                raise Problem('Пароль уже изменён. Обнови страницу.', 409)
+            c.execute('DELETE FROM sessions WHERE user_id=? AND token<>?', (user['id'], user['token']))
+            c.execute('UPDATE sessions SET csrf=? WHERE token=?', (secrets.token_urlsafe(24), user['token']))
+        self.send_json({'ok': True})
+
     def submit(self, user, path, value):
         code, xml = str(value.get('code', '')), str(value.get('xml', ''))
         if not code.strip() or len(code) > 60000 or not xml or len(xml) > 120000:
@@ -239,28 +266,42 @@ class Handler(BaseHTTPRequestHandler):
         if root.tag.split('}')[-1] != 'xml' or sum(1 for _ in root.iter()) > 4000:
             raise Problem('Слишком много блоков или некорректный формат.')
         completed = self.progress(user['id'])
-        level = tournament_id = None
+        level = tournament_id = team_id = None
         kind = 'training' if path == '/api/training/submit' else 'tournament'
         if kind == 'training':
             level = int(value.get('level', 0))
             if not 1 <= level <= LESSONS or any(i not in completed for i in range(1, level)):
                 raise Problem('Сначала заверши предыдущие уровни.', 403)
         else:
-            if not user['team']:
-                raise Problem('Укажи название команды в учётной записи.')
+            if not user['team_id']:
+                raise Problem('Создай команду или попроси капитана добавить тебя по логину.')
+            team_id = user['team_id']
             if any(i not in completed for i in range(1, LESSONS + 1)):
                 raise Problem('Для турнира заверши обучение.', 403)
             tournament_id = int(value.get('tournament_id', 0))
         with db() as c:
+            c.execute('BEGIN IMMEDIATE')
             if c.execute("SELECT 1 FROM jobs WHERE user_id=? AND status IN ('queued','running')", (user['id'],)).fetchone():
                 raise Problem('Предыдущее решение ещё проверяется.', 409)
             if kind == 'tournament' and not c.execute("SELECT 1 FROM tournaments WHERE id=? AND status='open'", (tournament_id,)).fetchone():
                 raise Problem('Турнир не найден или закрыт.')
-            job_id = c.execute('INSERT INTO jobs(user_id,tournament_id,kind,level,code,xml,created) VALUES(?,?,?,?,?,?,?)',
-                               (user['id'], tournament_id, kind, level, code, xml, time.time())).lastrowid
+            if kind == 'tournament':
+                if not c.execute('SELECT 1 FROM team_members WHERE user_id=? AND team_id=?', (user['id'], team_id)).fetchone():
+                    raise Problem('Состав команды изменился. Обнови страницу.', 409)
+                if c.execute("SELECT 1 FROM jobs WHERE team_id=? AND status IN ('queued','running')", (team_id,)).fetchone():
+                    raise Problem('Решение вашей команды ещё проверяется. Дождитесь результата.', 409)
+            job_id = c.execute('INSERT INTO jobs(user_id,tournament_id,team_id,kind,level,code,xml,created) VALUES(?,?,?,?,?,?,?,?)',
+                               (user['id'], tournament_id, team_id, kind, level, code, xml, time.time())).lastrowid
         self.send_json({'id': job_id}, 202)
 
     def static(self, path):
+        if path == '/pond-tutor.html' and not self.session(False):
+            self.send_response(302)
+            self.send_header('Location', '/portal/account.html?next=' + quote(self.path, safe=''))
+            self.send_header('Cache-Control', 'no-store')
+            self.send_header('Content-Length', '0')
+            self.end_headers()
+            return
         aliases = {'/': '/index.html', '/admin': '/portal/admin.html', '/account': '/portal/account.html', '/tournament': '/portal/tournament.html'}
         if path in aliases and path != '/':
             self.send_response(302)

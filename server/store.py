@@ -73,7 +73,35 @@ def initialize():
         CREATE INDEX IF NOT EXISTS jobs_queue ON jobs(status, kind, id);
         CREATE TABLE IF NOT EXISTS auth_failures (
           ip TEXT NOT NULL, at REAL NOT NULL);
+        CREATE TABLE IF NOT EXISTS teams (
+          id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+          captain_id INTEGER NOT NULL REFERENCES users(id), created REAL NOT NULL);
+        CREATE TABLE IF NOT EXISTS team_members (
+          user_id INTEGER PRIMARY KEY REFERENCES users(id),
+          team_id INTEGER NOT NULL REFERENCES teams(id), joined REAL NOT NULL);
         ''')
+        c.execute('BEGIN IMMEDIATE')
+        # Preserve existing accounts, individual teams and their tournament places.
+        if 'team_id' not in {r['name'] for r in c.execute('PRAGMA table_info(jobs)')}:
+            c.execute('ALTER TABLE jobs ADD COLUMN team_id INTEGER REFERENCES teams(id)')
+            c.execute('ALTER TABLE entries ADD COLUMN team_id INTEGER REFERENCES teams(id)')
+            for user in c.execute('SELECT id,team FROM users WHERE team IS NOT NULL').fetchall():
+                team_id = c.execute('INSERT INTO teams(name,captain_id,created) VALUES(?,?,?)',
+                                    (user['team'], user['id'], time.time())).lastrowid
+                c.execute('INSERT INTO team_members VALUES(?,?,?)', (user['id'], team_id, time.time()))
+                c.execute('UPDATE jobs SET team_id=? WHERE user_id=? AND kind=\'tournament\'', (team_id, user['id']))
+                c.execute('UPDATE entries SET team_id=? WHERE user_id=?', (team_id, user['id']))
+            c.execute('UPDATE users SET team=NULL')
+            c.execute('''CREATE TABLE entries_v2 (
+                id INTEGER PRIMARY KEY, tournament_id INTEGER NOT NULL REFERENCES tournaments(id),
+                user_id INTEGER NOT NULL REFERENCES users(id), position INTEGER NOT NULL,
+                code TEXT NOT NULL, xml TEXT NOT NULL, submission_id INTEGER NOT NULL REFERENCES jobs(id),
+                team_id INTEGER REFERENCES teams(id))''')
+            c.execute('INSERT INTO entries_v2 SELECT id,tournament_id,user_id,position,code,xml,submission_id,team_id FROM entries')
+            c.execute('DROP TABLE entries')
+            c.execute('ALTER TABLE entries_v2 RENAME TO entries')
+        c.execute('CREATE UNIQUE INDEX IF NOT EXISTS entries_team ON entries(tournament_id,team_id)')
+        c.execute('CREATE INDEX IF NOT EXISTS members_team ON team_members(team_id)')
         if not c.execute("SELECT 1 FROM users WHERE login='silenok'").fetchone():
             encoded = os.environ.get('POND_ADMIN_PASSWORD_HASH')
             if not encoded or not encoded.startswith('pbkdf2_sha256$260000$'):

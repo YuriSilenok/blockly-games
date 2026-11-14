@@ -1,5 +1,7 @@
 import json
 import queue
+import random
+import math
 import subprocess
 import sys
 import threading
@@ -9,6 +11,7 @@ import xml.etree.ElementTree as ET
 from .store import ROOT, db
 
 LESSONS = 15
+PIXELS_PER_UNIT = (400 - 35) / 100  # Pond's canvas includes a half-duck inset at each edge.
 
 
 def concept_error(level, xml, metrics):
@@ -118,24 +121,43 @@ def train(job):
     return {'passed': True, 'message': 'Уровень пройден. Можно продолжать.', 'unlocked': job['level'] == LESSONS}
 
 
+def starting_positions():
+    # Use the saved renderer's scale: coordinate / 100 * (canvasWidth - 35).
+    rng = random.SystemRandom()
+    while True:
+        positions = [(rng.uniform(10, 90), rng.uniform(10, 90)) for _ in range(2)]
+        if math.hypot(positions[0][0] - positions[1][0], positions[0][1] - positions[1][1]) * PIXELS_PER_UNIT >= 70:
+            return positions
+
+
 def compare(job, opponent, seconds):
-    score = 0
-    for mirror in (False, True):
-        positions = [(20, 20), (80, 80)]
-        if mirror:
-            positions.reverse()
+    wins = [0, 0]
+    round_number = 0
+    candidate_earlier = job['id'] < opponent.get('submission_id', -1)
+    while max(wins) < 2:
+        positions = starting_positions()
+        round_number += 1
         avatars = [
             dict(name=job['team'], x=positions[0][0], y=positions[0][1], code=job['code']),
             dict(name=opponent['team'], x=positions[1][0], y=positions[1][1], code=opponent['code']),
         ]
         frame = duel({'avatars': avatars, 'seconds': seconds, 'realtime': True}, job['id'],
-                     '%s — %s · бой %s/2' % (job['team'], opponent['team'], 2 if mirror else 1))
+                     '%s — %s · счёт %s:%s · бой %s · до двух побед' % (job['team'], opponent['team'], wins[0], wins[1], round_number))
         left, right = frame['avatars']
         if left.get('error'):
             raise ValueError('Алгоритм не удалось выполнить. Исправь блоки и отправь снова.')
         difference = left['health'] - right['health']
-        score += 1 if difference > .0001 else -1 if difference < -.0001 else 0
-    return score > 0  # Draws retain the incumbent order.
+        if difference > .0001:
+            wins[0] += 1
+        elif difference < -.0001:
+            wins[1] += 1
+        else:
+            wins[0 if candidate_earlier else 1] += 1
+        with db() as c:
+            c.execute('UPDATE matches SET title=? WHERE id=(SELECT max(id) FROM matches WHERE job_id=?)',
+                      ('%s — %s · счёт %s:%s · бой %s завершён%s' % (job['team'], opponent['team'], wins[0], wins[1], round_number,
+                       ' · равный результат: приоритет ранней отправки' if abs(difference) <= .0001 else ''), job['id']))
+    return wins[0] == 2
 
 
 def rank(job):
@@ -143,9 +165,9 @@ def rank(job):
         tournament = c.execute('SELECT * FROM tournaments WHERE id=?', (job['tournament_id'],)).fetchone()
         if not tournament or tournament['status'] != 'open':
             return {'message': 'Турнир закрыт. Решение не добавлено.', 'accepted': False}
-        entries = [dict(row) for row in c.execute('SELECT e.*,u.team FROM entries e JOIN users u ON u.id=e.user_id WHERE tournament_id=? ORDER BY position,id', (tournament['id'],))]
-    incumbent = next((e for e in entries if e['user_id'] == job['user_id']), None)
-    opponents = [e for e in entries if e['user_id'] != job['user_id']]
+        entries = [dict(row) for row in c.execute('SELECT e.*,t.name AS team FROM entries e JOIN teams t ON t.id=e.team_id WHERE tournament_id=? ORDER BY position,e.id', (tournament['id'],))]
+    incumbent = next((e for e in entries if e['team_id'] == job['team_id']), None)
+    opponents = [e for e in entries if e['team_id'] != job['team_id']]
     low, high = 0, len(opponents)
     if not opponents:
         # Even the first submission must be executable; its baseline bout is visible.
@@ -160,22 +182,22 @@ def rank(job):
     if incumbent and candidate_position >= incumbent['position']:
         return {'accepted': False, 'position': incumbent['position'], 'candidate_position': candidate_position,
                 'message': 'Прежний алгоритм сохранил лучшее место в таблице.'}
-    opponents.insert(low, dict(user_id=job['user_id'], code=job['code'], xml=job['xml'], submission_id=job['id']))
+    opponents.insert(low, dict(user_id=job['user_id'], team_id=job['team_id'], code=job['code'], xml=job['xml'], submission_id=job['id']))
     with db() as c:
         current = c.execute('SELECT status FROM tournaments WHERE id=?', (tournament['id'],)).fetchone()
         if current['status'] != 'open':
             return {'accepted': False, 'message': 'Турнир закрыт во время проверки. Таблица не изменена.'}
         c.execute('DELETE FROM entries WHERE tournament_id=?', (tournament['id'],))
         for position, entry in enumerate(opponents, 1):
-            c.execute('INSERT INTO entries(tournament_id,user_id,position,code,xml,submission_id) VALUES(?,?,?,?,?,?)',
-                      (tournament['id'], entry['user_id'], position, entry['code'], entry['xml'], entry['submission_id']))
+            c.execute('INSERT INTO entries(tournament_id,user_id,team_id,position,code,xml,submission_id) VALUES(?,?,?,?,?,?,?)',
+                      (tournament['id'], entry['user_id'], entry['team_id'], position, entry['code'], entry['xml'], entry['submission_id']))
     return {'accepted': True, 'position': candidate_position, 'message': 'Лучший алгоритм команды сохранён в таблице.'}
 
 
 def work(stop):
     while not stop.is_set():
         with db() as c:
-            row = c.execute("SELECT j.*,u.team FROM jobs j JOIN users u ON u.id=j.user_id WHERE j.status='queued' ORDER BY CASE kind WHEN 'training' THEN 0 ELSE 1 END,j.id LIMIT 1").fetchone()
+            row = c.execute("SELECT j.*,t.name AS team FROM jobs j LEFT JOIN teams t ON t.id=j.team_id WHERE j.status='queued' ORDER BY CASE kind WHEN 'training' THEN 0 ELSE 1 END,j.id LIMIT 1").fetchone()
             if row:
                 c.execute("UPDATE jobs SET status='running' WHERE id=?", (row['id'],))
         if not row:

@@ -1,7 +1,7 @@
 (async function () {
   var api = PondPortal, status = document.getElementById('status'), tournaments = [], select = document.getElementById('tournaments');
   await api.ready;
-  if (!api.user || api.user.role !== 'admin') { status.innerHTML = 'Нужен <a href="/account?next=/admin">вход администратора</a>.'; return; }
+  if (!api.user || api.user.role !== 'admin') { status.hidden=false;status.innerHTML = 'Нужен <a href="/account?next=/admin">вход администратора</a>.'; return; }
   document.getElementById('panel').hidden = false;
   async function load() {
     var old = select.value; tournaments = (await api.request('/api/tournaments')).tournaments; select.replaceChildren();
@@ -19,14 +19,14 @@
   select.onchange = function () { table().catch(fail); };
   document.getElementById('create').onsubmit = async function (event) {
     event.preventDefault(); var button = this.querySelector('button'); button.disabled = true;
-    try { await api.request('/api/admin/tournaments', Object.fromEntries(new FormData(this))); await load(); status.textContent = 'Турнир создан.'; } catch (error) { fail(error); }
+    try { await api.request('/api/admin/tournaments', Object.fromEntries(new FormData(this))); await load(); status.textContent = 'Турнир создан.';status.hidden=false; } catch (error) { fail(error); }
     finally { button.disabled = false; }
   };
   document.getElementById('toggle').onclick = async function () {
     var t = tournaments.find(function (t) { return String(t.id) === select.value; });
     try { await api.request('/api/admin/tournaments/' + t.id + '/status', {status: t.status === 'open' ? 'closed' : 'open'}); await load(); } catch (error) { fail(error); }
   };
-  function fail(error) { status.textContent = error.message; }
+  function fail(error) { status.textContent = error.message;status.hidden=false; }
   var canvas = document.getElementById('pond'), ctx = canvas.getContext('2d'), colors = ['#fff394','#e87979','#79cf92','#414c64'];
   async function live() {
     try {

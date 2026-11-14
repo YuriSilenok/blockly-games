@@ -1,8 +1,10 @@
 /** Saved bundles only; the site has one language. */
-(function () {
+(async function () {
   'use strict';
   var match = location.pathname.match(/\/([-\w]+)(?:\.html)?$/);
   var app = match ? match[1].replace('-', '/') : 'index';
+  await PondPortal.ready;
+  if(!PondPortal.user){PondPortal.signIn();return;}
   window.BlocklyGamesLanguages = ['ru'];
   window.BlocklyGamesLang = 'ru';
   var messages = document.createElement('script');

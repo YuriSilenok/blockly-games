@@ -5,6 +5,7 @@
     'Math.sqrt':'квадратный корень','Math.abs':'модуль','Math.sin_deg':'синус','Math.cos_deg':'косинус','Math.tan_deg':'тангенс','Math.asin_deg':'арксинус','Math.acos_deg':'арккосинус','Math.atan_deg':'арктангенс',
     'var':'задать','if (':'если','else if (':'иначе если','else':'иначе',') {':'то','}':'',';':'','true':'истина','false':'ложь','function':'функция','return':'вернуть','name':'имя','null':'ничего','undefined':'не задано','Infinity':'бесконечность','NaN':'не число','break':'прервать','continue':'продолжить','for (':'для'};
   var russian=window.PondRussian={};
+  labels['&&']='и';labels['||']='или';labels['!']='не';
   russian.label=function(text){
     if(typeof text!=='string')return text;
     if(Object.prototype.hasOwnProperty.call(labels,text))return labels[text];

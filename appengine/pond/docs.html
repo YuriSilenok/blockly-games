@@ -412,13 +412,13 @@ stop();</pre>
         </p>
         <pre class="js logicSpec spec">&&    ||</pre>
 
-        <p>Логическое «и» обозначается оператором <code>&&</code>. Он возвращает <code>true</code>, только если оба условия имеют значение <code>true</code>. В примере выстрел происходит, только если расстояние больше 5 и меньше 70:</p>
+        <p>Логическое «и» обозначается оператором <code>&&</code>. Он возвращает <code>true</code>, только если оба условия имеют значение <code>true</code>.</p>
 
         <pre>if (range &gt; 5 <b>&amp;&amp;</b> range &lt; 70) {
   cannon(angle, range);
 }</pre>
 
-        <p>Логическое «или» обозначается оператором <code>||</code>. Он возвращает <code>true</code>, если хотя бы одно условие имеет значение <code>true</code>. В примере утка останавливается вблизи любого края пруда:</p>
+        <p>Логическое «или» обозначается оператором <code>||</code>. Он возвращает <code>true</code>, если хотя бы одно условие имеет значение <code>true</code>.</p>
 
         <pre>if (getX() &lt; 10 <b>||</b> getX() &gt; 90 <b>||</b>
     getY() &lt; 10 <b>||</b> getY() &gt; 90) {
@@ -426,6 +426,10 @@ stop();</pre>
 }</pre>
       </div>
 
+
+      <h3 data-blocks="logic_negate">Отрицание — «не»</h3>
+      <p class="blocks"><svg width="160" height="40" viewBox="0 0 160 40" role="img" aria-label="Логический блок не с местом для условия"><path fill="#5b80a5" d="M12 2H146L158 20L146 38H12L0 20Z"></path><text x="16" y="25" fill="white" font-family="sans-serif" font-size="15">не</text><path fill="#486584" d="M62 8H131L140 20L131 32H62L53 20Z"></path></svg></p>
+      <p>Блок «не» меняет логическое значение на противоположное: истина становится ложью, а ложь — истиной.</p>
 
       <h3 data-blocks="logic_boolean">Логические значения</h3>
 

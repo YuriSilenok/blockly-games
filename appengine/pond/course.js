@@ -74,7 +74,7 @@ window.installPondCourse = function () {
     else if(nm===9)allowed.push('pond_swim','pond_health','controls_whileUntil','logic_compare');
     else if(nm===10||nm===11)allowed.push('pond_swim','pond_getX','pond_getY','controls_whileUntil','logic_compare');
     else allowed=null;
-    if(nm===11)allowed.push('controls_if');
+    if(nm===11){allowed.push('logic_operation','logic_negate','logic_boolean');var logic=toolbox.querySelector('category[name="'+X('Games.catLogic',false)+'"]');['logic_operation','logic_negate'].forEach(function(type){if(!logic.querySelector('block[type="'+type+'"]'))logic.insertAdjacentHTML('beforeend','<block type="'+type+'"></block>');});}
     if(nm>=4&&allowed){allowed.push('pond_log','pond_math_number');}
     if(nm===9)toolbox.querySelector('category[name="'+X('Games.pond',false)+'"]').insertAdjacentHTML('beforeend','<block type="pond_health"></block>');
     if(allowed)Array.from(toolbox.querySelectorAll('block')).forEach(function(b){if(allowed.indexOf(b.getAttribute('type'))===-1)b.remove();});
@@ -193,7 +193,7 @@ window.installPondCourse = function () {
   async function quote(){
     var target=W('course-quote');
     if(!lesson.concepts.length){target.textContent='Новых блоков нет. Комбинируй изученные возможности и исследуй поведение противников.';return;}
-    var map={cannon:['Углы','cannon'],scan:['scan'],variables:['Присваивание','Получение значения'],log:['Отладка'],swim:['swim'],speed:['Скорость'],health:['Здоровье'],while:['Цикл «пока»'],compare:['Сравнения'],nested:['Вложенные циклы'],repeat:['Цикл «повторить»'],change:['Увеличение значения'],coordinates:['Координаты'],if:['Условия']};
+    var map={cannon:['Углы','cannon'],scan:['scan'],variables:['Присваивание','Получение значения'],log:['Отладка'],swim:['swim'],speed:['Скорость'],health:['Здоровье'],while:['Цикл «пока»'],compare:['Сравнения'],nested:['Вложенные циклы'],repeat:['Цикл «повторить»'],change:['Увеличение значения'],coordinates:['Координаты'],if:['Условия'],logic:['«И» и «или»','Отрицание','Логические значения']};
     try{
       var response=await fetch('pond/docs.html');if(!response.ok)throw Error();
       var doc=new DOMParser().parseFromString(await response.text(),'text/html');target.textContent='';

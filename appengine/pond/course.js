@@ -71,6 +71,7 @@ window.installPondCourse = function () {
     else if(nm===9)allowed.push('pond_swim','pond_health','controls_whileUntil','logic_compare');
     else if(nm===10)allowed.push('pond_swim','pond_getX','pond_getY','controls_whileUntil','logic_compare');
     else allowed=null;
+    if(nm>=4&&allowed){allowed.push('pond_log','pond_math_number');}
     if(nm===9)toolbox.querySelector('category[name="'+X('Games.pond',false)+'"]').insertAdjacentHTML('beforeend','<block type="pond_health"></block>');
     if(allowed)Array.from(toolbox.querySelectorAll('block')).forEach(function(b){if(allowed.indexOf(b.getAttribute('type'))===-1)b.remove();});
     if(nm===8||nm===9||nm>=11){var category=toolbox.querySelector('category[name="'+X('Games.catLoops',false)+'"]');category.insertAdjacentHTML('beforeend','<block type="controls_repeat_ext"><value name="TIMES"><shadow type="pond_math_number"><field name="NUM">4</field></shadow></value></block>');}

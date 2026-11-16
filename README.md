@@ -24,7 +24,7 @@ python -m venv .venv
 
 Приложение слушает `127.0.0.1:8000`. Настройки окружения и инструкция для VPS, HTTPS, резервного копирования и автообновления: [deploy/README.md](deploy/README.md).
 
-GitHub Pages продолжает публиковать `appengine` существующим workflow. Статическая версия показывает главную страницу и направляет на основной домен для регистрации, обучения и турниров.
+Публикация в GitHub Pages отключена, workflow удалён. Основной сайт на VPS автоматически обновляется из ветки `master` с помощью systemd-таймера.
 
 Клиентские изменения находятся в `appengine/pond/course.js`, `course-data.js`, `tournament-editor.js` и `appengine/portal`. Интеграция подключается к сохранённым `generated/compressed.js`; сборочная цепочка не используется. Серверные файлы `server/runtime/avatar.js` и `battle.js` исполняются напрямую в QuickJS и сохраняют исходную физику Pond.
 

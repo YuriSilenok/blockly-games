@@ -168,3 +168,4 @@ body.hideLevel11 .level11 {
   display: none;
 }
 pre { display: none !important; }
+body.docs-loading { visibility: hidden; }

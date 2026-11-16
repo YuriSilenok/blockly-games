@@ -14,6 +14,7 @@
  * Turn all h2 tags into zippies.  Called on page load.
  */
 function init() {
+  filterDocumentation();
   var headers = document.getElementsByTagName('h2');
   for (var i = 0, header; (header = headers[i]); i++) {
     var img = document.createElement('img');
@@ -24,6 +25,44 @@ function init() {
     content.classList.add('zippy-content-collapsed');
     bindClick(header, toggle);
   }
+  document.body.classList.remove('docs-loading');
+}
+
+/** Use the current toolbox, including dynamic variable blocks, as the source. */
+function filterDocumentation() {
+  var toolbox;
+  try {
+    toolbox = window.parent !== window ? window.parent.document.getElementById('toolbox') : null;
+  } catch (error) {
+    return;
+  }
+  // A standalone reference has no player toolbox to restrict it to.
+  if (!toolbox) return;
+  var available = new Set();
+  toolbox.querySelectorAll('block[type], shadow[type]').forEach(function (block) {
+    available.add(block.getAttribute('type'));
+  });
+  if (toolbox.querySelector('category[custom="VARIABLE"]')) {
+    ['variables_set', 'variables_get', 'math_change'].forEach(function (type) {
+      available.add(type);
+    });
+  }
+  Array.from(document.querySelectorAll('h2')).forEach(function (header) {
+    var content = document.getElementById(header.id + '-content');
+    var headings = Array.from(content.querySelectorAll('h3'));
+    var visible = document.createDocumentFragment();
+    headings.forEach(function (heading, index) {
+      var types = (heading.getAttribute('data-blocks') || '').split(/\s+/);
+      if (!types.some(function (type) { return available.has(type); })) return;
+      var range = document.createRange();
+      range.setStartBefore(heading);
+      if (headings[index + 1]) range.setEndBefore(headings[index + 1]);
+      else range.setEnd(content, content.childNodes.length);
+      visible.appendChild(range.cloneContents());
+    });
+    if (visible.hasChildNodes()) content.replaceChildren(visible);
+    else { header.remove(); content.remove(); }
+  });
 }
 
 /**
@@ -63,10 +102,5 @@ function toggle(e) {
 
 (function() {
   window.addEventListener('load', init);
-  var param = window.location.search.match(/[?&]mode=([^&]+)/);
-  var level = param ? Number(param[1]) : 11;
-  var hide = 'hideJs';
-  var classes = [hide];
-  // Documentation is available in full, always with its original block images.
-  document.body.className = classes.join(' ');
+  document.body.classList.add('hideJs', 'docs-loading');
 })();

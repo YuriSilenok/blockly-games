@@ -14,14 +14,14 @@
     <h2 id="pond">Пруд</h2>
 
     <div id="pond-content">
-      <h3>Углы</h3>
+      <h3 data-blocks="pond_cannon pond_scan pond_swim">Углы</h3>
 
       <p>Направления на поле: 0° — вправо (восток), 90° — вверх (север), 180° — влево (запад), 270° — вниз (юг). Углы отсчитываются против часовой стрелки и повторяются через полный оборот: −90° — вниз, 450° — вверх.</p>
 
       <p><img src="docs/compass.png" height=145 width=150 style="padding: 0 2em;"></p>
 
 
-      <h3>Выстрел — cannon</h3>
+      <h3 data-blocks="pond_cannon">Выстрел — cannon</h3>
 
       <p class="blocks">
         <svg height=41 width=250>
@@ -65,7 +65,7 @@
 
 
       <div class="level5">
-        <h3>Поиск противника — scan</h3>
+        <h3 data-blocks="pond_scan">Поиск противника — scan</h3>
 
         <p class="blocks">
           <svg height=37 width=250>
@@ -100,7 +100,7 @@ scan(<i>angle</i>, <i>width</i>)</pre>
 
 
       <div class="level7">
-        <h3>Движение — swim</h3>
+        <h3 data-blocks="pond_swim">Движение — swim</h3>
 
         <p class="blocks">
           <svg height=41 width=250>
@@ -136,7 +136,7 @@ swim(<i>angle</i>, <i>Скорость</i>)</pre>
 
 
       <div class="level9">
-        <h3>Остановка — stop</h3>
+        <h3 data-blocks="pond_stop">Остановка — stop</h3>
 
         <p class="blocks">
           <svg height=31 width=250>
@@ -157,7 +157,7 @@ swim(<i>angle</i>, <i>Скорость</i>)</pre>
 
 
       <div class="level9">
-        <h3>Координаты</h3>
+        <h3 data-blocks="pond_getX pond_getY">Координаты</h3>
 
         <p class="blocks">
           <svg height=26 width=90>
@@ -192,7 +192,7 @@ getY()</pre>
 
 
       <div class="level11">
-        <h3>Скорость</h3>
+        <h3 data-blocks="pond_speed">Скорость</h3>
 
         <p class="block">
           <svg height=26 width=250>
@@ -213,7 +213,7 @@ getY()</pre>
 
 
       <div class="level11">
-        <h3>Здоровье</h3>
+        <h3 data-blocks="pond_health">Здоровье</h3>
 
         <p class="blocks">
           <svg height=26 width=250>
@@ -236,7 +236,7 @@ getY()</pre>
 
 
       <div class="level11">
-        <h3>Отладка</h3>
+        <h3 data-blocks="pond_log">Отладка</h3>
 
         <p class="blocks">
           <svg height=41 width=250>
@@ -276,7 +276,7 @@ getY()</pre>
 
     <div class="level3" id="logic-content">
       <div class="level9">
-        <h3>Условия</h3>
+        <h3 data-blocks="controls_if">Условия</h3>
 
         <p class="blocks">
           <svg height=90 width=250>
@@ -318,7 +318,7 @@ if (<i>condition</i>) {
 
 
       <div class="level9">
-        <h3>Сравнения</h3>
+        <h3 data-blocks="logic_compare">Сравнения</h3>
 
         <p class="blocks">
           <svg height=36 width=250>
@@ -393,7 +393,7 @@ stop();</pre>
 
 
       <div class="level11">
-        <h3>«И» и «или»</h3>
+        <h3 data-blocks="logic_operation">«И» и «или»</h3>
 
         <p class="blocks">
           <svg height=36 width=250>
@@ -426,7 +426,7 @@ stop();</pre>
       </div>
 
 
-      <h3>Логические значения</h3>
+      <h3 data-blocks="logic_boolean">Логические значения</h3>
 
       <p class="blocks">
         <svg height=26 width=250>
@@ -451,7 +451,7 @@ stop();</pre>
     <h2 class="level3" id="loops">Циклы</h2>
 
     <div class="level3" id="loops-content">
-      <h3>Цикл «пока»</h3>
+      <h3 data-blocks="controls_whileUntil">Цикл «пока»</h3>
 
       <p class="blocks">
         <svg height=90 width=250>
@@ -469,25 +469,25 @@ stop();</pre>
   <i>statements</i>
 }</pre>
 
-      <p>Цикл повторяет вложенные команды, пока условие истинно. Например, этот цикл постоянно стреляет влево:</p>
+      <p>Цикл повторяет вложенные команды, пока условие истинно. Выбери условие и действия для своего эксперимента.</p>
 
       <pre>while (true) {
   cannon(180, 50);
 }</pre>
 
-      <p>А этот цикл стреляет влево, пока противник находится в пределах дальности пушки:</p>
+      <p>Перед каждым повторением условие проверяется заново. Когда оно становится ложным, выполнение продолжается после цикла.</p>
 
       <pre>while (scan(180 <span class="js">, 5</span>) &lt;= 70) {
   cannon(180, scan(180 <span class="js">, 5</span>));
 }</pre>
-    <h3>Вложенные циклы</h3><p>Один цикл можно поместить внутрь другого. Внешний цикл повторяет всю последовательность действий, а внутренний выполняет своё действие или ждёт выполнения условия на каждом повторении внешнего цикла. Например, внешний цикл повторяет движение и поворот, а внутренний ждёт остановки утки.</p>
+    <h3 data-blocks="controls_repeat_ext controls_repeat">Вложенные циклы</h3><p>Один цикл можно поместить внутрь другого. Внешний цикл повторяет всю последовательность действий, а внутренний выполняет своё действие или ждёт выполнения условия на каждом повторении внешнего цикла. Например, внешний цикл повторяет движение и поворот, а внутренний ждёт остановки утки.</p>
     </div>
 
     <!-- ---------------------------------------------------------------------- -->
     <h2 id="math">Математика</h2>
 
     <div id="math-content">
-      <h3>Числа</h3>
+      <h3 data-blocks="pond_math_number math_number">Числа</h3>
 
       <p class="blocks">
         <svg height=26 width=250>
@@ -510,7 +510,7 @@ stop();</pre>
 
 
       <div class="level11">
-        <h3>Арифметика</h3>
+        <h3 data-blocks="pond_math_arithmetic math_arithmetic">Арифметика</h3>
 
         <p class="blocks">
           <svg height=36 width=250>
@@ -579,7 +579,7 @@ stop();</pre>
 
 
       <div class="level11">
-        <h3>Тригонометрия</h3>
+        <h3 data-blocks="pond_math_single math_trig">Тригонометрия</h3>
 
         <p class="blocks">
           <svg height=36 width=250>
@@ -663,7 +663,7 @@ stop();</pre>
 
 
       <div class="level11">
-        <h3>Случайные числа</h3>
+        <h3 data-blocks="math_random_float math_random_int">Случайные числа</h3>
 
         <p class="blocks">
           <svg height=26 width=250>
@@ -687,7 +687,7 @@ stop();</pre>
     <h2 class="level11" id="variables">Переменные</h2>
 
     <div class="level11" id="variables-content">
-      <h3>Присваивание</h3>
+      <h3 data-blocks="variables_set">Присваивание</h3>
 
       <p class="blocks">
         <svg height=40 width=250>
@@ -724,7 +724,7 @@ stop();</pre>
       <p class="js">Функция <code>var</code> при первом присваивании объявляет переменную. При следующих присваиваниях его можно опустить.</p>
 
 
-      <h3>Увеличение значения</h3>
+      <h3 data-blocks="pond_math_change math_change">Увеличение значения</h3>
 
       <p class="blocks">
         <svg height=41 width=250>
@@ -761,7 +761,7 @@ var angle = angle + 10;</pre>
       <p>Не применяй <code>+=</code> к переменной без начального значения. При необходимости присвой ей 0 в начале программы.</p>
 
 
-      <h3>Получение значения</h3>
+      <h3 data-blocks="variables_get">Получение значения</h3>
 
       <p class="blocks">
         <svg height=26 width=250>

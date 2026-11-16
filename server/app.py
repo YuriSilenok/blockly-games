@@ -97,7 +97,7 @@ class Handler(BaseHTTPRequestHandler):
                     user.pop('token')
                     user['completed'] = self.progress(user['id'])
                     user['unlocked'] = all(i in user['completed'] for i in range(1, LESSONS + 1))
-                self.send_json({'user': user, 'lessons': LESSONS, 'course_revision': 2})
+                self.send_json({'user': user, 'lessons': LESSONS, 'course_revision': 3})
             elif path == '/api/tournaments':
                 self.session()
                 with db() as c:
@@ -297,7 +297,7 @@ class Handler(BaseHTTPRequestHandler):
                 error = lesson_four_problem(root)
                 if error:
                     raise Problem(error)
-            if level in (7, 8):
+            if level in (7, 8, 9):
                 error = nested_loop_problem(root, level)
                 if error:
                     raise Problem(error)

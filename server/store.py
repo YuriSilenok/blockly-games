@@ -37,19 +37,19 @@ def db():
         connection.close()
 
 
-def backup_before_course_split():
+def backup_before_course_split(migration, basename):
     with db() as source:
         if not source.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='progress'").fetchone():
             return
         has_migrations = source.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='course_migrations'").fetchone()
-        if has_migrations and source.execute("SELECT 1 FROM course_migrations WHERE name='split-level-seven'").fetchone():
+        if has_migrations and source.execute('SELECT 1 FROM course_migrations WHERE name=?', (migration,)).fetchone():
             return
         folder = DATA / 'backups'
         folder.mkdir(mode=0o700, exist_ok=True)
-        target = folder / 'before-split-level-seven.sqlite3'
+        target = folder / (basename + '.sqlite3')
         if target.exists():
             return
-        temporary = folder / 'before-split-level-seven.pending'
+        temporary = folder / (basename + '.pending')
         destination = sqlite3.connect(str(temporary))
         try:
             source.backup(destination)
@@ -61,7 +61,8 @@ def backup_before_course_split():
 
 def initialize():
     DATA.mkdir(parents=True, exist_ok=True)
-    backup_before_course_split()
+    backup_before_course_split('split-level-seven', 'before-split-level-seven')
+    backup_before_course_split('duplicate-level-eight', 'before-duplicate-level-eight')
     with db() as c:
         c.execute('PRAGMA journal_mode=WAL')
         c.executescript('''
@@ -140,6 +141,12 @@ def initialize():
             c.execute('UPDATE progress SET level=level-99 WHERE level>=107')
             c.execute("UPDATE jobs SET level=level+1 WHERE kind='training' AND level>=7")
             c.execute("INSERT INTO course_migrations VALUES('split-level-seven')")
+        if not c.execute("SELECT 1 FROM course_migrations WHERE name='duplicate-level-eight'").fetchone():
+            # Keep lesson 8 intact and insert the tougher copy as a new lesson 9.
+            c.execute('UPDATE progress SET level=level+100 WHERE level>=9')
+            c.execute('UPDATE progress SET level=level-99 WHERE level>=109')
+            c.execute("UPDATE jobs SET level=level+1 WHERE kind='training' AND level>=9")
+            c.execute("INSERT INTO course_migrations VALUES('duplicate-level-eight')")
         if not c.execute("SELECT 1 FROM users WHERE login='silenok'").fetchone():
             encoded = os.environ.get('POND_ADMIN_PASSWORD_HASH')
             if not encoded or not encoded.startswith('pbkdf2_sha256$260000$'):

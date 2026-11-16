@@ -14,7 +14,7 @@ window.installPondCourse = function () {
   var metrics = {}, running = null, pending = false, ready = false, checkingSession = false;
   var runtimeFailure='',programFinished=false,idleReported=false,consoleSolution=null;
   var loops = ['controls_whileUntil','controls_repeat_ext','controls_repeat','controls_for','controls_forEach'];
-  function key(level) { return 'pond-course-v2:' + (portal.user ? portal.user.id : 'preview') + ':' + level; }
+  function key(level) { return 'pond-course-v3:' + (portal.user ? portal.user.id : 'preview') + ':' + level; }
   function completed(level) { return portal.user ? portal.user.completed.indexOf(level) !== -1 : !!localStorage.getItem(key(level)); }
   pm = function (level) { return completed(level) ? localStorage.getItem(key(level)) || '<xml></xml>' : null; };
   // A new level starts empty; only this level's saved work is restored below.
@@ -26,25 +26,25 @@ window.installPondCourse = function () {
   function planError(xml) {
     var bs = blocks(xml), types = bs.map(function (b) { return b.getAttribute('type'); });
     function has(type) { return types.indexOf(type) !== -1; }
-    if ([5,6,7,8,9,11,12].indexOf(nm) !== -1 && has('pond_cannon')) return 'На этом уровне исследуем таран: убери выстрелы из активной программы.';
-    if ([1,2,3,4,10].indexOf(nm) !== -1 && !has('pond_cannon')) return 'Попробуй исследовать стрельбу с помощью cannon.';
-    if ([2,3,4,10,11,12].indexOf(nm) !== -1 && !has('pond_scan')) return 'Добавь измерение расстояния с помощью scan.';
+    if ([5,6,7,8,9,10,12,13].indexOf(nm) !== -1 && has('pond_cannon')) return 'На этом уровне исследуем таран: убери выстрелы из активной программы.';
+    if ([1,2,3,4,11].indexOf(nm) !== -1 && !has('pond_cannon')) return 'Попробуй исследовать стрельбу с помощью cannon.';
+    if ([2,3,4,11,12,13].indexOf(nm) !== -1 && !has('pond_scan')) return 'Добавь измерение расстояния с помощью scan.';
     if(nm===2&&!PondFeedback.scanInCannon(xml))return 'Условие второго уровня: помести scan в параметр расстояния блока cannon. Отдельный блок scan или scan в параметре угла не выполняет это условие.';
     if (nm === 3 && (!has('variables_set') || !has('variables_get'))) return 'Исследуй, как сохранить направление в переменной и использовать его.';
     if(nm===3){var count=PondFeedback.nodes(xml).filter(function(node){return ['math_number','pond_math_number'].includes(node.getAttribute('type'));}).length;if(count!==1)return 'Условие третьего уровня: используй ровно один числовой блок во всей активной программе. Сейчас их: '+count+'. Повторно используй значение через переменную.';}
     if (nm === 4 && !has('pond_log')) return 'Добавь log, чтобы наблюдать измерение расстояния.';
     if(nm===4){var nodes=PondFeedback.nodes(xml),counts=[['числовой блок',nodes.filter(function(node){return ['math_number','pond_math_number'].includes(node.getAttribute('type'));}).length]];['log','cannon','scan'].forEach(function(name){counts.push([name,nodes.filter(function(node){return node.getAttribute('type')==='pond_'+name;}).length]);});var wrong=counts.filter(function(item){return item[1]!==1;});if(wrong.length)return 'Условие четвёртого уровня: ровно один числовой блок, один log, один cannon и один scan. Сейчас: '+wrong.map(function(item){return item[0]+': '+item[1];}).join('; ')+'.';}
     if (nm === 6 && (!has('pond_speed') || !types.some(function(t){return loops.indexOf(t)!==-1;}))) return 'Попробуй измерение скорости и цикл ожидания.';
-    if(nm===7||nm===8){var loopBlocks=bs.filter(function(b){return loops.includes(b.getAttribute('type'));});var whiles=loopBlocks.filter(function(b){return b.getAttribute('type')==='controls_whileUntil';});var repeats=loopBlocks.filter(function(b){return ['controls_repeat','controls_repeat_ext'].includes(b.getAttribute('type'));});function inside(outer,inner){return Array.from(outer.children).some(function(node){return node.localName==='statement'&&node.contains(inner);});}if(nm===7){if(loopBlocks.length!==2||whiles.length!==2)return 'На уровне 7 нужны ровно два цикла «пока». Другие виды циклов не подходят.';}else{if(loopBlocks.length!==2||whiles.length!==1||repeats.length!==1)return 'На уровне 8 нужны ровно два цикла: «повторить» и «пока».';if(!inside(repeats[0],whiles[0]))return 'Помести цикл «пока» внутрь цикла «повторить».';}}
-    if (nm === 9 && (!has('pond_getX') || !has('pond_getY') || !types.some(function(t){return loops.indexOf(t)!==-1;}))) return 'Используй обе координаты и циклы для управления маршрутом.';
+    if(nm===7||nm===8||nm===9){var loopBlocks=bs.filter(function(b){return loops.includes(b.getAttribute('type'));});var whiles=loopBlocks.filter(function(b){return b.getAttribute('type')==='controls_whileUntil';});var repeats=loopBlocks.filter(function(b){return ['controls_repeat','controls_repeat_ext'].includes(b.getAttribute('type'));});function inside(outer,inner){return Array.from(outer.children).some(function(node){return node.localName==='statement'&&node.contains(inner);});}if(nm===7){if(loopBlocks.length!==2||whiles.length!==2)return 'На уровне 7 нужны ровно два цикла «пока». Другие виды циклов не подходят.';}else{if(loopBlocks.length!==2||whiles.length!==1||repeats.length!==1)return 'На уровне '+nm+' нужны ровно два цикла: «повторить» и «пока».';if(!inside(repeats[0],whiles[0]))return 'Помести цикл «пока» внутрь цикла «повторить».';}}
+    if (nm === 10 && (!has('pond_getX') || !has('pond_getY') || !types.some(function(t){return loops.indexOf(t)!==-1;}))) return 'Используй обе координаты и циклы для управления маршрутом.';
     return '';
   }
   function metricError() {
-    if([1,2,3,4,10].includes(nm)&&!metrics.cannon)return 'Условие задания не выполнено: команда cannon не была выполнена. Проверь, достигает ли программа блока выстрела.';
-    if ([2,3,4,10,11,12].indexOf(nm)!==-1 && !metrics.scan) return 'Радар должен участвовать в выполнении программы. Попробуй изменить расположение блоков.';
+    if([1,2,3,4,11].includes(nm)&&!metrics.cannon)return 'Условие задания не выполнено: команда cannon не была выполнена. Проверь, достигает ли программа блока выстрела.';
+    if ([2,3,4,11,12,13].indexOf(nm)!==-1 && !metrics.scan) return 'Радар должен участвовать в выполнении программы. Попробуй изменить расположение блоков.';
     if (nm===4 && !metrics.log) return 'Измерение нужно вывести через log во время выполнения программы.';
     if (nm===6 && !metrics.speed) return 'Измеряй скорость во время выполнения программы.';
-    if (nm===9 && (!metrics.getX || !metrics.getY)) return 'Попробуй использовать обе координаты во время движения.';
+    if (nm===10 && (!metrics.getX || !metrics.getY)) return 'Попробуй использовать обе координаты во время движения.';
     return '';
   }
   var originalHTML = No;
@@ -67,13 +67,13 @@ window.installPondCourse = function () {
     if(nm<=4) {allowed.push('pond_cannon');if(nm>=2)allowed.push('pond_scan');if(nm>=4)allowed.push('pond_log');}
     else if(nm===5)allowed=['pond_swim'];
     else if(nm===6)allowed.push('pond_swim','pond_speed','controls_whileUntil','logic_compare');
-    else if(nm===7||nm===8)allowed.push('pond_swim','pond_speed','controls_whileUntil','logic_compare');
-    else if(nm===9)allowed.push('pond_swim','pond_getX','pond_getY','controls_whileUntil','logic_compare');
+    else if(nm===7||nm===8||nm===9)allowed.push('pond_swim','pond_speed','controls_whileUntil','logic_compare');
+    else if(nm===10)allowed.push('pond_swim','pond_getX','pond_getY','controls_whileUntil','logic_compare');
     else allowed=null;
     if(allowed)Array.from(toolbox.querySelectorAll('block')).forEach(function(b){if(allowed.indexOf(b.getAttribute('type'))===-1)b.remove();});
-    if(nm===8||nm>=10){var category=toolbox.querySelector('category[name="'+X('Games.catLoops',false)+'"]');category.insertAdjacentHTML('beforeend','<block type="controls_repeat_ext"><value name="TIMES"><shadow type="pond_math_number"><field name="NUM">4</field></shadow></value></block>');}
-    if(nm>=10){var math=toolbox.querySelector('category[name="'+X('Games.catMath',false)+'"]');if(math)math.insertAdjacentHTML('beforeend','<block type="pond_math_arithmetic"><value name="A"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value><value name="B"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value></block>');}
-    Array.from(toolbox.querySelectorAll('category')).forEach(function(c){if(c.getAttribute('custom')){if(nm===5||nm===6||nm===9)c.remove();}else if(!c.querySelector('block'))c.remove();});
+    if(nm===8||nm===9||nm>=11){var category=toolbox.querySelector('category[name="'+X('Games.catLoops',false)+'"]');category.insertAdjacentHTML('beforeend','<block type="controls_repeat_ext"><value name="TIMES"><shadow type="pond_math_number"><field name="NUM">4</field></shadow></value></block>');}
+    if(nm>=11){var math=toolbox.querySelector('category[name="'+X('Games.catMath',false)+'"]');if(math)math.insertAdjacentHTML('beforeend','<block type="pond_math_arithmetic"><value name="A"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value><value name="B"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value></block>');}
+    Array.from(toolbox.querySelectorAll('category')).forEach(function(c){if(c.getAttribute('custom')){if(nm===5||nm===6||nm===10)c.remove();}else if(!c.querySelector('block'))c.remove();});
     PondFeedback.place(container);
     return container.innerHTML;
   };
@@ -208,13 +208,13 @@ window.installPondCourse = function () {
     W('course-console-form').onsubmit=async function(event){event.preventDefault();if(!consoleSolution||pending)return;W('course-console-error').textContent='Проверяем число и сохраняем результат…';W('course-console-answer').removeAttribute('aria-invalid');await saveVictory(consoleSolution,W('course-console-answer').value.trim());};
     W('course-reset').onclick=async function(){
       if(!confirm('Сбросить пройденные уровни обучения? Турнирные результаты сохранятся.'))return;
-      try{if(portal.user)await portal.request('/api/progress/reset',{});for(var i=1;i<=mm;i++){localStorage.removeItem(key(i));localStorage.removeItem(key(i)+':draft');localStorage.removeItem(key(i)+':migrated');localStorage.removeItem('pond-course:'+portal.user.id+':'+i);localStorage.removeItem('pond-course:'+portal.user.id+':'+i+':draft');}location.href='?level=1';}catch(error){report(error.message);}
+      try{if(portal.user)await portal.request('/api/progress/reset',{});for(var i=1;i<=mm;i++){localStorage.removeItem(key(i));localStorage.removeItem(key(i)+':draft');localStorage.removeItem(key(i)+':migrated');localStorage.removeItem('pond-course:'+portal.user.id+':'+i);localStorage.removeItem('pond-course:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v2:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v2:'+portal.user.id+':'+i+':draft');}location.href='?level=1';}catch(error){report(error.message);}
     };
     quote();await portal.ready;
     if(!portal.user){portal.signIn();return;}
     try{
       var saved=localStorage.getItem(key(nm)+':draft');
-      if(!localStorage.getItem(key(nm)+':migrated')){var previous=nm<7?nm:nm>7?nm-1:null;if(previous&&!saved){saved=localStorage.getItem('pond-course:'+portal.user.id+':'+previous+':draft');if(saved)localStorage.setItem(key(nm)+':draft',saved);}localStorage.setItem(key(nm)+':migrated','1');}
+      if(!localStorage.getItem(key(nm)+':migrated')){var previous=nm<9?nm:nm>9?nm-1:null;if(previous&&!saved){saved=localStorage.getItem('pond-course-v2:'+portal.user.id+':'+previous+':draft');var original=previous<7?previous:previous>7?previous-1:null;if(!saved&&original)saved=localStorage.getItem('pond-course:'+portal.user.id+':'+original+':draft');if(saved)localStorage.setItem(key(nm)+':draft',saved);}localStorage.setItem(key(nm)+':migrated','1');}
       if(portal.user){var data=await portal.request('/api/training/'+nm);saved=saved||data.xml;}
       if(saved)Im(saved);
       for(var i=1;i<=mm;i++){var node=W('level'+i);if(node)node.classList.toggle('level_done',completed(i));}

@@ -4,7 +4,7 @@
   function message(text){status.textContent=text;status.hidden=!text;}
   await api.ready;
   if(!api.user){status.innerHTML='Для участия и просмотра таблицы <a href="account.html?next=%2Fportal%2Ftournament.html">войди</a> или <a href="account.html?mode=register&amp;next=%2Fportal%2Ftournament.html">создай учётную запись</a>.';status.hidden=false;return;}
-  if(!api.user.unlocked)message('Осталось завершить обучение, чтобы отправлять алгоритмы. Пройдено уровней: '+api.user.completed.length+' из 16.');
+  if(!api.user.unlocked)message('Осталось завершить обучение, чтобы отправлять алгоритмы. Пройдено уровней: '+api.user.completed.length+' из 17.');
   else if(!api.user.team){status.innerHTML='Обучение завершено. <a href="account.html">Создай команду в личном кабинете</a> или попроси капитана добавить тебя по логину.';status.hidden=false;}
   else message('Ты выступаешь за команду «'+api.user.team+'». Каждый участник, завершивший обучение, может отправить её новое решение.');
   try{

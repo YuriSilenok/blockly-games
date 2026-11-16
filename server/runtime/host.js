@@ -16,6 +16,14 @@ Date.now = function () { return matchClock; };
 function clearTimeout() {}
 function setTimeout() { return 0; }
 var matchMetrics;
+function learnerError(error) {
+  var name = String(error && error.name || '');
+  if (name === 'ReferenceError') return 'Ошибка выполнения: переменная ещё не получила значение. Задай её значение до первого использования.';
+  if (name === 'TypeError') return 'Ошибка выполнения: проверь числовые параметры блоков и значения переменных.';
+  if (name === 'SyntaxError') return 'Не удалось запустить программу. Проверь соединения блоков и заполнение их параметров.';
+  if (name === 'RangeError') return 'Программа превысила допустимую глубину вызовов. Проверь вызовы функций.';
+  return 'Программу не удалось выполнить. Проверь параметры блоков и значения переменных.';
+}
 function startMatch(spec) {
   var battle = Pond.Battle;
   battle.AVATARS.length = 0;
@@ -40,6 +48,7 @@ function startMatch(spec) {
           var fn = original.nativeFunc;
           original.nativeFunc = function () {
             matchMetrics[name]++;
+            if (['scan', 'cannon', 'swim'].indexOf(name) !== -1 && !Number.isFinite(arguments[0])) throw new TypeError();
             return fn.apply(this, arguments);
           };
         });
@@ -47,11 +56,11 @@ function startMatch(spec) {
       var step = duck.interpreter.step;
       duck.interpreter.step = function () {
         try { return step.apply(this, arguments); }
-        catch (error) { duck.loadError = 'Ошибка выполнения алгоритма'; throw error; }
+        catch (error) { duck.loadError = learnerError(error); throw error; }
       };
     } catch (error) {
       duck.die();
-      duck.loadError = String(error).slice(0, 200);
+      duck.loadError = learnerError(error);
     }
   });
 }

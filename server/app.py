@@ -16,6 +16,8 @@ import xml.etree.ElementTree as ET
 
 from .store import ROOT, db, initialize, password_hash, password_matches
 from .worker import LESSONS, work
+from .blocks import block_errors, number_count, scan_in_cannon, lesson_four_problem
+from . import challenges
 from .teams import details as team_details, change as change_team, TeamProblem
 
 STATIC = ROOT / 'appengine'
@@ -168,6 +170,14 @@ class Handler(BaseHTTPRequestHandler):
                     c.execute('DELETE FROM progress WHERE user_id=?', (user['id'],))
                     c.execute("UPDATE jobs SET status='cancelled' WHERE user_id=? AND kind='training' AND status='queued'", (user['id'],))
                 self.send_json({'ok': True})
+            elif path == '/api/training/challenge':
+                code, xml, root = self.program(value)
+                if any(i not in self.progress(user['id']) for i in (1, 2, 3)):
+                    raise Problem('Сначала заверши первые три уровня.', 403)
+                error = lesson_four_problem(root)
+                if error:
+                    raise Problem(error)
+                self.send_json(challenges.issue(user['id'], code, xml), 201)
             elif path in ('/api/training/submit', '/api/tournament/submit'):
                 self.submit(user, path, value)
             elif path == '/api/admin/tournaments':
@@ -256,7 +266,7 @@ class Handler(BaseHTTPRequestHandler):
             c.execute('UPDATE sessions SET csrf=? WHERE token=?', (secrets.token_urlsafe(24), user['token']))
         self.send_json({'ok': True})
 
-    def submit(self, user, path, value):
+    def program(self, value):
         code, xml = str(value.get('code', '')), str(value.get('xml', ''))
         if not code.strip() or len(code) > 60000 or not xml or len(xml) > 120000:
             raise Problem('Алгоритм пустой или слишком большой.')
@@ -265,6 +275,13 @@ class Handler(BaseHTTPRequestHandler):
         root = ET.fromstring(xml)
         if root.tag.split('}')[-1] != 'xml' or sum(1 for _ in root.iter()) > 4000:
             raise Problem('Слишком много блоков или некорректный формат.')
+        issues = block_errors(root)
+        if issues:
+            raise Problem('Проверь программу:\n' + '\n'.join(issues[:8]))
+        return code, xml, root
+
+    def submit(self, user, path, value):
+        code, xml, root = self.program(value)
         completed = self.progress(user['id'])
         level = tournament_id = team_id = None
         kind = 'training' if path == '/api/training/submit' else 'tournament'
@@ -272,6 +289,14 @@ class Handler(BaseHTTPRequestHandler):
             level = int(value.get('level', 0))
             if not 1 <= level <= LESSONS or any(i not in completed for i in range(1, level)):
                 raise Problem('Сначала заверши предыдущие уровни.', 403)
+            if level == 3 and number_count(root) != 1:
+                raise Problem('Условие третьего уровня: нужен ровно один числовой блок. Сейчас их: %s.' % number_count(root))
+            if level == 2 and not scan_in_cannon(root):
+                raise Problem('Условие второго уровня: используй scan внутри параметра расстояния блока cannon.')
+            if level == 4:
+                error = lesson_four_problem(root)
+                if error:
+                    raise Problem(error)
         else:
             if not user['team_id']:
                 raise Problem('Создай команду или попроси капитана добавить тебя по логину.')
@@ -281,6 +306,12 @@ class Handler(BaseHTTPRequestHandler):
             tournament_id = int(value.get('tournament_id', 0))
         with db() as c:
             c.execute('BEGIN IMMEDIATE')
+            challenge_id = str(value.get('challenge_id', '')) if level == 4 else None
+            answer = challenges.answer_hash(challenge_id, value.get('console_answer', '')) if level == 4 else None
+            if level == 4:
+                error = challenges.problem(c, user['id'], code, xml, challenge_id, answer)
+                if error:
+                    raise Problem(error)
             if c.execute("SELECT 1 FROM jobs WHERE user_id=? AND status IN ('queued','running')", (user['id'],)).fetchone():
                 raise Problem('Предыдущее решение ещё проверяется.', 409)
             if kind == 'tournament' and not c.execute("SELECT 1 FROM tournaments WHERE id=? AND status='open'", (tournament_id,)).fetchone():
@@ -290,8 +321,8 @@ class Handler(BaseHTTPRequestHandler):
                     raise Problem('Состав команды изменился. Обнови страницу.', 409)
                 if c.execute("SELECT 1 FROM jobs WHERE team_id=? AND status IN ('queued','running')", (team_id,)).fetchone():
                     raise Problem('Решение вашей команды ещё проверяется. Дождитесь результата.', 409)
-            job_id = c.execute('INSERT INTO jobs(user_id,tournament_id,team_id,kind,level,code,xml,created) VALUES(?,?,?,?,?,?,?,?)',
-                               (user['id'], tournament_id, team_id, kind, level, code, xml, time.time())).lastrowid
+            job_id = c.execute('INSERT INTO jobs(user_id,tournament_id,team_id,kind,level,code,xml,created,console_challenge_id,console_answer_hash) VALUES(?,?,?,?,?,?,?,?,?,?)',
+                               (user['id'], tournament_id, team_id, kind, level, code, xml, time.time(), challenge_id, answer)).lastrowid
         self.send_json({'id': job_id}, 202)
 
     def static(self, path):

@@ -12,8 +12,18 @@ window.installTournamentEditor=function(){
   };
   var originalTab=Po;Po=function(mode){if(mode===0)originalTab(0);};
   Qo=function(){};
-  var originalRun=Un;Un=function(event){if(!unlocked){alert('Для доступа к турниру войди в учётную запись и заверши обучение.');return;}originalRun(event);};
-  function report(message){U('course-status').textContent=message;}
+  var originalRun=Un;Un=async function(event){
+    if(!unlocked){report('Для доступа к турниру войди в учётную запись и заверши обучение.','error');return;}
+    try{await PondFeedback.ready;var issues=PondFeedback.validate(Em());if(issues.length){PondFeedback.issues(issues);return;}report('Испытываем алгоритм. Наблюдай за сражением.');originalRun(event);}catch(error){report(PondFeedback.runtime(error),'error');}
+  };
+  function report(message,kind){PondFeedback.show(message,kind);}
+  var initializeAvatar=yn.prototype.nn;
+  yn.prototype.nn=function(){
+    try{initializeAvatar.call(this);}catch(error){if(this===Z.pb[0])report(PondFeedback.runtime(error),'error');throw error;}
+    if(this!==Z.pb[0])return;
+    var step=this.Dq.step;
+    this.Dq.step=function(){try{return step.apply(this,arguments);}catch(error){report(PondFeedback.runtime(error),'error');throw error;}};
+  };
   portal.onLoad(async function(){
     document.title='Алгоритм команды — Пруд';U('avatar-select').style.display='none';
     var names={rook:'Ладья',counter:'Контратакующий',sniper:'Снайпер'};
@@ -37,11 +47,14 @@ window.installTournamentEditor=function(){
       button.onclick=async function(){
         button.disabled=true;
         try{
-          var xml=Em(),code=Om();localStorage.setItem(storageKey,xml);
+          await PondFeedback.ready;
+          var xml=Em(),issues=PondFeedback.validate(xml);if(issues.length){PondFeedback.issues(issues);return;}
+          var code;try{code=Om();}catch(error){report(PondFeedback.runtime(error),'error');return;}
+          localStorage.setItem(storageKey,xml);
           var job=await portal.request('/api/tournament/submit',{tournament_id:Number(select.value),code:code,xml:xml});
           report('Решение отправлено…');var result=await portal.wait(job.id,report);
           report(result.message+(result.position?' Место команды: '+result.position+'.':'')+(result.candidate_position?' Место нового решения: '+result.candidate_position+'.':''));
-        }catch(error){report(error.message);}finally{button.disabled=false;}
+        }catch(error){report(error.message,'error');}finally{button.disabled=false;}
       };
     }catch(error){report(error.message);}
   });

@@ -1,0 +1,23 @@
+{
+  "pond_cannon": {"label": "cannon", "inputs": {"DEGREE": "направление выстрела", "RANGE": "расстояние выстрела"}},
+  "pond_scan": {"label": "scan", "inputs": {"DEGREE": "направление поиска"}},
+  "pond_swim": {"label": "swim", "inputs": {"DEGREE": "направление движения"}},
+  "pond_log": {"label": "log", "inputs": {"VALUE": "значение для вывода"}},
+  "variables_set": {"label": "присваивание переменной", "inputs": {"VALUE": "значение переменной"}},
+  "math_change": {"label": "изменение переменной", "inputs": {"DELTA": "величину изменения"}},
+  "pond_math_change": {"label": "изменение переменной", "inputs": {"DELTA": "величину изменения"}},
+  "logic_compare": {"label": "сравнение", "inputs": {"A": "первое значение", "B": "второе значение"}},
+  "logic_operation": {"label": "«и» / «или»", "inputs": {"A": "первое условие", "B": "второе условие"}},
+  "logic_negate": {"label": "«не»", "inputs": {"BOOL": "условие"}},
+  "controls_whileUntil": {"label": "цикл «пока»", "inputs": {"BOOL": "условие цикла"}},
+  "controls_repeat_ext": {"label": "повторение", "inputs": {"TIMES": "количество повторений"}},
+  "controls_for": {"label": "цикл со счётчиком", "inputs": {"FROM": "начальное значение", "TO": "конечное значение", "BY": "шаг счётчика"}},
+  "controls_forEach": {"label": "цикл по списку", "inputs": {"LIST": "список"}},
+  "controls_if": {"label": "ветвление", "inputs": {"IF0": "условие первой ветви"}},
+  "math_arithmetic": {"label": "арифметика", "inputs": {"A": "первое число", "B": "второе число"}},
+  "pond_math_arithmetic": {"label": "арифметика", "inputs": {"A": "первое число", "B": "второе число"}},
+  "math_single": {"label": "математическая функция", "inputs": {"NUM": "число"}},
+  "pond_math_single": {"label": "математическая функция", "inputs": {"NUM": "число"}},
+  "math_trig": {"label": "тригонометрия", "inputs": {"NUM": "число"}},
+  "math_random_int": {"label": "случайное число", "inputs": {"FROM": "нижнюю границу", "TO": "верхнюю границу"}}
+}

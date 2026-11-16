@@ -9,6 +9,8 @@ import time
 import xml.etree.ElementTree as ET
 
 from .store import ROOT, db
+from .blocks import block_errors, active_nodes, number_count, scan_in_cannon, lesson_four_problem
+from . import challenges
 
 LESSONS = 15
 PIXELS_PER_UNIT = (400 - 35) / 100  # Pond's canvas includes a half-duck inset at each edge.
@@ -17,22 +19,21 @@ PIXELS_PER_UNIT = (400 - 35) / 100  # Pond's canvas includes a half-duck inset a
 def concept_error(level, xml, metrics):
     """Check concepts, not exact values, names, operators or block ordering."""
     root = ET.fromstring(xml)
-    def active(node):
-        if node.get('disabled') == 'true':
-            return
-        if node.tag.split('}')[-1] == 'block':
-            yield node
-        for child in node:
-            yield from active(child)
-    blocks = list(active(root))
+    blocks = list(active_nodes(root))
     types = {b.get('type') for b in blocks}
     loops = {'controls_whileUntil', 'controls_repeat_ext', 'controls_repeat', 'controls_for', 'controls_forEach'}
+    if level == 2 and not scan_in_cannon(root):
+        return 'Условие второго уровня: используй scan внутри параметра расстояния блока cannon.'
     if level in (2, 3, 4, 9, 10, 11) and not metrics.get('scan'):
         return 'Попробуй использовать радар scan во время выполнения программы.'
     if level == 3 and not {'variables_set', 'variables_get'}.issubset(types):
         return 'Исследуй использование переменной для направления.'
+    if level == 3 and number_count(root) != 1:
+        return 'Условие третьего уровня: нужен ровно один числовой блок. Сейчас их: %s.' % number_count(root)
     if level == 4 and not metrics.get('log'):
         return 'Выведи измерение через log, чтобы увидеть результат работы радара.'
+    if level == 4 and lesson_four_problem(root):
+        return lesson_four_problem(root)
     if level == 6 and (not metrics.get('speed') or not types.intersection(loops)):
         return 'Используй измерение скорости и цикл для ожидания.'
     if level == 7:
@@ -87,7 +88,7 @@ def duel(spec, job_id, title):
                 c.execute('UPDATE matches SET snapshot=? WHERE id=?', (json.dumps(snapshot), match_id))
         process.wait(timeout=5)
         if process.returncode or not snapshot or not snapshot.get('done'):
-            raise RuntimeError('Бой не завершился: проверь установку quickjs и журнал сервера')
+            raise RuntimeError('Сервер не смог завершить проверку. Попробуй отправить решение ещё раз.')
         with db() as c:
             c.execute("UPDATE matches SET status='done',result=? WHERE id=?", (json.dumps(snapshot), match_id))
         return snapshot
@@ -104,20 +105,30 @@ def duel(spec, job_id, title):
 
 
 def train(job):
+    issues = block_errors(ET.fromstring(job['xml']))
+    if issues:
+        return {'passed': False, 'message': 'Проверь программу:\n' + '\n'.join(issues[:8])}
     result = duel({'level': job['level'], 'code': job['code'], 'seconds': 120}, job['id'], 'Проверка уровня %s' % job['level'])
     avatars = result['avatars']
     if avatars[0].get('error'):
-        return {'passed': False, 'message': 'Алгоритм не удалось выполнить. Измени блоки и попробуй снова.'}
+        return {'passed': False, 'message': avatars[0]['error']}
     error = concept_error(job['level'], job['xml'], result['metrics'])
     victory = not avatars[0]['dead'] and all(a['dead'] for a in avatars[1:])
     if not victory or error:
         return {'passed': False, 'message': error or 'На серверной проверке остались цели. Попробуй улучшить алгоритм и повторить эксперимент.'}
     with db() as c:
+        c.execute('BEGIN IMMEDIATE')
+        if job['level'] == 4:
+            error = challenges.problem(c, job['user_id'], job['code'], job['xml'], job['console_challenge_id'], job['console_answer_hash'] or '')
+            if error:
+                return {'passed': False, 'message': error}
         for level in range(1, job['level']):
             if not c.execute('SELECT 1 FROM progress WHERE user_id=? AND level=?', (job['user_id'], level)).fetchone():
                 return {'passed': False, 'message': 'Сначала заверши предыдущие уровни.'}
         c.execute('INSERT OR REPLACE INTO progress VALUES(?,?,?,?,?)',
                   (job['user_id'], job['level'], job['code'], job['xml'], time.time()))
+        if job['level'] == 4:
+            c.execute('UPDATE training_challenges SET used=1 WHERE id=?', (job['console_challenge_id'],))
     return {'passed': True, 'message': 'Уровень пройден. Можно продолжать.', 'unlocked': job['level'] == LESSONS}
 
 
@@ -145,7 +156,7 @@ def compare(job, opponent, seconds):
                      '%s — %s · счёт %s:%s · бой %s · до двух побед' % (job['team'], opponent['team'], wins[0], wins[1], round_number))
         left, right = frame['avatars']
         if left.get('error'):
-            raise ValueError('Алгоритм не удалось выполнить. Исправь блоки и отправь снова.')
+            raise ValueError(left['error'])
         difference = left['health'] - right['health']
         if difference > .0001:
             wins[0] += 1

@@ -79,6 +79,10 @@ def initialize():
         CREATE TABLE IF NOT EXISTS team_members (
           user_id INTEGER PRIMARY KEY REFERENCES users(id),
           team_id INTEGER NOT NULL REFERENCES teams(id), joined REAL NOT NULL);
+        CREATE TABLE IF NOT EXISTS training_challenges (
+          id TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id),
+          program_hash TEXT NOT NULL, answer_hash TEXT NOT NULL, expires REAL NOT NULL,
+          used INTEGER NOT NULL DEFAULT 0);
         ''')
         c.execute('BEGIN IMMEDIATE')
         # Preserve existing accounts, individual teams and their tournament places.
@@ -102,6 +106,10 @@ def initialize():
             c.execute('ALTER TABLE entries_v2 RENAME TO entries')
         c.execute('CREATE UNIQUE INDEX IF NOT EXISTS entries_team ON entries(tournament_id,team_id)')
         c.execute('CREATE INDEX IF NOT EXISTS members_team ON team_members(team_id)')
+        columns = {r['name'] for r in c.execute('PRAGMA table_info(jobs)')}
+        for column in ('console_challenge_id', 'console_answer_hash'):
+            if column not in columns:
+                c.execute('ALTER TABLE jobs ADD COLUMN %s TEXT' % column)
         if not c.execute("SELECT 1 FROM users WHERE login='silenok'").fetchone():
             encoded = os.environ.get('POND_ADMIN_PASSWORD_HASH')
             if not encoded or not encoded.startswith('pbkdf2_sha256$260000$'):

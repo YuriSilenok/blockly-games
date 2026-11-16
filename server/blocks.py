@@ -92,3 +92,23 @@ def scan_in_cannon(root):
             if value is not None and any(item.get('type') == 'pond_scan' for item in active_nodes(value)):
                 return True
     return False
+
+
+def nested_loop_problem(root, level):
+    loops = [node for node in active_nodes(root) if node.get('type') in
+             ('controls_whileUntil', 'controls_repeat_ext', 'controls_repeat', 'controls_for', 'controls_forEach')]
+    if level == 7:
+        if len(loops) != 2 or any(node.get('type') != 'controls_whileUntil' for node in loops):
+            return 'На уровне 7 нужны ровно два цикла «пока». Другие виды циклов не подходят.'
+        if not any(inner is not outer and any(tag(body) == 'statement' and any(item is inner for item in active_nodes(body)) for body in outer) for outer in loops for inner in loops):
+            return 'Помести один цикл «пока» внутрь другого.'
+    if level == 8:
+        repeats = [node for node in loops if node.get('type') in ('controls_repeat_ext', 'controls_repeat')]
+        whiles = [node for node in loops if node.get('type') == 'controls_whileUntil']
+        if len(loops) != 2 or len(repeats) != 1 or len(whiles) != 1:
+            return 'На уровне 8 нужны ровно два цикла: «повторить» и «пока».'
+        # Descend into the body, not the following statement chain.
+        body = child(repeats[0], 'statement')
+        if body is None or not any(item is whiles[0] for item in active_nodes(body)):
+            return 'Помести цикл «пока» внутрь цикла «повторить».'
+    return None

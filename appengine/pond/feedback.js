@@ -3,6 +3,11 @@
   'use strict';
   var schema=null;
   var feedback=window.PondFeedback={};
+  feedback.place=function(root){
+    var panel=root.querySelector('#course-feedback'),button=root.querySelector('#docsButton');
+    var controls=button&&button.closest('table');
+    if(panel&&controls)controls.insertAdjacentElement('afterend',panel);
+  };
   feedback.ready=fetch('pond/block-inputs.json').then(function(response){if(!response.ok)throw Error();return response.json();}).then(function(value){schema=value;}).catch(function(){schema=null;});
   function tag(node){return node.localName;}
   function child(node,name){return Array.from(node.children).find(function(item){return tag(item)===name;});}
@@ -58,7 +63,7 @@
     status.dataset.kind=kind||'info';
     status.setAttribute('role',kind==='error'?'alert':'status');
     status.setAttribute('aria-live',kind==='error'?'assertive':'polite');
-    status.textContent=message;
+    status.textContent=PondRussian.prose(message);
     if(kind==='error')status.scrollIntoView({block:'nearest',behavior:'smooth'});
   };
   feedback.issues=function(issues){feedback.show('Проверь программу:\n'+issues.slice(0,8).map(function(item){return '• '+item;}).join('\n')+(issues.length>8?'\nИсправь эти ошибки и повтори запуск.':''),'error');};

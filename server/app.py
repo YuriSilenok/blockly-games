@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 
 from .store import ROOT, db, initialize, password_hash, password_matches
 from .worker import LESSONS, work
-from .blocks import block_errors, number_count, scan_in_cannon, lesson_four_problem
+from .blocks import block_errors, number_count, scan_in_cannon, lesson_four_problem, nested_loop_problem
 from . import challenges
 from .teams import details as team_details, change as change_team, TeamProblem
 
@@ -97,7 +97,7 @@ class Handler(BaseHTTPRequestHandler):
                     user.pop('token')
                     user['completed'] = self.progress(user['id'])
                     user['unlocked'] = all(i in user['completed'] for i in range(1, LESSONS + 1))
-                self.send_json({'user': user})
+                self.send_json({'user': user, 'lessons': LESSONS, 'course_revision': 2})
             elif path == '/api/tournaments':
                 self.session()
                 with db() as c:
@@ -295,6 +295,10 @@ class Handler(BaseHTTPRequestHandler):
                 raise Problem('Условие второго уровня: используй scan внутри параметра расстояния блока cannon.')
             if level == 4:
                 error = lesson_four_problem(root)
+                if error:
+                    raise Problem(error)
+            if level in (7, 8):
+                error = nested_loop_problem(root, level)
                 if error:
                     raise Problem(error)
         else:

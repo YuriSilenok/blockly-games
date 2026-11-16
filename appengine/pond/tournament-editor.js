@@ -1,5 +1,8 @@
 window.installTournamentEditor=function(){
   'use strict';
+  var appendField=P,jsonInit=wi;
+  P=function(input,label,name){return appendField(input,PondRussian.label(label),name);};
+  wi=function(block,definition){return jsonInit(block,PondRussian.definition(definition));};
   // Redraw the idle arena when its sprites become available.
   Hn.addEventListener('load',function(){if(Cn&&Dn&&Z.pb.length)Mn();});
   var portal=PondPortal, unlocked=false, originalHTML=Jo;
@@ -8,6 +11,7 @@ window.installTournamentEditor=function(){
     ['languageMenu','linkButton'].forEach(function(id){var e=box.querySelector('#'+id);if(e)e.remove();});
     box.querySelector('#header_cta').insertAdjacentHTML('beforeend',' <a href="portal/account.html">Личный кабинет</a> <a href="portal/tournament.html">Таблица турниров</a> <button id="tournament-submit" disabled>Отправить на турнир</button>');
     box.querySelector('#visualization').insertAdjacentHTML('afterend','<div id="course-feedback"><div id="course-status" role="status">Загружаем учётную запись…</div><select id="tournament-select" aria-label="Турнир"></select></div>');
+    PondFeedback.place(box);
     return box.innerHTML;
   };
   var originalTab=Po;Po=function(mode){if(mode===0)originalTab(0);};

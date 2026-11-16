@@ -15,6 +15,7 @@
  */
 function init() {
   filterDocumentation();
+  PondRussian.images(document);
   var headers = document.getElementsByTagName('h2');
   for (var i = 0, header; (header = headers[i]); i++) {
     var img = document.createElement('img');

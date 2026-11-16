@@ -37,8 +37,31 @@ def db():
         connection.close()
 
 
+def backup_before_course_split():
+    with db() as source:
+        if not source.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='progress'").fetchone():
+            return
+        has_migrations = source.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='course_migrations'").fetchone()
+        if has_migrations and source.execute("SELECT 1 FROM course_migrations WHERE name='split-level-seven'").fetchone():
+            return
+        folder = DATA / 'backups'
+        folder.mkdir(mode=0o700, exist_ok=True)
+        target = folder / 'before-split-level-seven.sqlite3'
+        if target.exists():
+            return
+        temporary = folder / 'before-split-level-seven.pending'
+        destination = sqlite3.connect(str(temporary))
+        try:
+            source.backup(destination)
+        finally:
+            destination.close()
+        temporary.chmod(0o600)
+        temporary.replace(target)
+
+
 def initialize():
     DATA.mkdir(parents=True, exist_ok=True)
+    backup_before_course_split()
     with db() as c:
         c.execute('PRAGMA journal_mode=WAL')
         c.executescript('''
@@ -83,6 +106,7 @@ def initialize():
           id TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id),
           program_hash TEXT NOT NULL, answer_hash TEXT NOT NULL, expires REAL NOT NULL,
           used INTEGER NOT NULL DEFAULT 0);
+        CREATE TABLE IF NOT EXISTS course_migrations (name TEXT PRIMARY KEY);
         ''')
         c.execute('BEGIN IMMEDIATE')
         # Preserve existing accounts, individual teams and their tournament places.
@@ -110,6 +134,12 @@ def initialize():
         for column in ('console_challenge_id', 'console_answer_hash'):
             if column not in columns:
                 c.execute('ALTER TABLE jobs ADD COLUMN %s TEXT' % column)
+        if not c.execute("SELECT 1 FROM course_migrations WHERE name='split-level-seven'").fetchone():
+            # Old lesson 7 becomes 8; the new while-only lesson 7 remains unfinished.
+            c.execute('UPDATE progress SET level=level+100 WHERE level>=7')
+            c.execute('UPDATE progress SET level=level-99 WHERE level>=107')
+            c.execute("UPDATE jobs SET level=level+1 WHERE kind='training' AND level>=7")
+            c.execute("INSERT INTO course_migrations VALUES('split-level-seven')")
         if not c.execute("SELECT 1 FROM users WHERE login='silenok'").fetchone():
             encoded = os.environ.get('POND_ADMIN_PASSWORD_HASH')
             if not encoded or not encoded.startswith('pbkdf2_sha256$260000$'):

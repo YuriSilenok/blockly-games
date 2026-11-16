@@ -13,12 +13,12 @@
     document.getElementById('page-title').textContent='Привет, '+api.user.login+'.';
     document.getElementById('page-description').textContent='Твои эксперименты, команда и следующий шаг — всё здесь.';
     document.getElementById('name').textContent='Выполнен вход: '+api.user.login;
-    document.getElementById('progress').textContent=api.user.unlocked?'Обучение завершено. Собери команду и испытай свою стратегию в турнире.':'Пройдено уровней: '+api.user.completed.length+' из 15. Продолжай исследовать, чтобы открыть турнир.';
-    document.getElementById('progress-count').textContent=api.user.completed.length+' / 15';
+    document.getElementById('progress').textContent=api.user.unlocked?'Обучение завершено. Собери команду и испытай свою стратегию в турнире.':'Пройдено уровней: '+api.user.completed.length+' из 16. Продолжай исследовать, чтобы открыть турнир.';
+    document.getElementById('progress-count').textContent=api.user.completed.length+' / 16';
     document.getElementById('learning-progress').value=api.user.completed.length;
     document.getElementById('admin').hidden=api.user.role!=='admin';
-    var next=1;while(next<=15&&api.user.completed.includes(next))next++;
-    document.getElementById('continue').href=api.user.unlocked?'tournament.html':'../pond-tutor.html?level='+Math.min(15,next);
+    var next=1;while(next<=16&&api.user.completed.includes(next))next++;
+    document.getElementById('continue').href=api.user.unlocked?'tournament.html':'../pond-tutor.html?level='+Math.min(16,next);
     document.getElementById('continue').textContent=api.user.unlocked?'Открыть турниры ↗':'Продолжить обучение ↗';
     team=(await api.request('/api/team')).team;renderTeam();
   }

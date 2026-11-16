@@ -52,7 +52,7 @@ window.installPondCourse = function () {
     var container = document.createElement('div'); container.innerHTML = originalHTML();
     ['languageMenu','linkButton','helpUseScan','playerPendulum','playerScared','playerDefense'].forEach(function(id){var e=container.querySelector('#'+id);if(e)e.remove();});
     var help = container.querySelector('#help');
-    help.innerHTML = '<div class="course-scroll"><section><h2>Новые возможности</h2><div id="course-quote">Загружаем цитату документации…</div></section><section><h2>Задание: '+lesson.title+'</h2><p id="course-task"></p></section></div><div class="course-buttons"><button class="secondary addHideHandler">Понятно</button></div>';
+    help.innerHTML = '<div class="course-scroll"><section><h2>Новые возможности</h2><div id="course-quote" class="level-help-documentation">Загружаем цитату документации…</div></section><section><h2>Задание: '+lesson.title+'</h2><p id="course-task"></p></section></div><div class="course-buttons"><button class="secondary addHideHandler">Понятно</button></div>';
     help.querySelector('#course-task').textContent=PondRussian.prose(lesson.task);
     if(nm===4)help.querySelector('#course-task').insertAdjacentHTML('afterend','<p>Открой консоль браузера: нажми F12 и выбери вкладку «Консоль» или нажми Ctrl+Shift+J (на macOS — Cmd+Option+J). Запусти программу и найди последнее сообщение «Проверочное число для уровня 4». Возьми следующие за ним шесть цифр. Это отдельное число, а не расстояние, которое выводит блок «вывести в консоль». После победы введи его в окне результата. При новом запуске нужно брать число из нового сообщения.</p>');
     var done=container.querySelector('#dialogDone');

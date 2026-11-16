@@ -27,12 +27,28 @@
   };
   russian.prose=function(text){return String(text).replace(/«(scan|cannon|swim|stop|speed|health|getX|getY|log)»/g,function(match,name){return '«'+labels[name]+'»';}).replace(/\b(scan|cannon|swim|stop|speed|health|getX|getY|log)\b/g,function(name){return '«'+labels[name]+'»';});};
   russian.images=function(root){
+    // A viewBox scales the existing paths and fields together instead of cropping them.
+    root.querySelectorAll('svg').forEach(function(svg){
+      var width=parseFloat(svg.getAttribute('width')),height=parseFloat(svg.getAttribute('height'));
+      if(!svg.hasAttribute('viewBox')&&width>0&&height>0)svg.setAttribute('viewBox','0 0 '+width+' '+height);
+      svg.setAttribute('preserveAspectRatio','xMinYMin meet');
+      svg.classList.add('documentation-block-image');
+    });
+    var context=document.createElement('canvas').getContext('2d');
     root.querySelectorAll('svg text').forEach(function(element){
+      var originalText=element.textContent.replace(/\s+/g,' ').trim(),changed=false;
       Array.from(element.childNodes).forEach(function(node){
         if(node.nodeType!==3)return;
-        var original=node.textContent.trim(),short={getX:'X',getY:'Y',log:'вывод','Math.sqrt':'корень'},translated=short[original]||russian.label(original);
-        if(original&&translated!==original){node.textContent=node.textContent.replace(original,translated);if(translated.length>original.length){element.setAttribute('textLength',String(original.length*7));element.setAttribute('lengthAdjust','spacingAndGlyphs');}}
+        var original=node.textContent.trim(),short={getX:'X',getY:'Y',log:'вывод','var':'зад.','Math.sqrt':'корень'},translated=short[original]||russian.label(original);
+        if(original&&translated!==original){node.textContent=node.textContent.replace(original,translated);changed=true;}
       });
+      if(changed&&context){
+        var style=window.getComputedStyle(element);
+        context.font=style.font||style.fontSize+' '+style.fontFamily;
+        var available=context.measureText(originalText).width;
+        var required=context.measureText(element.textContent.replace(/\s+/g,' ').trim()).width;
+        if(available>0&&required>available){element.setAttribute('textLength',String(available));element.setAttribute('lengthAdjust','spacingAndGlyphs');}
+      }
     });
   };
 })();

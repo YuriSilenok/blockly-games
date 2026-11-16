@@ -168,4 +168,5 @@ body.hideLevel11 .level11 {
   display: none;
 }
 pre { display: none !important; }
+.documentation-block-image { max-width: 100%; height: auto; }
 body.docs-loading { visibility: hidden; }

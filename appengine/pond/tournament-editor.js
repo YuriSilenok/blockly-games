@@ -1,5 +1,7 @@
 window.installTournamentEditor=function(){
   'use strict';
+  // Redraw the idle arena when its sprites become available.
+  Hn.addEventListener('load',function(){if(Cn&&Dn&&Z.pb.length)Mn();});
   var portal=PondPortal, unlocked=false, originalHTML=Jo;
   Jo=function(){
     var box=document.createElement('div');box.innerHTML=originalHTML();

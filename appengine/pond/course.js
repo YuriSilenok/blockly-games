@@ -1,6 +1,10 @@
 /* Integration layer for the retained, prebuilt Pond Tutor bundle. */
 window.installPondCourse = function () {
   'use strict';
+  // The first scene may be drawn before the sprite sheet has finished loading.
+  Kn.addEventListener('load', function () {
+    if (Fn && Gn && Z.Jb.length) Pn();
+  });
   mm = POND_COURSE.length;
   nm = Math.max(1, Math.min(mm, nm));
   var lesson = POND_COURSE[nm - 1], portal = PondPortal;

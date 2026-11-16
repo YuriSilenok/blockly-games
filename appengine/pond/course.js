@@ -79,7 +79,7 @@ window.installPondCourse = function () {
     if(allowed)Array.from(toolbox.querySelectorAll('block')).forEach(function(b){if(allowed.indexOf(b.getAttribute('type'))===-1)b.remove();});
     if(nm===8||nm===9||nm>=11){var category=toolbox.querySelector('category[name="'+X('Games.catLoops',false)+'"]');category.insertAdjacentHTML('beforeend','<block type="controls_repeat_ext"><value name="TIMES"><shadow type="pond_math_number"><field name="NUM">4</field></shadow></value></block>');}
     if(nm>=12){var math=toolbox.querySelector('category[name="'+X('Games.catMath',false)+'"]');if(math)math.insertAdjacentHTML('beforeend','<block type="pond_math_arithmetic"><value name="A"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value><value name="B"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value></block>');}
-    Array.from(toolbox.querySelectorAll('category')).forEach(function(c){if(c.getAttribute('custom')){if(nm===5||nm===6||nm===10||nm===11)c.remove();}else if(!c.querySelector('block'))c.remove();});
+    Array.from(toolbox.querySelectorAll('category')).forEach(function(c){if(c.getAttribute('custom')){if(nm===5||nm===6||nm===10)c.remove();}else if(!c.querySelector('block'))c.remove();});
     PondFeedback.place(container);
     return container.innerHTML;
   };

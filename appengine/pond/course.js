@@ -27,6 +27,7 @@ window.installPondCourse = function () {
     var bs = blocks(xml), types = bs.map(function (b) { return b.getAttribute('type'); });
     function has(type) { return types.indexOf(type) !== -1; }
     if(nm===9){var loopCount=types.filter(function(type){return loops.includes(type);}).length;if(loopCount>2)return 'На уровне 9 можно использовать не более двух циклов. Сейчас их: '+loopCount+'.';}
+    if(nm===10){var loopCount=types.filter(function(type){return loops.includes(type);}).length;if(loopCount>3)return 'На уровне 10 можно использовать не более трёх циклов. Сейчас их: '+loopCount+'.';}
     if ([5,6,7,8,9,10,12,13].indexOf(nm) !== -1 && has('pond_cannon')) return 'На этом уровне исследуем таран: убери выстрелы из активной программы.';
     if ([1,2,3,4,11].indexOf(nm) !== -1 && !has('pond_cannon')) return 'Попробуй исследовать стрельбу с помощью cannon.';
     if ([2,3,4,11,12,13].indexOf(nm) !== -1 && !has('pond_scan')) return 'Добавь измерение расстояния с помощью scan.';

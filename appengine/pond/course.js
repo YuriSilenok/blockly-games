@@ -67,9 +67,11 @@ window.installPondCourse = function () {
     if(nm<=4) {allowed.push('pond_cannon');if(nm>=2)allowed.push('pond_scan');if(nm>=4)allowed.push('pond_log');}
     else if(nm===5)allowed=['pond_swim'];
     else if(nm===6)allowed.push('pond_swim','pond_speed','controls_whileUntil','logic_compare');
-    else if(nm===7||nm===8||nm===9)allowed.push('pond_swim','pond_speed','controls_whileUntil','logic_compare');
+    else if(nm===7||nm===8)allowed.push('pond_swim','pond_speed','controls_whileUntil','logic_compare');
+    else if(nm===9)allowed.push('pond_swim','pond_health','controls_whileUntil','logic_compare');
     else if(nm===10)allowed.push('pond_swim','pond_getX','pond_getY','controls_whileUntil','logic_compare');
     else allowed=null;
+    if(nm===9)toolbox.querySelector('category[name="'+X('Games.pond',false)+'"]').insertAdjacentHTML('beforeend','<block type="pond_health"></block>');
     if(allowed)Array.from(toolbox.querySelectorAll('block')).forEach(function(b){if(allowed.indexOf(b.getAttribute('type'))===-1)b.remove();});
     if(nm===8||nm===9||nm>=11){var category=toolbox.querySelector('category[name="'+X('Games.catLoops',false)+'"]');category.insertAdjacentHTML('beforeend','<block type="controls_repeat_ext"><value name="TIMES"><shadow type="pond_math_number"><field name="NUM">4</field></shadow></value></block>');}
     if(nm>=11){var math=toolbox.querySelector('category[name="'+X('Games.catMath',false)+'"]');if(math)math.insertAdjacentHTML('beforeend','<block type="pond_math_arithmetic"><value name="A"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value><value name="B"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value></block>');}
@@ -104,6 +106,7 @@ window.installPondCourse = function () {
   var originalDraw=Pn;
   Pn=function(){
     originalDraw();
+    PondHealth.update(Z.Jb,'aa','Nu');
     if(running&&programFinished&&!idleReported&&!runtimeFailure&&!En.td&&En.speed===0&&Z.zg.length===0){
       idleReported=true;var remaining=Z.Jb.filter(function(a){return a!==En&&!a.td;}).length;
       var problem=metricError();
@@ -185,7 +188,7 @@ window.installPondCourse = function () {
   async function quote(){
     var target=W('course-quote');
     if(!lesson.concepts.length){target.textContent='Новых блоков нет. Комбинируй изученные возможности и исследуй поведение противников.';return;}
-    var map={cannon:['Углы','cannon'],scan:['scan'],variables:['Присваивание','Получение значения'],log:['Отладка'],swim:['swim'],speed:['Скорость'],while:['Цикл «пока»'],compare:['Сравнения'],nested:['Вложенные циклы'],repeat:['Цикл «повторить»'],change:['Увеличение значения'],coordinates:['Координаты'],if:['Условия']};
+    var map={cannon:['Углы','cannon'],scan:['scan'],variables:['Присваивание','Получение значения'],log:['Отладка'],swim:['swim'],speed:['Скорость'],health:['Здоровье'],while:['Цикл «пока»'],compare:['Сравнения'],nested:['Вложенные циклы'],repeat:['Цикл «повторить»'],change:['Увеличение значения'],coordinates:['Координаты'],if:['Условия']};
     try{
       var response=await fetch('pond/docs.html');if(!response.ok)throw Error();
       var doc=new DOMParser().parseFromString(await response.text(),'text/html');target.textContent='';

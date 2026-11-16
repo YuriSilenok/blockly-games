@@ -3,6 +3,8 @@ window.installTournamentEditor=function(){
   var appendField=P,jsonInit=wi;
   P=function(input,label,name){return appendField(input,PondRussian.label(label),name);};
   wi=function(block,definition){return jsonInit(block,PondRussian.definition(definition));};
+  var drawArena=Mn;
+  Mn=function(){drawArena();PondHealth.update(Z.pb,'cd','dv');};
   // Redraw the idle arena when its sprites become available.
   Hn.addEventListener('load',function(){if(Cn&&Dn&&Z.pb.length)Mn();});
   var portal=PondPortal, unlocked=false, originalHTML=Jo;

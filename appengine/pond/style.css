@@ -51,6 +51,32 @@
   white-space: nowrap;
 }
 
+#avatarStatTable td.avatarHealthCell { position: relative; }
+#avatarStatTable .avatarHealthCell .avatarStatHealth { top: 0; left: 0; }
+#avatarStatTable .avatarHealthCell .avatarStatName {
+  left: 4px;
+  right: 76px;
+  width: auto !important;
+  top: 50%;
+  transform: translateY(-50%);
+  text-shadow: 0 1px 2px #333;
+}
+.avatarStatHealthValue {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 4px;
+  border-radius: 3px;
+  color: #fff;
+  background: rgba(0, 0, 0, .45);
+  font-size: 12px;
+  line-height: 17px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 .avatarStatHealth {
   position: absolute;
 }

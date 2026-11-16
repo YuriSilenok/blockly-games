@@ -100,8 +100,6 @@ def nested_loop_problem(root, level):
     if level == 7:
         if len(loops) != 2 or any(node.get('type') != 'controls_whileUntil' for node in loops):
             return 'На уровне 7 нужны ровно два цикла «пока». Другие виды циклов не подходят.'
-        if not any(inner is not outer and any(tag(body) == 'statement' and any(item is inner for item in active_nodes(body)) for body in outer) for outer in loops for inner in loops):
-            return 'Помести один цикл «пока» внутрь другого.'
     if level == 8:
         repeats = [node for node in loops if node.get('type') in ('controls_repeat_ext', 'controls_repeat')]
         whiles = [node for node in loops if node.get('type') == 'controls_whileUntil']

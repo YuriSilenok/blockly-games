@@ -103,7 +103,7 @@ def nested_loop_problem(root, level):
         return 'На уровне 10 можно использовать не более трёх циклов. Сейчас их: %s.' % len(loops)
     if level == 11 and len(loops) > 2:
         return 'На уровне 11 можно использовать не более двух циклов. Сейчас их: %s.' % len(loops)
-    if level in (12, 13):
+    if level in (12, 13, 14):
         conditionals = sum(node.get('type') == 'controls_if' for node in active_nodes(root))
         if len(loops) != 1 or conditionals != 1:
             return 'На уровне %s нужны ровно один цикл и один блок «Если». Сейчас циклов: %s, блоков «Если»: %s.' % (level, len(loops), conditionals)

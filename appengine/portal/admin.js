@@ -30,6 +30,7 @@
     data.rounds.forEach(function(round){
       var box=document.createElement('section');box.className='round-editor';var title=document.createElement('h3');title.textContent=round.name;box.appendChild(title);
       if(round.status==='draft'){
+        var hint=document.createElement('p');hint.textContent='Выбери от двух до четырёх команд. Утки стартуют в углах с отступом 10.';box.appendChild(hint);
         var choices=document.createElement('div');choices.className='team-choices';
         data.teams.forEach(function(team){var label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=team.team_id;input.checked=round.players.some(function(p){return p.team_id===team.team_id;});label.appendChild(input);label.appendChild(document.createTextNode(team.team+' · '+team.algorithm));choices.appendChild(label);});box.appendChild(choices);
         var start=document.createElement('button');start.textContent='Сохранить состав и запустить';start.disabled=t.status==='finished';

@@ -66,7 +66,7 @@ window.installTournamentEditor=function(){
   async function prepareArena(preview){
     var selectors=Array.from(U('duck-assignments').querySelectorAll('select'));
     var ducks=await Promise.all(selectors.map(function(s){return preview?Promise.resolve({name:s.dataset.duck==='0'?'Моя утка':'Противник '+s.dataset.duck,code:'',xml:'<xml></xml>'}):resolved(s.value);}));
-    var points=[];for(var x of [10,30,50,70,90])for(var y of [10,30,50,70,90])points.push([x,y]);
+    var points=[[10,10],[90,10],[90,90],[10,90]];
     for(var i=points.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),temp=points[i];points[i]=points[j];points[j]=temp;}
     clearTimeout(Z.vr);Z.reset();Z.pb.length=0;var nativeSelect=U('avatar-select');nativeSelect.replaceChildren();
     ducks.forEach(function(a,index){var avatar=new yn((index?'Противник '+index:'Моя утка')+' · '+a.name,new r(points[index][0],points[index][1]),index===0);zn(avatar,index===0?Em():a.xml,undefined,a.code);nativeSelect.add(new Option(avatar.name,String(index)));});

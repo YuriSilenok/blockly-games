@@ -1,5 +1,4 @@
 """Saved algorithms, invitations and manually scheduled tournament rounds."""
-import math
 import random
 import re
 import time
@@ -106,18 +105,10 @@ def report(c, tournament_id):
 
 
 def positions(count):
-    rng = random.SystemRandom()
-    # Retry a bounded random packing, then use a shuffled grid with >70 px spacing.
-    for attempt in range(50):
-        points = []
-        for unused in range(2000):
-            candidate = (rng.uniform(10, 90), rng.uniform(10, 90))
-            if all(math.hypot(candidate[0]-x, candidate[1]-y) * 3.65 >= 70 for x, y in points):
-                points.append(candidate)
-                if len(points) == count:
-                    return points
-    points = [(x, y) for x in (10, 30, 50, 70, 90) for y in (10, 30, 50, 70, 90)]
-    rng.shuffle(points)
+    if not 1 <= count <= 4:
+        raise ValueError('В углах пруда можно разместить не более четырёх уток.')
+    points = [(10, 10), (90, 10), (90, 90), (10, 90)]
+    random.SystemRandom().shuffle(points)
     return points[:count]
 
 
@@ -254,8 +245,8 @@ def post(h, user, path, value):
                 raise h.problem('Менять состав и запускать можно только подготовленный раунд незавершённого турнира.', 409)
             if path.endswith('/teams'):
                 team_ids = value.get('team_ids', [])
-                if not isinstance(team_ids, list) or len(team_ids) > 25:
-                    raise h.problem('Выбери не более 25 команд.')
+                if not isinstance(team_ids, list) or len(team_ids) > 4:
+                    raise h.problem('Выбери не более четырёх команд: каждая утка стартует в отдельном углу.')
                 team_ids = set(int(i) for i in team_ids)
                 c.execute('DELETE FROM round_players WHERE round_id=?', (round_id,))
                 for team_id in team_ids:
@@ -267,6 +258,8 @@ def post(h, user, path, value):
                 players = c.execute('SELECT team_id FROM round_players WHERE round_id=? ORDER BY team_id', (round_id,)).fetchall()
                 if len(players) < 2:
                     raise h.problem('Добавь в раунд хотя бы две команды.')
+                if len(players) > 4:
+                    raise h.problem('В раунде может быть не более четырёх команд. Измени состав раунда.')
                 for p in players:
                     saved = c.execute('''SELECT s.*,t.name AS team FROM tournament_algorithms s JOIN teams t ON t.id=s.team_id
                       WHERE s.tournament_id=? AND s.team_id=? AND s.is_main=1 AND t.dissolved=0''', (row['tournament_id'], p['team_id'])).fetchone()

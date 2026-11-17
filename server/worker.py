@@ -36,7 +36,7 @@ def concept_error(level, xml, metrics):
         return lesson_four_problem(root)
     if level == 6 and (not metrics.get('speed') or not types.intersection(loops)):
         return 'Используй измерение скорости и цикл для ожидания.'
-    if level in (7, 8, 9, 10, 11, 12, 13, 14) and nested_loop_problem(root, level):
+    if level in (7, 8, 9, 10, 11, 12, 13, 14, 15) and nested_loop_problem(root, level):
         return nested_loop_problem(root, level)
     if level in (10, 11) and (not metrics.get('getX') or not metrics.get('getY') or not types.intersection(loops)):
         return 'Используй обе координаты и циклы, чтобы управлять маршрутом.'

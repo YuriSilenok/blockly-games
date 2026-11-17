@@ -280,6 +280,7 @@ Pond.Avatar = class {
         startLoc.x + Pond.Avatar.angleDx(degree, range),
         startLoc.y + Pond.Avatar.angleDy(degree, range));
     const missile = {
+      replayId: ++this.battle_.nextMissileId,
       avatar: this,
       startLoc: startLoc,
       degree: degree,

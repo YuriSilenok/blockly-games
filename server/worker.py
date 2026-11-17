@@ -7,11 +7,13 @@ import sys
 import threading
 import time
 import xml.etree.ElementTree as ET
+import zlib
 
 from .store import ROOT, db
 from .blocks import block_errors, active_nodes, number_count, scan_in_cannon, lesson_four_problem, nested_loop_problem
 from . import challenges
 from . import arena
+from . import sandbox
 
 LESSONS = 19
 PIXELS_PER_UNIT = (400 - 35) / 100  # Pond's canvas includes a half-duck inset at each edge.
@@ -67,6 +69,20 @@ def duel(spec, job_id, title):
     thread = threading.Thread(target=read_output, daemon=True)
     thread.start()
     snapshot = None
+    replay_frames = []
+    replay_index = 0
+
+    def flush_replay():
+        nonlocal replay_index
+        if not replay_frames:
+            return
+        payload = zlib.compress(json.dumps(replay_frames, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
+        with db() as c:
+            c.execute('INSERT INTO match_replay_chunks(match_id,chunk_index,first_time,last_time,frame_count,payload) VALUES(?,?,?,?,?,?)',
+                      (match_id, replay_index, replay_frames[0]['time'], replay_frames[-1]['time'], len(replay_frames), payload))
+        replay_frames.clear()
+        replay_index += 1
+
     started = time.monotonic()
     try:
         process.stdin.write(json.dumps(spec, ensure_ascii=False) + '\n')
@@ -83,14 +99,19 @@ def duel(spec, job_id, title):
             snapshot = json.loads(line)
             if snapshot.get('error'):
                 raise RuntimeError(snapshot['error'])
+            if spec.get('record_replay'):
+                replay_frames.append(snapshot)
+                if len(replay_frames) >= 200:
+                    flush_replay()
             with db() as c:
                 c.execute('UPDATE matches SET snapshot=? WHERE id=?', (json.dumps(snapshot), match_id))
         process.wait(timeout=5)
         if process.returncode or not snapshot or not snapshot.get('done'):
             raise RuntimeError('Сервер не смог завершить проверку. Попробуй отправить решение ещё раз.')
+        flush_replay()
         with db() as c:
             c.execute("UPDATE matches SET status='done',result=? WHERE id=?", (json.dumps(snapshot), match_id))
-        return snapshot
+        return dict(snapshot, match_id=match_id)
     except Exception:
         with db() as c:
             c.execute("UPDATE matches SET status='error' WHERE id=?", (match_id,))
@@ -207,7 +228,10 @@ def rank(job):
 def work(stop):
     while not stop.is_set():
         with db() as c:
-            row = c.execute("SELECT j.*,t.name AS team FROM jobs j LEFT JOIN teams t ON t.id=j.team_id WHERE j.status='queued' ORDER BY CASE kind WHEN 'training' THEN 0 ELSE 1 END,j.id LIMIT 1").fetchone()
+            c.execute('BEGIN IMMEDIATE')
+            row = None
+            if not c.execute("SELECT 1 FROM jobs WHERE status='running' LIMIT 1").fetchone():
+                row = c.execute("SELECT j.*,t.name AS team FROM jobs j LEFT JOIN teams t ON t.id=j.team_id WHERE j.status='queued' ORDER BY CASE kind WHEN 'training' THEN 0 ELSE 1 END,j.id LIMIT 1").fetchone()
             if row:
                 c.execute("UPDATE jobs SET status='running' WHERE id=?", (row['id'],))
         if not row:
@@ -219,6 +243,8 @@ def work(stop):
                 result = train(job)
             elif job['kind'] == 'round':
                 result = arena.run_round(job, duel)
+            elif job['kind'] == 'sandbox':
+                result = sandbox.rank(job, duel)
             else:
                 result = {'accepted': False, 'message': 'Автоматическое ранжирование заменено раундами. Сохрани и заяви алгоритм в новой библиотеке.'}
             status = 'done'

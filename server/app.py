@@ -11,7 +11,7 @@ import secrets
 import sqlite3
 import threading
 import time
-from urllib.parse import unquote, urlsplit, quote
+from urllib.parse import unquote, urlsplit, quote, parse_qs
 import xml.etree.ElementTree as ET
 
 from .store import ROOT, db, initialize, password_hash, password_matches
@@ -19,6 +19,7 @@ from .worker import LESSONS, work
 from .blocks import block_errors, number_count, scan_in_cannon, lesson_four_problem, nested_loop_problem
 from . import challenges
 from . import arena
+from . import sandbox
 from .version import REVISION
 from .teams import details as team_details, change as change_team, TeamProblem
 
@@ -117,6 +118,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({'team': team_details(user['id']), 'invitations': arena.invitations(user['id'])})
             elif path.startswith('/api/arena/'):
                 arena.get(self, path)
+            elif path.startswith('/api/sandbox'):
+                sandbox.get(self, path)
             elif re.fullmatch(r'/api/tournaments/\d+/standings', path):
                 self.graduate()
                 tournament_id = int(path.split('/')[3])
@@ -177,6 +180,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({'team': change_team(user['id'], path.split('/')[-1], value)})
             elif path.startswith('/api/arena/') or path.startswith('/api/admin/rounds'):
                 arena.post(self, user, path, value)
+            elif path == '/api/sandbox/submit':
+                sandbox.submit(self, user, value)
             elif path == '/api/progress/reset':
                 with db() as c:
                     if c.execute("SELECT 1 FROM jobs WHERE user_id=? AND kind='training' AND status='running'", (user['id'],)).fetchone():
@@ -353,14 +358,14 @@ class Handler(BaseHTTPRequestHandler):
         self.send_json({'id': job_id}, 202)
 
     def static(self, path):
-        if path in ('/pond-duck.html', '/portal/tournament.html', '/tournament'):
+        if path in ('/pond-duck.html', '/portal/tournament.html', '/tournament', '/portal/sandbox.html', '/sandbox'):
             user = self.session(False)
             destination = None
             if not user:
                 destination = '/portal/account.html?next=' + quote(self.path, safe='')
             elif user['role'] != 'admin' and any(i not in self.progress(user['id']) for i in range(1, LESSONS + 1)):
                 destination = '/portal/account.html?training_required=1'
-            elif path == '/pond-duck.html' and not user['team_id']:
+            elif path == '/pond-duck.html' and not user['team_id'] and parse_qs(urlsplit(self.path).query).get('sandbox') != ['1']:
                 destination = '/portal/tournament.html'
             if destination:
                 self.send_response(302)
@@ -376,7 +381,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header('Content-Length', '0')
             self.end_headers()
             return
-        aliases = {'/': '/index.html', '/admin': '/portal/admin.html', '/account': '/portal/account.html', '/tournament': '/portal/tournament.html'}
+        aliases = {'/': '/index.html', '/admin': '/portal/admin.html', '/account': '/portal/account.html', '/tournament': '/portal/tournament.html', '/sandbox': '/portal/sandbox.html'}
         if path in aliases and path != '/':
             self.send_response(302)
             self.send_header('Location', aliases[path])

@@ -6,7 +6,7 @@ window.installTournamentEditor=function(){
   wi=function(block,definition){return jsonInit(block,PondRussian.definition(definition));};
   var drawArena=Mn;Mn=function(){drawArena();PondHealth.update(Z.pb,'cd','dv');};
   Hn.addEventListener('load',function(){if(Cn&&Dn&&Z.pb.length)Mn();});
-  var portal=PondPortal,unlocked=false,originalHTML=Jo,library={owned:[],available:[]},selectedAlgorithm=null,storageKey;
+  var portal=PondPortal,unlocked=false,originalHTML=Jo,library={owned:[],available:[]},selectedAlgorithm=null,storageKey,sandboxMode=new URLSearchParams(location.search).get('sandbox')==='1';
   Jo=function(){
     var box=document.createElement('div');box.innerHTML=originalHTML();
     PondToolbox.complete(box.querySelector('#toolbox'));
@@ -22,6 +22,7 @@ window.installTournamentEditor=function(){
       Array.from(menu.childNodes).forEach(function(node){if(node!==summary)panel.appendChild(node);});menu.appendChild(panel);
     });
     box.querySelector('#header_cta').prepend(tools);
+    box.querySelector('#header_cta').insertAdjacentHTML('beforeend',' <a href="portal/sandbox.html">Песочница</a>');
     PondFeedback.place(box);return box.innerHTML;
   };
   var originalTab=Po;Po=function(mode){if(mode===0)originalTab(0);};Qo=function(){};
@@ -73,10 +74,10 @@ window.installTournamentEditor=function(){
     Yn=Z.pb[0];nativeSelect.selectedIndex=0;Z.reset();Ln();Mn();
   }
   var originalRun=Un,preparing=false;Un=async function(event){
-    if(!unlocked){report('Сначала заверши обучение и создай команду.','error');return;}
+    if(!unlocked){report(sandboxMode?'Сначала заверши обучение.':'Сначала заверши обучение и создай команду.','error');return;}
     if(preparing)return;preparing=true;U('runButton').disabled=true;
     try{
-      await portal.refresh();if(!portal.user||!portal.user.team_id||(!portal.user.unlocked&&portal.user.role!=='admin')){location.assign('portal/tournament.html');return;}
+      await portal.refresh();if(!portal.user||(!sandboxMode&&!portal.user.team_id)||(!portal.user.unlocked&&portal.user.role!=='admin')){location.assign(sandboxMode?'portal/sandbox.html':'portal/tournament.html');return;}
       await PondFeedback.ready;if(document.querySelector('#duck-assignments select').value==='current'){var issues=PondFeedback.validate(Em());if(issues.length){PondFeedback.issues(issues);return;}}
       await prepareArena(false);suppressSave=true;try{originalRun(event);}finally{suppressSave=false;}report('Тренировочный бой запущен.');
     }catch(error){report(['TypeError','ReferenceError','SyntaxError','RangeError'].includes(error.name)?PondFeedback.runtime(error):error.message,'error');}finally{preparing=false;U('runButton').disabled=false;}
@@ -92,7 +93,7 @@ window.installTournamentEditor=function(){
     document.addEventListener('keydown',function(event){if(event.key==='Escape')menus.forEach(function(menu){if(menu.open){menu.open=false;menu.querySelector('summary').focus();}});});
     document.title='Редактор и тренировочный пруд';U('avatar-select').style.display='none';await portal.ready;
     if(!portal.user){portal.signIn();return;}
-    if((!portal.user.unlocked&&portal.user.role!=='admin')||!portal.user.team_id){location.replace('portal/tournament.html');return;}
+    if((!portal.user.unlocked&&portal.user.role!=='admin')||(!sandboxMode&&!portal.user.team_id)){location.replace(sandboxMode?'portal/sandbox.html':'portal/tournament.html');return;}
     unlocked=true;storageKey='pond-tournament:'+portal.user.id;
     var saved=localStorage.getItem(storageKey);if(saved){try{loadBlocks(saved);}catch(error){report('Черновик не удалось открыть.','error');}}
     window.addEventListener('beforeunload',function(){if(Bm&&!Dm)localStorage.setItem(storageKey,Em());});
@@ -108,7 +109,7 @@ window.installTournamentEditor=function(){
       U('tournament-submit').disabled=!tournaments.length||portal.user.captain_id!==portal.user.id;
       if(portal.user.captain_id!==portal.user.id){var notice=document.createElement('p');notice.textContent='Отправлять алгоритмы на турнир может только капитан команды.';U('tournament-submit').after(notice);}
       U('tournament-submit').onclick=async function(){var button=this;button.disabled=true;try{var algorithmId=Number(U('tournament-algorithm').value);if(!algorithmId)throw Error('Выбери отправляемый алгоритм участника команды. Если список пуст, участникам нужно сохранить алгоритм в личной библиотеке.');await portal.request('/api/arena/submit',{tournament_id:Number(select.value),algorithm_id:algorithmId,shared:U('algorithm-shared').checked,is_main:U('algorithm-main').checked});await refreshLibrary();report('Выбранный алгоритм заявлен. Основной алгоритм и доступность можно менять на странице турниров.','success');}catch(error){report(error.message,'error');}finally{button.disabled=!tournaments.length||portal.user.captain_id!==portal.user.id;}};
-      report('Команда «'+portal.user.team+'». Сохраняй алгоритмы, назначай их уткам и готовь заявки.');
+      report(sandboxMode?'Сохрани алгоритм в личной библиотеке, затем отправь его со страницы песочницы.':'Команда «'+portal.user.team+'». Сохраняй алгоритмы, назначай их уткам и готовь заявки.');
     }catch(error){report(error.message,'error');}
   });
 };

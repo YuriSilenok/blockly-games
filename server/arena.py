@@ -178,7 +178,7 @@ def post(h, user, path, value):
                 c.execute('UPDATE algorithms SET code=?,xml=?,updated=? WHERE id=?', (code, xml, time.time(), algorithm_id))
                 # Published snapshots keep their references, but duplicates disappear from the library.
                 c.execute('UPDATE algorithms SET archived=1 WHERE user_id=? AND name=? AND id<>?', (user['id'], name, algorithm_id))
-                c.execute('DELETE FROM algorithms WHERE user_id=? AND name=? AND id<>? AND NOT EXISTS (SELECT 1 FROM tournament_algorithms s WHERE s.algorithm_id=algorithms.id)', (user['id'], name, algorithm_id))
+                c.execute('DELETE FROM algorithms WHERE user_id=? AND name=? AND id<>? AND NOT EXISTS (SELECT 1 FROM tournament_algorithms s WHERE s.algorithm_id=algorithms.id) AND NOT EXISTS (SELECT 1 FROM sandbox_submissions s WHERE s.algorithm_id=algorithms.id)', (user['id'], name, algorithm_id))
             else:
                 algorithm_id = c.execute('INSERT INTO algorithms(user_id,name,code,xml,created,updated) VALUES(?,?,?,?,?,?)',
                                          (user['id'], name, code, xml, time.time(), time.time())).lastrowid

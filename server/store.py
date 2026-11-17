@@ -67,6 +67,7 @@ def initialize():
     backup_before_course_split('duplicate-level-twelve', 'before-duplicate-level-twelve')
     backup_before_course_split('swap-levels-thirteen-fourteen', 'before-swap-levels-thirteen-fourteen')
     backup_before_course_split('algorithm-library-v1', 'before-algorithm-library')
+    backup_before_course_split('sandbox-v1', 'before-sandbox')
     with db() as c:
         c.execute('PRAGMA journal_mode=WAL')
         c.executescript('''
@@ -115,6 +116,8 @@ def initialize():
         ''')
         from .arena import initialize as initialize_arena
         initialize_arena(c)
+        from .sandbox import initialize as initialize_sandbox
+        initialize_sandbox(c)
         c.execute('BEGIN IMMEDIATE')
         # Preserve existing accounts, individual teams and their tournament places.
         if 'team_id' not in {r['name'] for r in c.execute('PRAGMA table_info(jobs)')}:
@@ -176,6 +179,7 @@ def initialize():
                       ('silenok', encoded, 'admin', time.time()))
         from .arena import migrate_legacy
         migrate_legacy(c)
+        c.execute("INSERT OR IGNORE INTO course_migrations VALUES('sandbox-v1')")
         c.execute("UPDATE jobs SET status='queued' WHERE status='running'")
         c.execute("UPDATE matches SET status='interrupted' WHERE status='running'")
         c.execute('DELETE FROM sessions WHERE expires < ?', (time.time(),))

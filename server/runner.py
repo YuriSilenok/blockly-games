@@ -29,6 +29,11 @@ def run(spec):
         scene[0]['code'] = spec['code']
         spec['avatars'] = scene
     context.eval('startMatch(%s)' % json.dumps(spec, ensure_ascii=True))
+    if spec.get('record_replay'):
+        initial = json.loads(context.eval('advanceMatch(0)'))
+        print(json.dumps(initial, ensure_ascii=True), flush=True)
+        if initial.get('done'):
+            return
     started = time.monotonic()
     limit = min(120, max(10, int(spec.get('seconds', 60))))
     while True:

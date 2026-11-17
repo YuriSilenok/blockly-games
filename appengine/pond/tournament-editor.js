@@ -93,7 +93,7 @@ window.installTournamentEditor=function(){
     unlocked=true;storageKey='pond-tournament:'+portal.user.id;
     var saved=localStorage.getItem(storageKey);if(saved){try{loadBlocks(saved);}catch(error){report('Черновик не удалось открыть.','error');}}
     window.addEventListener('beforeunload',function(){if(Bm&&!Dm)localStorage.setItem(storageKey,Em());});
-    for(var n=0;n<=24;n++)U('opponent-count').add(new Option(String(n),String(n)));U('opponent-count').value='3';
+    for(var n=1;n<=3;n++)U('opponent-count').add(new Option(String(n),String(n)));U('opponent-count').value='3';
     U('opponent-count').onchange=async function(){assignments();Vn();await prepareArena(true);};
     U('algorithm-library').onchange=function(){selectedAlgorithm=this.value?Number(this.value):null;};
     U('algorithm-load').onclick=async function(){try{if(!selectedAlgorithm)throw Error('Выбери сохранённый алгоритм.');var a=await resolved('owned:'+selectedAlgorithm);loadBlocks(a.xml);U('algorithm-name').value=a.name;document.querySelector('#duck-assignments select').value='current';report('Алгоритм «'+a.name+'» загружен.');}catch(error){report(error.message,'error');}};

@@ -55,7 +55,8 @@ window.installTournamentEditor=function(){
     library=await portal.request('/api/arena/algorithms');var select=U('algorithm-library'),old=preferred||select.value;select.replaceChildren();select.add(new Option('Выбери свой алгоритм',''));
     library.owned.forEach(function(a){select.add(new Option(a.name,a.id));});if(old)select.value=old;selectedAlgorithm=select.value?Number(select.value):null;
     var submission=U('tournament-algorithm'),previous=submission.value;submission.replaceChildren();submission.add(new Option('Выбери алгоритм для заявки',''));
-    library.owned.forEach(function(a){submission.add(new Option(a.name,a.id));});if(previous)submission.value=previous;assignments();
+    var teamAlgorithms=portal.user.captain_id===portal.user.id?(library.team||library.owned):[];
+    teamAlgorithms.forEach(function(a){submission.add(new Option(a.name+(a.author?' · '+a.author:''),a.id));});if(previous)submission.value=previous;submission.disabled=portal.user.captain_id!==portal.user.id;assignments();
   }
   async function resolved(reference){
     if(reference==='current')return {name:'Моя утка',code:Om(),xml:Em()};
@@ -86,7 +87,7 @@ window.installTournamentEditor=function(){
   };
   portal.onLoad(async function(){
     var tools=U('arena-tools'),menus=Array.from(tools.querySelectorAll('details'));
-    menus.forEach(function(menu){menu.addEventListener('toggle',function(){if(menu.open)menus.forEach(function(other){if(other!==menu)other.open=false;});});});
+    menus.forEach(function(menu){menu.addEventListener('toggle',function(){if(menu.open){menus.forEach(function(other){if(other!==menu)other.open=false;});if(unlocked&&menu.querySelector('#tournament-algorithm'))refreshLibrary().catch(function(error){report(error.message,'error');});}});});
     document.addEventListener('click',function(event){if(!tools.contains(event.target))menus.forEach(function(menu){menu.open=false;});});
     document.addEventListener('keydown',function(event){if(event.key==='Escape')menus.forEach(function(menu){if(menu.open){menu.open=false;menu.querySelector('summary').focus();}});});
     document.title='Редактор и тренировочный пруд';U('avatar-select').style.display='none';await portal.ready;
@@ -99,13 +100,14 @@ window.installTournamentEditor=function(){
     U('opponent-count').onchange=async function(){assignments();Vn();await prepareArena(true);};
     U('algorithm-library').onchange=function(){selectedAlgorithm=this.value?Number(this.value):null;};
     U('algorithm-load').onclick=async function(){try{if(!selectedAlgorithm)throw Error('Выбери сохранённый алгоритм.');var a=await resolved('owned:'+selectedAlgorithm);loadBlocks(a.xml);U('algorithm-name').value=a.name;document.querySelector('#duck-assignments select').value='current';report('Алгоритм «'+a.name+'» загружен.');}catch(error){report(error.message,'error');}};
-    U('algorithm-save').onsubmit=async function(event){event.preventDefault();var button=this.querySelector('button');button.disabled=true;try{await PondFeedback.ready;var xml=Em(),issues=PondFeedback.validate(xml);if(issues.length){PondFeedback.issues(issues);return;}var result=await portal.request('/api/arena/algorithms/save',{name:U('algorithm-name').value,xml:xml,code:Om()});localStorage.setItem(storageKey,xml);await refreshLibrary(String(result.id));report('Алгоритм сохранён в личной библиотеке.','success');}catch(error){report(error.message,'error');}finally{button.disabled=false;}};
+    U('algorithm-save').onsubmit=async function(event){event.preventDefault();var button=this.querySelector('button');button.disabled=true;try{await PondFeedback.ready;var xml=Em(),issues=PondFeedback.validate(xml);if(issues.length){PondFeedback.issues(issues);return;}var result=await portal.request('/api/arena/algorithms/save',{name:U('algorithm-name').value,xml:xml,code:Om()});localStorage.setItem(storageKey,xml);await refreshLibrary(String(result.id));report(result.replaced?'Алгоритм перезаписан. Дубликаты этого названия удалены из библиотеки.':'Алгоритм сохранён в личной библиотеке.','success');}catch(error){report(error.message,'error');}finally{button.disabled=false;}};
     try{
       await refreshLibrary();await prepareArena(true);
       var tournaments=(await portal.request('/api/tournaments')).tournaments.filter(function(t){return t.status==='open';}),select=U('tournament-select');
       tournaments.forEach(function(t){select.add(new Option(t.name,t.id));});var requested=new URLSearchParams(location.search).get('tournament');if(requested&&tournaments.some(function(t){return String(t.id)===requested;}))select.value=requested;
-      U('tournament-submit').disabled=!tournaments.length;
-      U('tournament-submit').onclick=async function(){var button=this;button.disabled=true;try{var algorithmId=Number(U('tournament-algorithm').value);if(!algorithmId)throw Error('Выбери отправляемый алгоритм в заявке на турнир. Если список пуст, сначала сохрани алгоритм в разделе «Мои алгоритмы».');await portal.request('/api/arena/submit',{tournament_id:Number(select.value),algorithm_id:algorithmId,shared:U('algorithm-shared').checked,is_main:U('algorithm-main').checked});await refreshLibrary();report('Выбранный алгоритм заявлен. Основной алгоритм и доступность можно менять на странице турниров.','success');}catch(error){report(error.message,'error');}finally{button.disabled=false;}};
+      U('tournament-submit').disabled=!tournaments.length||portal.user.captain_id!==portal.user.id;
+      if(portal.user.captain_id!==portal.user.id){var notice=document.createElement('p');notice.textContent='Отправлять алгоритмы на турнир может только капитан команды.';U('tournament-submit').after(notice);}
+      U('tournament-submit').onclick=async function(){var button=this;button.disabled=true;try{var algorithmId=Number(U('tournament-algorithm').value);if(!algorithmId)throw Error('Выбери отправляемый алгоритм участника команды. Если список пуст, участникам нужно сохранить алгоритм в личной библиотеке.');await portal.request('/api/arena/submit',{tournament_id:Number(select.value),algorithm_id:algorithmId,shared:U('algorithm-shared').checked,is_main:U('algorithm-main').checked});await refreshLibrary();report('Выбранный алгоритм заявлен. Основной алгоритм и доступность можно менять на странице турниров.','success');}catch(error){report(error.message,'error');}finally{button.disabled=!tournaments.length||portal.user.captain_id!==portal.user.id;}};
       report('Команда «'+portal.user.team+'». Сохраняй алгоритмы, назначай их уткам и готовь заявки.');
     }catch(error){report(error.message,'error');}
   });

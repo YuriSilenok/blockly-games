@@ -36,7 +36,7 @@
     if(!team)return;
     var captain=team.captain_id===api.user.id;
     document.getElementById('team-name').textContent=team.name;
-    document.getElementById('team-role').textContent=captain?'Ты капитан: управляй составом и названием команды.':'Ты участник команды. После обучения можешь отправлять её алгоритмы.';
+    document.getElementById('team-role').textContent=captain?'Ты капитан: управляй составом и отправляй алгоритмы участников команды на турнир.':'Ты участник команды. После обучения сохраняй алгоритмы и тренируйся. Заявки на турнир отправляет капитан.';
     document.getElementById('captain-controls').hidden=!captain;document.getElementById('leave-team').hidden=captain;
     var dissolve=document.getElementById('dissolve-team');if(!dissolve){dissolve=document.createElement('button');dissolve.id='dissolve-team';dissolve.className='quiet danger';dissolve.textContent='Распустить команду';dissolve.onclick=function(){if(confirm('Распустить команду? Личные алгоритмы и история турниров сохранятся.'))mutate('dissolve',{},dissolve);};document.getElementById('captain-controls').appendChild(dissolve);}
     document.querySelector('#rename-team input').value=team.name;

@@ -43,6 +43,8 @@ def initialize(c):
       CREATE INDEX IF NOT EXISTS submissions_team ON tournament_algorithms(tournament_id,team_id);
       CREATE INDEX IF NOT EXISTS rounds_tournament ON rounds(tournament_id,id);
     ''')
+    if 'archived' not in {r['name'] for r in c.execute('PRAGMA table_info(algorithms)')}:
+        c.execute('ALTER TABLE algorithms ADD COLUMN archived INTEGER NOT NULL DEFAULT 0')
 
 
 def invitations(user_id):
@@ -66,16 +68,19 @@ def migrate_legacy(c):
 
 def algorithms(user):
     with db() as c:
-        owned = [dict(r) for r in c.execute('SELECT id,name,created,updated FROM algorithms WHERE user_id=? ORDER BY updated DESC', (user['id'],))]
+        owned = [dict(r) for r in c.execute('SELECT id,name,created,updated FROM algorithms WHERE user_id=? AND archived=0 ORDER BY updated DESC', (user['id'],))]
+        team = [dict(r) for r in c.execute('''SELECT a.id,a.name,a.created,a.updated,u.login AS author FROM algorithms a
+          JOIN users u ON u.id=a.user_id JOIN team_members m ON m.user_id=a.user_id JOIN teams t ON t.id=m.team_id
+          WHERE t.id=? AND t.captain_id=? AND t.dissolved=0 AND a.archived=0 ORDER BY a.updated DESC,a.id DESC''', (user['team_id'], user['id']))]
         available = [dict(r) for r in c.execute('''SELECT s.id,s.name,u.login AS author,t.name AS team,s.team_id
           FROM tournament_algorithms s JOIN users u ON u.id=s.user_id JOIN teams t ON t.id=s.team_id
           WHERE s.shared=1 OR s.user_id=? OR s.team_id=? ORDER BY s.id DESC''', (user['id'], user['team_id']))]
-    return {'owned': owned, 'available': available}
+    return {'owned': owned, 'available': available, 'team': team}
 
 
 def algorithm(c, user, source, algorithm_id):
     if source == 'owned':
-        row = c.execute('SELECT * FROM algorithms WHERE id=? AND user_id=?', (algorithm_id, user['id'])).fetchone()
+        row = c.execute('SELECT * FROM algorithms WHERE id=? AND user_id=? AND archived=0', (algorithm_id, user['id'])).fetchone()
     else:
         row = c.execute('SELECT * FROM tournament_algorithms WHERE id=? AND (shared=1 OR user_id=? OR team_id=?)',
                         (algorithm_id, user['id'], user['team_id'])).fetchone()
@@ -175,31 +180,43 @@ def post(h, user, path, value):
         if not 1 <= len(name) <= 80:
             raise h.problem('Укажи название алгоритма: от 1 до 80 символов.')
         with db() as c:
-            algorithm_id = c.execute('INSERT INTO algorithms(user_id,name,code,xml,created,updated) VALUES(?,?,?,?,?,?)',
-                                     (user['id'], name, code, xml, time.time(), time.time())).lastrowid
-        h.send_json({'id': algorithm_id}, 201)
+            c.execute('BEGIN IMMEDIATE')
+            previous = c.execute('SELECT id FROM algorithms WHERE user_id=? AND name=? AND archived=0 ORDER BY updated DESC,id DESC LIMIT 1', (user['id'], name)).fetchone()
+            if previous:
+                algorithm_id = previous['id']
+                c.execute('UPDATE algorithms SET code=?,xml=?,updated=? WHERE id=?', (code, xml, time.time(), algorithm_id))
+                # Published snapshots keep their references, but duplicates disappear from the library.
+                c.execute('UPDATE algorithms SET archived=1 WHERE user_id=? AND name=? AND id<>?', (user['id'], name, algorithm_id))
+                c.execute('DELETE FROM algorithms WHERE user_id=? AND name=? AND id<>? AND NOT EXISTS (SELECT 1 FROM tournament_algorithms s WHERE s.algorithm_id=algorithms.id)', (user['id'], name, algorithm_id))
+            else:
+                algorithm_id = c.execute('INSERT INTO algorithms(user_id,name,code,xml,created,updated) VALUES(?,?,?,?,?,?)',
+                                         (user['id'], name, code, xml, time.time(), time.time())).lastrowid
+        h.send_json({'id': algorithm_id, 'replaced': bool(previous)}, 200 if previous else 201)
     elif path == '/api/arena/submit':
         with db() as c:
             c.execute('BEGIN IMMEDIATE')
             team = c.execute('SELECT t.* FROM team_members m JOIN teams t ON t.id=m.team_id WHERE m.user_id=? AND t.dissolved=0', (user['id'],)).fetchone()
             if not team:
                 raise h.problem('Сначала создай команду или подтверди приглашение в личном кабинете.', 403)
+            if team['captain_id'] != user['id']:
+                raise h.problem('Отправлять алгоритмы на турнир может только капитан команды.', 403)
             tournament_id = int(value.get('tournament_id', 0))
             if not c.execute("SELECT 1 FROM tournaments WHERE id=? AND status='open'", (tournament_id,)).fetchone():
                 raise h.problem('Приём алгоритмов на этот турнир закрыт.', 409)
-            saved = algorithm(c, user, 'owned', int(value.get('algorithm_id', 0)))
+            saved = c.execute('''SELECT a.* FROM algorithms a JOIN team_members m ON m.user_id=a.user_id
+              WHERE a.id=? AND m.team_id=? AND a.archived=0''', (int(value.get('algorithm_id', 0)), team['id'])).fetchone()
             if not saved:
-                raise h.problem('Сначала сохрани свой алгоритм в библиотеке.')
+                raise h.problem('Выбери сохранённый алгоритм участника своей команды.')
             main = value.get('is_main') is True
             shared = value.get('shared') is True
             if main:
                 c.execute('UPDATE tournament_algorithms SET is_main=0 WHERE tournament_id=? AND team_id=?', (tournament_id, team['id']))
             existing = c.execute('SELECT id FROM tournament_algorithms WHERE tournament_id=? AND team_id=? AND algorithm_id=?', (tournament_id, team['id'], saved['id'])).fetchone()
             if existing:
-                c.execute('UPDATE tournament_algorithms SET shared=?,is_main=? WHERE id=?', (shared, main, existing['id']))
+                c.execute('UPDATE tournament_algorithms SET name=?,code=?,xml=?,shared=?,is_main=? WHERE id=?', (saved['name'], saved['code'], saved['xml'], shared, main, existing['id']))
             else:
                 c.execute('''INSERT INTO tournament_algorithms(tournament_id,team_id,algorithm_id,user_id,name,code,xml,shared,is_main,created)
-                  VALUES(?,?,?,?,?,?,?,?,?,?)''', (tournament_id, team['id'], saved['id'], user['id'], saved['name'], saved['code'], saved['xml'], shared, main, time.time()))
+                  VALUES(?,?,?,?,?,?,?,?,?,?)''', (tournament_id, team['id'], saved['id'], saved['user_id'], saved['name'], saved['code'], saved['xml'], shared, main, time.time()))
         h.send_json({'ok': True})
     elif re.fullmatch(r'/api/arena/submissions/\d+/flags', path):
         with db() as c:

@@ -103,8 +103,9 @@ def duel(spec, job_id, title):
                 replay_frames.append(snapshot)
                 if len(replay_frames) >= 200:
                     flush_replay()
-            with db() as c:
-                c.execute('UPDATE matches SET snapshot=? WHERE id=?', (json.dumps(snapshot), match_id))
+            if not spec.get('record_replay') or snapshot.get('done') or round(snapshot['time'] * 50) % 5 == 0:
+                with db() as c:
+                    c.execute('UPDATE matches SET snapshot=? WHERE id=?', (json.dumps(snapshot), match_id))
         process.wait(timeout=5)
         if process.returncode or not snapshot or not snapshot.get('done'):
             raise RuntimeError('Сервер не смог завершить проверку. Попробуй отправить решение ещё раз.')

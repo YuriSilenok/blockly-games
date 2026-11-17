@@ -37,7 +37,7 @@ def run(spec):
     started = time.monotonic()
     limit = min(120, max(10, int(spec.get('seconds', 60))))
     while True:
-        frame = json.loads(context.eval('advanceMatch(5)'))
+        frame = json.loads(context.eval('advanceMatch(%d)' % (1 if spec.get('record_replay') else 5)))
         if not spec.get('no_damage_seconds') and frame['time'] >= limit:
             frame['done'] = True
         print(json.dumps(frame, ensure_ascii=True), flush=True)

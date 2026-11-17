@@ -49,14 +49,38 @@
   var canvas=byId('replay-pond'),ctx=canvas.getContext('2d'),colors=['#ff8b00','#c90015','#166c0b','#223068'];
   function background(){ctx.fillStyle='#527dbf';ctx.fillRect(0,0,400,400);ctx.strokeStyle='#ffffff22';for(var i=0;i<=10;i++){ctx.beginPath();ctx.moveTo(i*40,0);ctx.lineTo(i*40,400);ctx.moveTo(0,i*40);ctx.lineTo(400,i*40);ctx.stroke();}}
   function coordinate(value){return value*3.65+17.5;}
+  function drawScans(frame){
+    var scans={};(frame.scans||[]).forEach(function(scan){var age=frame.time-scan.time;if(age<0||age>.16)return;if(!scans[scan.avatar])scans[scan.avatar]=[];scans[scan.avatar].push(scan);});
+    Object.keys(scans).forEach(function(avatar){scans[avatar].slice(-4).forEach(function(scan){
+      var age=frame.time-scan.time,half=Math.max(.5,scan.resolution/2),from=-(scan.degree+half)*Math.PI/180,to=-(scan.degree-half)*Math.PI/180,x=coordinate(scan.x),y=coordinate(100-scan.y);
+      ctx.save();ctx.globalAlpha=Math.max(0,1-age/.16);ctx.beginPath();ctx.moveTo(x,y);ctx.arc(x,y,200,from,to);ctx.closePath();
+      var gradient=ctx.createRadialGradient(x,y,12,x,y,200);gradient.addColorStop(0,'rgba(255,255,255,.4)');gradient.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=gradient;ctx.fill();
+      ctx.strokeStyle=colors[Number(avatar)%4];ctx.globalAlpha*=.45;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(-scan.degree*Math.PI/180)*200,y+Math.sin(-scan.degree*Math.PI/180)*200);ctx.stroke();ctx.restore();
+    });});
+  }
+  function drawFlights(frame){
+    (frame.flights||[]).forEach(function(flight){
+      if(frame.time<flight.startTime)return;
+      var duration=flight.endTime-flight.startTime;
+      if(duration>0&&frame.time<flight.endTime){
+        var progress=Math.max(0,Math.min(1,(frame.time-flight.startTime)/duration)),x=coordinate(flight.startX+(flight.endX-flight.startX)*progress),y=coordinate(100-flight.startY-(flight.endY-flight.startY)*progress);
+        var distance=Math.hypot(flight.endX-flight.startX,flight.endY-flight.startY)*3.65,lift=4*Math.min(45,distance*.18)*progress*(1-progress);
+        ctx.save();ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx.ellipse(x,y,4,2,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=colors[flight.avatar%4];ctx.strokeStyle='#ffedab';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y-lift,4,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();
+      }else{
+        var age=frame.time-flight.endTime;if(age<0||age>.15)return;
+        ctx.save();ctx.globalAlpha=1-age/.15;ctx.fillStyle='#ffedab';ctx.beginPath();ctx.arc(coordinate(flight.endX),coordinate(100-flight.endY),3+age*65,0,Math.PI*2);ctx.fill();ctx.restore();
+      }
+    });
+  }
   function draw(frame){
-    background();var health=byId('replay-health');if(health.children.length!==frame.avatars.length){health.replaceChildren();frame.avatars.forEach(function(a,index){var row=document.createElement('li');row.style.borderColor=colors[index%4];health.appendChild(row);});}
+    background();drawScans(frame);var health=byId('replay-health');if(health.children.length!==frame.avatars.length){health.replaceChildren();frame.avatars.forEach(function(a,index){var row=document.createElement('li');row.style.borderColor=colors[index%4];health.appendChild(row);});}
     frame.avatars.forEach(function(a,index){
       var x=coordinate(a.x),y=coordinate(100-a.y),facing=((a.facing||0)%360+360)%360;ctx.save();ctx.translate(x,y);ctx.globalAlpha=a.dead?0.25:1;
       if(sprites.complete&&sprites.naturalWidth){var row=index%4*35;ctx.drawImage(sprites,0,row,35,35,-17.5,-17.5,35,35);var angle=facing*Math.PI/180;ctx.translate(Math.cos(angle)*12,-Math.sin(angle)*12-2);var head=(14-Math.round(facing/360*12))%12+1,offset=facing%30;if(offset>=15)offset-=30;ctx.rotate(-offset/1.5*Math.PI/180);ctx.drawImage(sprites,head*35,row,35,35,-15.5,-15.5,35,35);}else{ctx.fillStyle=colors[index%4];ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.fill();}ctx.restore();
       var hp=a.health>0&&a.health<.001?'<0,001':Number(a.health.toFixed(3)).toLocaleString('ru-RU');health.children[index].textContent=a.name+' — '+hp+' ХП'+(a.dead?' · выбыл':'');
     });
-    ctx.fillStyle='#ffedab';frame.missiles.forEach(function(m){ctx.beginPath();ctx.arc(coordinate(m.x),coordinate(100-m.y),4,0,Math.PI*2);ctx.fill();});
+    if(frame.replay_version>=2)drawFlights(frame);
+    else{ctx.fillStyle='#ffedab';frame.missiles.forEach(function(m){ctx.beginPath();ctx.arc(coordinate(m.x),coordinate(100-m.y),4,0,Math.PI*2);ctx.fill();});}
   }
   async function chunk(record,index){
     if(!record.cache.has(index))record.cache.set(index,api.request('/api/sandbox/matches/'+record.id+'/replay/chunks/'+index).then(function(data){return data.frames;}));
@@ -70,11 +94,12 @@
     if(!index&&section.chunk_index>0&&at<right.time){var previous=await chunk(record,section.chunk_index-1);left=previous[previous.length-1];}
     var fraction=right.time>left.time?Math.max(0,Math.min(1,(at-left.time)/(right.time-left.time))):1;
     if(fraction>=1)return right;
-    return Object.assign({},left,{avatars:left.avatars.map(function(a,i){var next=right.avatars[i];return Object.assign({},a,{x:a.x+(next.x-a.x)*fraction,y:a.y+(next.y-a.y)*fraction});}),missiles:left.missiles.map(function(m){var next=right.missiles.find(function(n){return n.id===m.id;});return next?Object.assign({},m,{x:m.x+(next.x-m.x)*fraction,y:m.y+(next.y-m.y)*fraction}):m;})});
+    function events(key){var merged=new Map();(left[key]||[]).concat(right[key]||[]).forEach(function(event){merged.set(event.id,event);});return Array.from(merged.values());}
+    return Object.assign({},left,{time:at,scans:events('scans'),flights:events('flights'),avatars:left.avatars.map(function(a,i){var next=right.avatars[i];return Object.assign({},a,{x:a.x+(next.x-a.x)*fraction,y:a.y+(next.y-a.y)*fraction});}),missiles:left.missiles.map(function(m){var next=right.missiles.find(function(n){return n.id===m.id;});return next?Object.assign({},m,{x:m.x+(next.x-m.x)*fraction,y:m.y+(next.y-m.y)*fraction}):m;})});
   }
   async function openReplay(id){
     playing=false;var record=await api.request('/api/sandbox/matches/'+id+'/replay');record.cache=new Map();playback=record;time=0;lastWall=0;
-    byId('replay-title').textContent=record.title;byId('replay-controls').hidden=false;byId('replay-seek').max=String(record.duration);byId('replay-play').textContent='Воспроизвести';
+    byId('replay-title').textContent=record.title+(record.visuals?'':' · Старая запись: события радара и полёта снарядов не сохранялись.');byId('replay-controls').hidden=false;byId('replay-seek').max=String(record.duration);byId('replay-play').textContent='Воспроизвести';
     var first=await sample(record,0);if(playback!==record)return;draw(first);byId('replay-pond').scrollIntoView({behavior:'smooth',block:'center'});
   }
   byId('replay-play').onclick=function(){if(!playback)return;if(time>=playback.duration)time=0;playing=!playing;lastWall=performance.now();this.textContent=playing?'Пауза':'Воспроизвести';};

@@ -175,7 +175,8 @@ Pond.Avatar = class {
     resolution = Blockly.utils.math.clamp(resolution, 0, 20);
 
     this.battle_.EVENTS.push({'type': 'SCAN', 'avatar': this,
-                              'degree': degree, 'resolution': resolution});
+                              'degree': degree, 'resolution': resolution,
+                              'x': this.loc.x, 'y': this.loc.y, 'at': Date.now()});
 
     // Compute both edges of the scan.
     const scan1 = BlocklyGames.normalizeAngle(degree - resolution / 2);
@@ -281,6 +282,7 @@ Pond.Avatar = class {
         startLoc.y + Pond.Avatar.angleDy(degree, range));
     const missile = {
       replayId: ++this.battle_.nextMissileId,
+      launchedAt: Date.now(),
       avatar: this,
       startLoc: startLoc,
       degree: degree,
@@ -290,7 +292,7 @@ Pond.Avatar = class {
     };
     this.battle_.MISSILES.push(missile);
     this.battle_.EVENTS.push({'type': 'BANG', 'avatar': this,
-        'degree': missile.degree});
+        'degree': missile.degree, 'missile': missile});
     return true;
   }
 

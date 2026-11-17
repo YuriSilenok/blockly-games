@@ -161,7 +161,8 @@ def get(h, path):
                 h.send_json({'frames': json.loads(zlib.decompress(row['payload']).decode('utf-8'))})
             else:
                 chunks = [dict(r) for r in c.execute('SELECT chunk_index,first_time,last_time,frame_count FROM match_replay_chunks WHERE match_id=? ORDER BY chunk_index', (match_id,))]
-                h.send_json({'id': match_id, 'title': fight['title'], 'duration': json.loads(fight['result'])['time'], 'chunks': chunks})
+                result = json.loads(fight['result'])
+                h.send_json({'id': match_id, 'title': fight['title'], 'duration': result['time'], 'visuals': result.get('replay_version', 0) >= 2, 'chunks': chunks})
     else:
         raise h.problem('Адрес не найден.', 404)
 

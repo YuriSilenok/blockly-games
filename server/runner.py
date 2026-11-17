@@ -33,7 +33,7 @@ def run(spec):
     limit = min(120, max(10, int(spec.get('seconds', 60))))
     while True:
         frame = json.loads(context.eval('advanceMatch(5)'))
-        if frame['time'] >= limit:
+        if not spec.get('no_damage_seconds') and frame['time'] >= limit:
             frame['done'] = True
         print(json.dumps(frame, ensure_ascii=True), flush=True)
         if frame['done']:
@@ -52,8 +52,9 @@ if __name__ == '__main__':
             resource.setrlimit(resource.RLIMIT_CPU, (90, 90))
             resource.setrlimit(resource.RLIMIT_AS, (512 * 1024 * 1024, 512 * 1024 * 1024))
             resource.setrlimit(resource.RLIMIT_FSIZE, (8 * 1024 * 1024, 8 * 1024 * 1024))
-        request = sys.stdin.buffer.readline(250001)
-        if len(request) > 250000:
+        # 25 programs of up to 60,000 characters, including UTF-8 and JSON escaping.
+        request = sys.stdin.buffer.readline(8000001)
+        if len(request) > 8000000:
             raise ValueError('Слишком большой алгоритм')
         run(json.loads(request))
     except Exception:

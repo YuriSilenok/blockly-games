@@ -217,3 +217,4 @@ h1{letter-spacing:-1.3px;font-size:35px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}
 }
 
+.table-scroll{overflow-x:auto;max-width:100%}.table-scroll table{min-width:620px}.round-controls{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}.team-choices{display:grid;gap:8px;margin:16px 0}.team-choices label{display:flex;align-items:center;gap:10px}.team-choices input[type=checkbox],table input[type=checkbox]{width:20px;height:20px;accent-color:#137a63}.round-editor{padding:18px 0;border-top:1px solid #dfe7e4}#team-ready{margin-top:24px}

@@ -66,6 +66,7 @@ def initialize():
     backup_before_course_split('duplicate-level-ten', 'before-duplicate-level-ten')
     backup_before_course_split('duplicate-level-twelve', 'before-duplicate-level-twelve')
     backup_before_course_split('swap-levels-thirteen-fourteen', 'before-swap-levels-thirteen-fourteen')
+    backup_before_course_split('algorithm-library-v1', 'before-algorithm-library')
     with db() as c:
         c.execute('PRAGMA journal_mode=WAL')
         c.executescript('''
@@ -112,6 +113,8 @@ def initialize():
           used INTEGER NOT NULL DEFAULT 0);
         CREATE TABLE IF NOT EXISTS course_migrations (name TEXT PRIMARY KEY);
         ''')
+        from .arena import initialize as initialize_arena
+        initialize_arena(c)
         c.execute('BEGIN IMMEDIATE')
         # Preserve existing accounts, individual teams and their tournament places.
         if 'team_id' not in {r['name'] for r in c.execute('PRAGMA table_info(jobs)')}:
@@ -171,6 +174,8 @@ def initialize():
                 raise RuntimeError('Перед первым запуском укажи POND_ADMIN_PASSWORD_HASH в закрытой конфигурации сервера.')
             c.execute('INSERT INTO users(login,password,role,created) VALUES(?,?,?,?)',
                       ('silenok', encoded, 'admin', time.time()))
+        from .arena import migrate_legacy
+        migrate_legacy(c)
         c.execute("UPDATE jobs SET status='queued' WHERE status='running'")
         c.execute("UPDATE matches SET status='interrupted' WHERE status='running'")
         c.execute('DELETE FROM sessions WHERE expires < ?', (time.time(),))

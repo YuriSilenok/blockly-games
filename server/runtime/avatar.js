@@ -127,7 +127,9 @@ Pond.Avatar = class {
    * @param {number} add Amount of damage to add.
    */
   addDamage(add) {
+    const previousDamage = this.damage;
     this.damage += add;
+    if (this.damage > previousDamage) this.battle_.lastDamageAt = Date.now();
     if (this.damage >= 100) {
       this.die();
     }
@@ -137,6 +139,10 @@ Pond.Avatar = class {
    * Kill this avatar.
    */
   die() {
+    if (this.dead) return;
+    this.eliminatedAt = (Date.now() - 1000) / 1000;
+    this.eliminatedOrder = ++this.battle_.eliminationCount;
+    if (this.lastDamager && this.lastDamager !== this) this.lastDamager.kills = (this.lastDamager.kills || 0) + 1;
     this.speed = 0;
     this.dead = true;
     this.damage = 100;

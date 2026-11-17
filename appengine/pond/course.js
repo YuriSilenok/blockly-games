@@ -84,6 +84,7 @@ window.installPondCourse = function () {
     if(allowed)Array.from(toolbox.querySelectorAll('block')).forEach(function(b){if(allowed.indexOf(b.getAttribute('type'))===-1)b.remove();});
     if(nm===8||nm===9||nm===11||nm>=16){var category=toolbox.querySelector('category[name="'+X('Games.catLoops',false)+'"]');category.insertAdjacentHTML('beforeend','<block type="controls_repeat_ext"><value name="TIMES"><shadow type="pond_math_number"><field name="NUM">4</field></shadow></value></block>');}
     if(nm>=16){var math=toolbox.querySelector('category[name="'+X('Games.catMath',false)+'"]');if(math)math.insertAdjacentHTML('beforeend','<block type="pond_math_arithmetic"><value name="A"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value><value name="B"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value></block>');}
+    if(nm>=16)PondToolbox.complete(toolbox);
     Array.from(toolbox.querySelectorAll('category')).forEach(function(c){if(c.getAttribute('custom')){if(nm===5||nm===6||nm===10)c.remove();}else if(!c.querySelector('block'))c.remove();});
     PondFeedback.place(container);
     return container.innerHTML;
@@ -187,7 +188,9 @@ window.installPondCourse = function () {
         await portal.refresh();
       }
       localStorage.setItem(key(nm),solution.xml);report('Прогресс сохранён в учётной записи.','success');
+      if(nm>=16&&nm<mm){localStorage.setItem(key(nm+1)+':draft',solution.xml);localStorage.setItem(key(nm+1)+':migrated','1');}
       consoleSolution=null;
+      if(nm===mm){location.assign('portal/tournament.html');return;}
       var level=W('level'+nm);if(level)level.classList.add('level_done');Zm();
     }catch(error){
       if(nm===4){W('course-console-error').textContent=PondRussian.prose(error.message);W('course-console-answer').setAttribute('aria-invalid','true');}
@@ -203,6 +206,26 @@ window.installPondCourse = function () {
     if(!names.length)return;
     var images=W('course-block-images');
     var sections={cannon:['Выстрел'],scan:['Поиск противника'],variables:['Присваивание','Получение значения'],log:['Отладка'],swim:['Движение'],stop:['Остановка'],speed:['Скорость'],health:['Здоровье'],while:['Цикл «пока»'],compare:['Сравнения'],repeat:['Цикл «повторить»'],change:['Увеличение значения'],coordinates:['Координаты'],if:['Условия'],logic:['«И» и «или»','Отрицание','Логические значения']};
+    var descriptions={
+      'Выстрел':'Стреляет в заданном направлении. Параметры: угол в градусах и дальность от 0 до 70. Блок команды не возвращает значение.',
+      'Поиск противника':'Измеряет расстояние до ближайшей утки в указанном направлении. Параметр: угол в градусах. Возвращает расстояние или бесконечность, если цели нет.',
+      'Присваивание':'Сохраняет значение в переменной. Выбери переменную и задай значение. Блок команды не возвращает значение.',
+      'Получение значения':'Возвращает текущее значение выбранной переменной. Входных параметров нет.',
+      'Отладка':'Выводит значение в консоль браузера. Параметр: выводимое значение. Блок команды не возвращает значение.',
+      'Движение':'Задаёт импульс движения. Параметр: направление в градусах. Блок команды не возвращает значение.',
+      'Остановка':'Останавливает движение утки с учётом инерции. Параметров и возвращаемого значения нет.',
+      'Скорость':'Возвращает текущую скорость утки от 0 до 100. Параметров нет.',
+      'Здоровье':'Возвращает оставшееся здоровье утки от 0 до 100. Параметров нет.',
+      'Цикл «пока»':'Повторяет вложенные действия, пока условие истинно. Вход: логическое условие. Значение не возвращает.',
+      'Сравнения':'Сравнивает два значения выбранным способом. Вход: два сравниваемых значения. Возвращает истину или ложь.',
+      'Цикл «повторить»':'Повторяет вложенные действия заданное число раз. Параметр: число повторений. Значение не возвращает.',
+      'Увеличение значения':'Прибавляет число к значению выбранной переменной. Параметр: прибавляемое число. Значение не возвращает.',
+      'Координаты':'Блоки «координата X» и «координата Y» возвращают соответствующую текущую координату утки от 0 до 100. Параметров нет.',
+      'Условия':'Выполняет вложенные действия, если условие истинно. Вход: логическое условие. Значение не возвращает.',
+      '«И» и «или»':'Объединяет два условия. «И» истинно, когда истинны оба условия; «или» — хотя бы одно. Возвращает истину или ложь.',
+      'Отрицание':'Меняет логическое значение на противоположное. Вход: одно условие. Возвращает истину или ложь.',
+      'Логические значения':'Возвращает выбранное значение: истина или ложь. Параметров нет.'
+    };
     try{
       var response=await fetch('pond/docs.html');if(!response.ok)throw Error();
       var doc=new DOMParser().parseFromString(await response.text(),'text/html');
@@ -217,6 +240,7 @@ window.installPondCourse = function () {
           if(picture.tagName.toLowerCase()==='img')picture.src=new URL(picture.getAttribute('src'),new URL('pond/docs.html',location.href)).href;
           wrapper.appendChild(picture);images.appendChild(wrapper);
         });
+        var explanation=document.createElement('p');explanation.textContent=descriptions[name]||'';images.appendChild(explanation);
       });});
       images.querySelectorAll('[id]').forEach(function(node){node.removeAttribute('id');});
       PondRussian.images(images);
@@ -235,7 +259,7 @@ window.installPondCourse = function () {
     try{
       var saved=localStorage.getItem(key(nm)+':draft');
       if(!localStorage.getItem(key(nm)+':migrated')){var oldLevel=nm===13?14:nm===14?13:nm;if(!saved)saved=localStorage.getItem('pond-course-v5:'+portal.user.id+':'+oldLevel+':draft');var prior=oldLevel<13?oldLevel:oldLevel>13?oldLevel-1:null;var previous=prior===null?null:prior<11?prior:prior>11?prior-1:null;if(prior&&!saved)saved=localStorage.getItem('pond-course-v4:'+portal.user.id+':'+prior+':draft');if(previous&&!saved){saved=localStorage.getItem('pond-course-v3:'+portal.user.id+':'+previous+':draft');var second=previous<9?previous:previous>9?previous-1:null;if(!saved&&second){saved=localStorage.getItem('pond-course-v2:'+portal.user.id+':'+second+':draft');var original=second<7?second:second>7?second-1:null;if(!saved&&original)saved=localStorage.getItem('pond-course:'+portal.user.id+':'+original+':draft');}if(saved)localStorage.setItem(key(nm)+':draft',saved);}if(saved)localStorage.setItem(key(nm)+':draft',saved);localStorage.setItem(key(nm)+':migrated','1');}
-      if(portal.user){var data=await portal.request('/api/training/'+nm);saved=saved||data.xml;}
+      if(portal.user){var data=await portal.request('/api/training/'+nm);saved=saved||data.xml;if(!saved&&nm>=17&&completed(nm-1)){var preceding=await portal.request('/api/training/'+(nm-1));saved=preceding.xml;if(saved)localStorage.setItem(key(nm)+':draft',saved);}}
       if(saved)Im(saved);
       for(var i=1;i<=mm;i++){var node=W('level'+i);if(node)node.classList.toggle('level_done',completed(i));}
       report('Уровень '+nm+' · '+lesson.title+'\nПрогресс сохраняется для '+portal.user.login+'.');

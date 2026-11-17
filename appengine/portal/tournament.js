@@ -3,20 +3,31 @@
   var api=PondPortal,status=document.getElementById('status'),list=document.getElementById('list');
   function message(text){status.textContent=text;status.hidden=!text;}
   await api.ready;
-  if(!api.user){status.innerHTML='Для участия и просмотра таблицы <a href="account.html?next=%2Fportal%2Ftournament.html">войди</a> или <a href="account.html?mode=register&amp;next=%2Fportal%2Ftournament.html">создай учётную запись</a>.';status.hidden=false;return;}
-  if(!api.user.unlocked)message('Осталось завершить обучение, чтобы отправлять алгоритмы. Пройдено уровней: '+api.user.completed.length+' из 19.');
-  else if(!api.user.team){status.innerHTML='Обучение завершено. <a href="account.html">Создай команду в личном кабинете</a> или попроси капитана добавить тебя по логину.';status.hidden=false;}
-  else message('Ты выступаешь за команду «'+api.user.team+'». Каждый участник, завершивший обучение, может отправить её новое решение.');
-  try{
-    var data=await api.request('/api/tournaments');
-    if(!data.tournaments.length){list.innerHTML='<div class="empty-state"><strong>Готовимся к новому старту</strong>Администратор скоро сможет открыть первый турнир.</div>';return;}
-    data.tournaments.forEach(function(t){
-      var card=document.createElement('section');card.className='card tournament-card';
-      var top=document.createElement('div');top.className='tournament-top';var info=document.createElement('div');var heading=document.createElement('h2');heading.textContent=t.name;info.appendChild(heading);
-      var meta=document.createElement('div');meta.className='tournament-meta';var badge=document.createElement('span');badge.className='pill'+(t.status==='open'?' open':'');badge.textContent=t.status==='open'?'Приём решений открыт':'Турнир закрыт';meta.appendChild(badge);var duration=document.createElement('span');duration.textContent='Бой до '+t.seconds+' с · серия до 2 побед';meta.appendChild(duration);info.appendChild(meta);top.appendChild(info);
-      if(t.status==='open'&&api.user.unlocked&&api.user.team){var a=document.createElement('a');a.className='button';a.href='../pond-duck.html?tournament='+t.id;a.textContent='Подготовить алгоритм ↗';top.appendChild(a);}
-      card.appendChild(top);var table=document.createElement('div');card.appendChild(table);list.appendChild(card);
-      function refresh(){api.table(t.id,table).catch(function(error){message(error.message);});}refresh();setInterval(refresh,5000);
-    });
-  }catch(error){message(error.message);}
+  if(!api.user){location.replace('account.html?next=%2Fportal%2Ftournament.html');return;}
+  if(!api.user.unlocked&&api.user.role!=='admin'){location.replace('account.html?training_required=1');return;}
+  async function load(){
+    await api.refresh();
+    var team=(await api.request('/api/team')).team;
+    document.getElementById('team-registration').hidden=!!team;
+    document.getElementById('team-ready').hidden=!team;
+    if(team){document.getElementById('team-title').textContent='Команда «'+team.name+'»';document.getElementById('team-members').textContent=team.members.map(function(m){return m.login;}).join(', ')+(team.invitations.length?' · приглашений ожидают: '+team.invitations.length:'');}
+    var tournaments=(await api.request('/api/tournaments')).tournaments;list.replaceChildren();
+    if(!tournaments.length){var empty=document.createElement('p');empty.className='empty-state';empty.textContent='Турниров пока нет. Можно готовить алгоритмы в тренировочном пруду.';list.appendChild(empty);}
+    for(var t of tournaments){
+      var data=await api.request('/api/arena/tournaments/'+t.id),card=document.createElement('section');card.className='card';
+      var heading=document.createElement('h2');heading.textContent=t.name;card.appendChild(heading);
+      var state=document.createElement('p');state.className='pill';state.textContent=t.status==='open'?'Приём алгоритмов открыт':t.status==='finished'?'Турнир завершён':'Приём алгоритмов закрыт';card.appendChild(state);
+      if(team){
+        if(t.status==='open'){var link=document.createElement('a');link.className='button secondary';link.href='../pond-duck.html?tournament='+t.id;link.textContent='Подготовить и заявить алгоритм';card.appendChild(link);}
+        var title=document.createElement('h3');title.textContent='Алгоритмы команды';card.appendChild(title);
+        var table=document.createElement('table'),head=table.insertRow();['Название','Автор','Доступен для тренировок','Основной'].forEach(function(label){var th=document.createElement('th');th.textContent=label;head.appendChild(th);});
+        data.algorithms.forEach(function(a){var row=table.insertRow();row.insertCell().textContent=a.name;row.insertCell().textContent=a.author;['shared','is_main'].forEach(function(flag){var cell=row.insertCell(),box=document.createElement('input');box.type='checkbox';box.checked=!!a[flag];box.disabled=t.status==='finished';box.setAttribute('aria-label',(flag==='shared'?'Доступен для тренировок: ':'Основной: ')+a.name);box.onchange=async function(){box.disabled=true;try{var value={};value[flag]=box.checked;await api.request('/api/arena/submissions/'+a.id+'/flags',value);await load();}catch(error){box.checked=!box.checked;box.disabled=false;message(error.message);}};cell.appendChild(box);});});
+        card.appendChild(table);if(!data.algorithms.length){var no=document.createElement('p');no.textContent='Заявленных алгоритмов пока нет.';card.appendChild(no);}
+      }
+      var report=document.createElement('div');report.dataset.tournamentReport=String(t.id);api.roundReport(data.rounds,report);card.appendChild(report);list.appendChild(card);
+    }
+  }
+  document.getElementById('team-form').onsubmit=async function(event){event.preventDefault();var button=this.querySelector('button');button.disabled=true;try{var value=Object.fromEntries(new FormData(this));await api.request('/api/team/create',{name:value.name,members:[value.member1,value.member2].filter(function(s){return s.trim();})});await load();message('Команда создана. Приглашённые игроки должны подтвердить участие в личном кабинете.');}catch(error){message(error.message);}finally{button.disabled=false;}};
+  try{await load();}catch(error){message(error.message);}
+  setInterval(async function(){try{for(var target of document.querySelectorAll('[data-tournament-report]')){var data=await api.request('/api/arena/tournaments/'+target.dataset.tournamentReport);api.roundReport(data.rounds,target);}}catch(error){message(error.message);}},5000);
 })();

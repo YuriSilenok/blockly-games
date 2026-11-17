@@ -11,6 +11,7 @@ import xml.etree.ElementTree as ET
 from .store import ROOT, db
 from .blocks import block_errors, active_nodes, number_count, scan_in_cannon, lesson_four_problem, nested_loop_problem
 from . import challenges
+from . import arena
 
 LESSONS = 19
 PIXELS_PER_UNIT = (400 - 35) / 100  # Pond's canvas includes a half-duck inset at each edge.
@@ -68,10 +69,10 @@ def duel(spec, job_id, title):
     snapshot = None
     started = time.monotonic()
     try:
-        process.stdin.write(json.dumps(spec) + '\n')
+        process.stdin.write(json.dumps(spec, ensure_ascii=False) + '\n')
         process.stdin.close()
         while True:
-            if time.monotonic() - started > (int(spec.get('seconds', 60)) + 100):
+            if not spec.get('no_damage_seconds') and time.monotonic() - started > (int(spec.get('seconds', 60)) + 100):
                 raise RuntimeError('Превышено время выполнения боя')
             try:
                 line = lines.get(timeout=1)
@@ -214,7 +215,12 @@ def work(stop):
             continue
         job = dict(row)
         try:
-            result = train(job) if job['kind'] == 'training' else rank(job)
+            if job['kind'] == 'training':
+                result = train(job)
+            elif job['kind'] == 'round':
+                result = arena.run_round(job, duel)
+            else:
+                result = {'accepted': False, 'message': 'Автоматическое ранжирование заменено раундами. Сохрани и заяви алгоритм в новой библиотеке.'}
             status = 'done'
         except Exception as error:
             result = {'message': str(error)[:300] or 'Ошибка выполнения боя'}

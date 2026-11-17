@@ -217,6 +217,7 @@ Pond.Battle.updateMissiles_ = function() {
         const range = Blockly.utils.Coordinate.distance(avatar.loc, missile.endLoc);
         const damage = (1 - range / 4) * 10;
         if (damage > 0) {
+          avatar.lastDamager = missile.avatar;
           avatar.addDamage(damage);
           maxDamage = Math.max(maxDamage, damage);
         }
@@ -260,6 +261,7 @@ Pond.Battle.updateAvatars_ = function() {
         avatar.loc.x = Blockly.utils.math.clamp(avatar.loc.x, 0, 100);
         avatar.loc.y = Blockly.utils.math.clamp(avatar.loc.y, 0, 100);
         const damage = avatar.speed / 100 * Pond.Battle.COLLISION_DAMAGE;
+        avatar.lastDamager = null;
         avatar.addDamage(damage);
         avatar.speed = 0;
         avatar.desiredSpeed = 0;
@@ -275,6 +277,8 @@ Pond.Battle.updateAvatars_ = function() {
           avatar.loc.y -= dy;
           const damage = Math.max(avatar.speed, neighbour.speed) / 100 *
               Pond.Battle.COLLISION_DAMAGE;
+          avatar.lastDamager = neighbour;
+          neighbour.lastDamager = avatar;
           avatar.addDamage(damage);
           avatar.speed = 0;
           avatar.desiredSpeed = 0;

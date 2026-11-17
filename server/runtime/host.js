@@ -29,6 +29,10 @@ function startMatch(spec) {
   battle.AVATARS.length = 0;
   battle.RANK.length = 0;
   matchClock = 1000;
+  battle.lastDamageAt = matchClock;
+  battle.eliminationCount = 0;
+  battle.idleLimit = spec.no_damage_seconds ? Number(spec.no_damage_seconds) * 1000 : Infinity;
+  battle.clockLimit = spec.no_damage_seconds ? Infinity : 121000;
   matchMetrics = {scan: 0, cannon: 0, swim: 0, speed: 0, getX: 0, getY: 0, log: 0};
   spec.avatars.forEach(function (item, index) {
     var duck = new Pond.Avatar(item.name, new Blockly.utils.Coordinate(item.x, item.y), item.damage || 0, false, battle);
@@ -74,14 +78,14 @@ function advanceMatch(frames) {
     // Visual events have no consumers here and must not grow without bound.
     b.EVENTS.length = 0;
     var alive = b.AVATARS.filter(function (a) { return !a.dead; });
-    if (alive.length <= 1 || matchClock >= 121000) break;
+    if (alive.length <= 1 || matchClock >= b.clockLimit || matchClock - b.lastDamageAt >= b.idleLimit) break;
   }
   var alive = b.AVATARS.filter(function (a) { return !a.dead; });
   return JSON.stringify({
-    done: alive.length <= 1 || matchClock >= 121000,
+    done: alive.length <= 1 || matchClock >= b.clockLimit || matchClock - b.lastDamageAt >= b.idleLimit,
     time: (matchClock - 1000) / 1000,
     metrics: matchMetrics,
-    avatars: b.AVATARS.map(function (a) { return {name: a.name, x: a.loc.x, y: a.loc.y, facing: a.facing, health: Math.max(0, 100 - a.damage), dead: a.dead, error: a.loadError || null}; }),
+    avatars: b.AVATARS.map(function (a) { return {name: a.name, x: a.loc.x, y: a.loc.y, facing: a.facing, health: Math.max(0, 100 - a.damage), dead: a.dead, eliminated: a.eliminatedOrder || b.eliminationCount + 1, kills: a.kills || 0, error: a.loadError || null}; }),
     missiles: b.MISSILES.map(function (m) { return {x: m.startLoc.x + (m.endLoc.x - m.startLoc.x) * Math.min(1, m.progress / Math.max(1, m.range)), y: m.startLoc.y + (m.endLoc.y - m.startLoc.y) * Math.min(1, m.progress / Math.max(1, m.range))}; })
   });
 }

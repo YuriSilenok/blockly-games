@@ -31,6 +31,22 @@
     return api.user;
   };
   api.ready = api.refresh().catch(function () { return null; });
+  api.roundReport=function(rounds,target){
+    target.replaceChildren();var heading=document.createElement('h3');heading.textContent='Статистика раундов';target.appendChild(heading);
+    if(!rounds.length){var empty=document.createElement('p');empty.className='empty-state';empty.textContent='Раунды пока не проводились.';target.appendChild(empty);return;}
+    var note=document.createElement('p');note.className='muted';note.textContent='«Выбыл» — номер выбытия. Оставшиеся к концу боя утки получают одинаковый следующий номер.';target.appendChild(note);
+    var scroll=document.createElement('div');scroll.className='table-scroll';var table=document.createElement('table'),head=table.insertRow();
+    ['Раунд','Статус','Команда','Алгоритм','Выбыл','Здоровье','Потоплений'].forEach(function(label){var th=document.createElement('th');th.textContent=label;head.appendChild(th);});
+    var states={draft:'Подготовка',queued:'В очереди',running:'Идёт бой',done:'Завершён',error:'Не завершён'};
+    rounds.forEach(function(round){
+      var players=round.players.length?round.players:[{team:'Состав не выбран'}];
+      players.forEach(function(player){var row=table.insertRow();if(api.user&&player.team_id===api.user.team_id)row.className='my-team';
+        var health=player.health==null?'—':(player.health>0&&player.health<.001?'<0,001':Number(player.health.toFixed(3)).toLocaleString('ru-RU'))+' ХП';
+        [round.name,states[round.status]||round.status,player.team,player.algorithm_name||'—',player.eliminated==null?'—':player.eliminated,health,player.kills==null?'—':player.kills].forEach(function(value){row.insertCell().textContent=value;});
+        if(player.error)row.title=player.error;
+      });
+    });scroll.appendChild(table);target.appendChild(scroll);
+  };
   api.wait = async function (id, changed) {
     for (;;) {
       var job = await api.request('/api/jobs/' + id);

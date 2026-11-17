@@ -18,6 +18,7 @@ from .store import ROOT, db, initialize, password_hash, password_matches
 from .worker import LESSONS, work
 from .blocks import block_errors, number_count, scan_in_cannon, lesson_four_problem, nested_loop_problem
 from . import challenges
+from . import arena
 from .teams import details as team_details, change as change_team, TeamProblem
 
 STATIC = ROOT / 'appengine'
@@ -32,6 +33,13 @@ class Problem(Exception):
 
 class Handler(BaseHTTPRequestHandler):
     server_version = 'Pond'
+    problem = Problem
+
+    def graduate(self):
+        user = self.session()
+        if user['role'] != 'admin' and any(i not in self.progress(user['id']) for i in range(1, LESSONS + 1)):
+            raise Problem('Для доступа к турнирам сначала заверши обучение.', 403)
+        return user
 
     def send_json(self, value, status=200, cookie=None):
         body = json.dumps(value, ensure_ascii=False).encode('utf-8')
@@ -99,14 +107,17 @@ class Handler(BaseHTTPRequestHandler):
                     user['unlocked'] = all(i in user['completed'] for i in range(1, LESSONS + 1))
                 self.send_json({'user': user, 'lessons': LESSONS, 'course_revision': 6})
             elif path == '/api/tournaments':
-                self.session()
+                self.graduate()
                 with db() as c:
                     rows = c.execute('SELECT id,name,status,seconds FROM tournaments ORDER BY id DESC').fetchall()
                 self.send_json({'tournaments': [dict(r) for r in rows]})
             elif path == '/api/team':
-                self.send_json({'team': team_details(self.session()['id'])})
+                user = self.session()
+                self.send_json({'team': team_details(user['id']), 'invitations': arena.invitations(user['id'])})
+            elif path.startswith('/api/arena/'):
+                arena.get(self, path)
             elif re.fullmatch(r'/api/tournaments/\d+/standings', path):
-                self.session()
+                self.graduate()
                 tournament_id = int(path.split('/')[3])
                 with db() as c:
                     rows = c.execute('SELECT e.position,t.name AS team,e.team_id,e.submission_id FROM entries e JOIN teams t ON t.id=e.team_id WHERE e.tournament_id=? ORDER BY e.position', (tournament_id,)).fetchall()
@@ -126,8 +137,8 @@ class Handler(BaseHTTPRequestHandler):
             elif path == '/api/admin/live':
                 self.admin()
                 with db() as c:
-                    row = c.execute("SELECT m.id,m.title,m.status,m.snapshot,j.tournament_id,j.kind FROM matches m JOIN jobs j ON j.id=m.job_id WHERE j.kind='tournament' ORDER BY CASE m.status WHEN 'running' THEN 0 ELSE 1 END,m.id DESC LIMIT 1").fetchone()
-                    waiting = c.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running') AND kind='tournament'").fetchone()[0]
+                    row = c.execute("SELECT m.id,m.title,m.status,m.snapshot,j.tournament_id,j.kind FROM matches m JOIN jobs j ON j.id=m.job_id WHERE j.kind IN ('tournament','round') ORDER BY CASE m.status WHEN 'running' THEN 0 ELSE 1 END,m.id DESC LIMIT 1").fetchone()
+                    waiting = c.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running') AND kind IN ('tournament','round')").fetchone()[0]
                 match = dict(row) if row else None
                 if match:
                     match['snapshot'] = json.loads(match['snapshot']) if match['snapshot'] else None
@@ -161,8 +172,10 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({'ok': True}, cookie='pond_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict')
             elif path == '/api/password':
                 self.change_password(user, value)
-            elif path in ('/api/team/create', '/api/team/rename', '/api/team/add', '/api/team/remove', '/api/team/leave'):
+            elif path in ('/api/team/create', '/api/team/rename', '/api/team/add', '/api/team/remove', '/api/team/leave', '/api/team/dissolve', '/api/team/accept', '/api/team/decline', '/api/team/cancel'):
                 self.send_json({'team': change_team(user['id'], path.split('/')[-1], value)})
+            elif path.startswith('/api/arena/') or path.startswith('/api/admin/rounds'):
+                arena.post(self, user, path, value)
             elif path == '/api/progress/reset':
                 with db() as c:
                     if c.execute("SELECT 1 FROM jobs WHERE user_id=? AND kind='training' AND status='running'", (user['id'],)).fetchone():
@@ -178,7 +191,9 @@ class Handler(BaseHTTPRequestHandler):
                 if error:
                     raise Problem(error)
                 self.send_json(challenges.issue(user['id'], code, xml), 201)
-            elif path in ('/api/training/submit', '/api/tournament/submit'):
+            elif path == '/api/tournament/submit':
+                raise Problem('Сохрани алгоритм в библиотеке и заяви его на турнир через список алгоритмов команды.')
+            elif path == '/api/training/submit':
                 self.submit(user, path, value)
             elif path == '/api/admin/tournaments':
                 self.admin()
@@ -191,10 +206,17 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({'id': tournament_id}, 201)
             elif re.fullmatch(r'/api/admin/tournaments/\d+/status', path):
                 self.admin()
-                if value.get('status') not in ('open', 'closed'):
+                if value.get('status') not in ('open', 'closed', 'finished'):
                     raise Problem('Неизвестный статус турнира.')
                 with db() as c:
-                    c.execute('UPDATE tournaments SET status=? WHERE id=?', (value['status'], int(path.split('/')[4])))
+                    c.execute('BEGIN IMMEDIATE')
+                    tournament_id = int(path.split('/')[4])
+                    tournament = c.execute('SELECT status FROM tournaments WHERE id=?', (tournament_id,)).fetchone()
+                    if not tournament or tournament['status'] == 'finished':
+                        raise Problem('Турнир не найден или уже завершён.', 409)
+                    if value['status'] == 'finished' and c.execute("SELECT 1 FROM rounds WHERE tournament_id=? AND status IN ('queued','running')", (tournament_id,)).fetchone():
+                        raise Problem('Дождись завершения запущенных раундов.', 409)
+                    c.execute('UPDATE tournaments SET status=? WHERE id=?', (value['status'], tournament_id))
                 self.send_json({'ok': True})
             else:
                 raise Problem('Адрес не найден.', 404)
@@ -330,6 +352,22 @@ class Handler(BaseHTTPRequestHandler):
         self.send_json({'id': job_id}, 202)
 
     def static(self, path):
+        if path in ('/pond-duck.html', '/portal/tournament.html', '/tournament'):
+            user = self.session(False)
+            destination = None
+            if not user:
+                destination = '/portal/account.html?next=' + quote(self.path, safe='')
+            elif user['role'] != 'admin' and any(i not in self.progress(user['id']) for i in range(1, LESSONS + 1)):
+                destination = '/portal/account.html?training_required=1'
+            elif path == '/pond-duck.html' and not user['team_id']:
+                destination = '/portal/tournament.html'
+            if destination:
+                self.send_response(302)
+                self.send_header('Location', destination)
+                self.send_header('Cache-Control', 'no-store')
+                self.send_header('Content-Length', '0')
+                self.end_headers()
+                return
         if path == '/pond-tutor.html' and not self.session(False):
             self.send_response(302)
             self.send_header('Location', '/portal/account.html?next=' + quote(self.path, safe=''))

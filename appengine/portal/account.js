@@ -20,7 +20,15 @@
     var next=1;while(next<=19&&api.user.completed.includes(next))next++;
     document.getElementById('continue').href=api.user.unlocked?'tournament.html':'../pond-tutor.html?level='+Math.min(19,next);
     document.getElementById('continue').textContent=api.user.unlocked?'Открыть турниры ↗':'Продолжить обучение ↗';
-    team=(await api.request('/api/team')).team;renderTeam();
+    var teamData=await api.request('/api/team');team=teamData.team;renderTeam();renderInvitations(teamData.invitations||[]);
+    if(new URLSearchParams(location.search).has('training_required'))notify('Доступ к турнирам откроется после завершения всех уровней обучения.');
+  }
+  function renderInvitations(items){
+    var panel=document.getElementById('team-invitations');
+    if(!panel){panel=document.createElement('section');panel.id='team-invitations';panel.className='card';document.getElementById('security').before(panel);}
+    panel.replaceChildren();panel.hidden=!items.length;if(!items.length)return;
+    var heading=document.createElement('h2');heading.textContent='Приглашения в команды';panel.appendChild(heading);
+    items.forEach(function(invitation){var row=document.createElement('p');row.textContent='Команда «'+invitation.team+'», капитан '+invitation.captain+' ';['accept','decline'].forEach(function(action){var button=document.createElement('button');button.textContent=action==='accept'?'Присоединиться':'Отклонить';button.className='secondary';button.onclick=function(){mutate(action,{invitation_id:invitation.id},button);};row.appendChild(button);});panel.appendChild(row);});
   }
   function renderTeam(){
     document.getElementById('create-team').hidden=!!team;document.getElementById('team-current').hidden=!team;
@@ -30,6 +38,7 @@
     document.getElementById('team-name').textContent=team.name;
     document.getElementById('team-role').textContent=captain?'Ты капитан: управляй составом и названием команды.':'Ты участник команды. После обучения можешь отправлять её алгоритмы.';
     document.getElementById('captain-controls').hidden=!captain;document.getElementById('leave-team').hidden=captain;
+    var dissolve=document.getElementById('dissolve-team');if(!dissolve){dissolve=document.createElement('button');dissolve.id='dissolve-team';dissolve.className='quiet danger';dissolve.textContent='Распустить команду';dissolve.onclick=function(){if(confirm('Распустить команду? Личные алгоритмы и история турниров сохранятся.'))mutate('dissolve',{},dissolve);};document.getElementById('captain-controls').appendChild(dissolve);}
     document.querySelector('#rename-team input').value=team.name;
     var members=document.getElementById('members');members.replaceChildren();
     team.members.forEach(function(member){
@@ -37,14 +46,15 @@
       var info=document.createElement('span');info.className='member-info';var name=document.createElement('strong');name.textContent=member.login+(member.id===api.user.id?' · ты':'');info.appendChild(name);var role=document.createElement('small');role.textContent=member.id===team.captain_id?'Капитан':'Участник';info.appendChild(role);row.appendChild(info);
       if(captain&&member.id!==api.user.id){var remove=document.createElement('button');remove.type='button';remove.className='quiet danger';remove.textContent='Исключить';remove.onclick=function(){if(confirm('Исключить '+member.login+' из команды?'))mutate('remove',{user_id:member.id},remove);};row.appendChild(remove);}members.appendChild(row);
     });
-    document.querySelector('#add-member button').disabled=team.members.length>=3;
-    document.getElementById('member-hint').textContent=team.members.length>=3?'Команда в полном составе.':'Сначала игроку нужно зарегистрироваться. Нужен только его логин.';
+    (team.invitations||[]).forEach(function(invitation){var row=document.createElement('li');row.textContent=invitation.login+' · ожидает подтверждения ';if(captain){var cancel=document.createElement('button');cancel.className='quiet';cancel.textContent='Отозвать';cancel.onclick=function(){mutate('cancel',{invitation_id:invitation.id},cancel);};row.appendChild(cancel);}members.appendChild(row);});
+    document.querySelector('#add-member button').disabled=team.members.length+(team.invitations||[]).length>=3;
+    document.getElementById('member-hint').textContent=team.members.length>=3?'Команда в полном составе.':'Приглашённый игрок должен подтвердить участие в своём личном кабинете.';
   }
   async function mutate(action,value,button){
     button.disabled=true;
     try{await api.request('/api/team/'+action,value);await api.refresh();await render();notify('Изменения команды сохранены.');}
     catch(error){notify(error.message);}
-    finally{button.disabled=false;if(team&&team.members.length>=3)document.querySelector('#add-member button').disabled=true;}
+    finally{button.disabled=false;if(team&&team.members.length+(team.invitations||[]).length>=3)document.querySelector('#add-member button').disabled=true;}
   }
   ['login','register'].forEach(function(kind){
     document.getElementById(kind).onsubmit=async function(event){
@@ -60,7 +70,7 @@
     };
   });
   ['create','rename','add'].forEach(function(action){var form=document.getElementById(action==='create'?'create-team':action==='rename'?'rename-team':'add-member');form.onsubmit=function(event){event.preventDefault();mutate(action,Object.fromEntries(new FormData(form)),form.querySelector('button'));};});
-  document.getElementById('leave-team').onclick=function(){if(confirm('Выйти из команды? Отправленные алгоритмы останутся у неё.'))mutate('leave',{},this);};
+  document.getElementById('leave-team').onclick=function(){if(confirm('Выйти из команды? Личные алгоритмы и история турниров сохранятся.'))mutate('leave',{},this);};
   document.getElementById('password').onsubmit=async function(event){
     event.preventDefault();var button=this.querySelector('button'),output=document.getElementById('password-status');button.disabled=true;output.textContent='';
     try{var value=Object.fromEntries(new FormData(this));if(value.new_password!==value.confirm_password)throw Error('Новые пароли не совпадают.');await api.request('/api/password',value);this.reset();await api.refresh();output.textContent='Пароль изменён. На этом устройстве вход сохранён.';}catch(error){output.textContent=error.message;}finally{button.disabled=false;}

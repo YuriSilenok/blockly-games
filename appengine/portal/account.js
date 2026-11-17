@@ -13,13 +13,14 @@
     document.getElementById('page-title').textContent='Привет, '+api.user.login+'.';
     document.getElementById('page-description').textContent='Твои эксперименты, команда и следующий шаг — всё здесь.';
     document.getElementById('name').textContent='Выполнен вход: '+api.user.login;
-    document.getElementById('progress').textContent=api.user.unlocked?'Обучение завершено. Собери команду и испытай свою стратегию в турнире.':'Пройдено уровней: '+api.user.completed.length+' из 19. Продолжай исследовать, чтобы открыть турнир.';
+    document.getElementById('progress').textContent=api.user.unlocked?'Обучение завершено. Можно вернуться к любому уровню или перейти к турнирам.':'Пройдено уровней: '+api.user.completed.length+' из 19. Продолжай исследовать, чтобы открыть турнир.';
     document.getElementById('progress-count').textContent=api.user.completed.length+' / 19';
     document.getElementById('learning-progress').value=api.user.completed.length;
     document.getElementById('admin').hidden=api.user.role!=='admin';
     var next=1;while(next<=19&&api.user.completed.includes(next))next++;
-    document.getElementById('continue').href=api.user.unlocked?'tournament.html':'../pond-tutor.html?level='+Math.min(19,next);
-    document.getElementById('continue').textContent=api.user.unlocked?'Открыть турниры ↗':'Продолжить обучение ↗';
+    document.getElementById('continue').href='../pond-tutor.html?level='+(api.user.unlocked?1:Math.min(19,next));
+    document.getElementById('continue').textContent=api.user.unlocked?'Вернуться к обучению ↗':'Продолжить обучение ↗';
+    var tournaments=document.getElementById('graduated-tournaments');if(!tournaments){tournaments=document.createElement('a');tournaments.id='graduated-tournaments';tournaments.className='button secondary';tournaments.href='tournament.html';tournaments.textContent='Открыть турниры ↗';document.getElementById('continue').after(tournaments);}tournaments.hidden=!api.user.unlocked;
     var teamData=await api.request('/api/team');team=teamData.team;renderTeam();renderInvitations(teamData.invitations||[]);
     if(new URLSearchParams(location.search).has('training_required'))notify('Доступ к турнирам откроется после завершения всех уровней обучения.');
   }

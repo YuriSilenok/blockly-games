@@ -95,6 +95,11 @@ def scan_in_cannon(root):
 
 
 def nested_loop_problem(root, level):
+    if level in (6, 8):
+        limit = 2 if level == 6 else 1
+        swims = sum(node.get('type') == 'pond_swim' for node in active_nodes(root))
+        if swims > limit:
+            return 'На уровне %s можно использовать не более %s активных блоков «Плыть». Сейчас их: %s.' % (level, limit, swims)
     loops = [node for node in active_nodes(root) if node.get('type') in
              ('controls_whileUntil', 'controls_repeat_ext', 'controls_repeat', 'controls_for', 'controls_forEach')]
     if level == 9 and len(loops) > 2:

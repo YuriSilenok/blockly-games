@@ -27,6 +27,7 @@ window.installPondCourse = function () {
   function planError(xml) {
     var bs = blocks(xml), types = bs.map(function (b) { return b.getAttribute('type'); });
     function has(type) { return types.indexOf(type) !== -1; }
+    if(nm===6||nm===8){var swimLimit=nm===6?2:1,swimCount=types.filter(function(type){return type==='pond_swim';}).length;if(swimCount>swimLimit)return 'На уровне '+nm+' можно использовать не более '+swimLimit+' активных блоков «Плыть». Сейчас их: '+swimCount+'.';}
     if(nm===12||nm===13||nm===14||nm===15){var loopCount=types.filter(function(type){return loops.includes(type);}).length,ifCount=types.filter(function(type){return type==='controls_if';}).length;if(loopCount!==1||ifCount!==1)return 'На уровне '+nm+' нужны ровно один цикл и один блок «Если». Сейчас циклов: '+loopCount+', блоков «Если»: '+ifCount+'.';}
     if(nm===9){var loopCount=types.filter(function(type){return loops.includes(type);}).length;if(loopCount>2)return 'На уровне 9 можно использовать не более двух циклов. Сейчас их: '+loopCount+'.';}
     if(nm===10){var loopCount=types.filter(function(type){return loops.includes(type);}).length;if(loopCount>3)return 'На уровне 10 можно использовать не более трёх циклов. Сейчас их: '+loopCount+'.';}
@@ -176,6 +177,7 @@ window.installPondCourse = function () {
   };
   async function saveVictory(solution,consoleAnswer){
     var consoleButton=W('course-console-form').querySelector('button');
+    var wasGraduated=!!(portal.user&&portal.user.unlocked);
     try{
       pending=true;
       consoleButton.disabled=true;
@@ -190,7 +192,7 @@ window.installPondCourse = function () {
       localStorage.setItem(key(nm),solution.xml);report('Прогресс сохранён в учётной записи.','success');
       if(nm>=16&&nm<mm){localStorage.setItem(key(nm+1)+':draft',solution.xml);localStorage.setItem(key(nm+1)+':migrated','1');}
       consoleSolution=null;
-      if(nm===mm){location.assign('portal/tournament.html');return;}
+      if(nm===mm&&!wasGraduated){location.assign('portal/tournament.html');return;}
       var level=W('level'+nm);if(level)level.classList.add('level_done');Zm();
     }catch(error){
       if(nm===4){W('course-console-error').textContent=PondRussian.prose(error.message);W('course-console-answer').setAttribute('aria-invalid','true');}

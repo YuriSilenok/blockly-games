@@ -319,7 +319,7 @@ class Handler(BaseHTTPRequestHandler):
                 error = lesson_four_problem(root)
                 if error:
                     raise Problem(error)
-            if level in (7, 8, 9, 10, 11, 12, 13, 14, 15):
+            if level in (6, 7, 8, 9, 10, 11, 12, 13, 14, 15):
                 error = nested_loop_problem(root, level)
                 if error:
                     raise Problem(error)

@@ -102,6 +102,8 @@ def nested_loop_problem(root, level):
             return 'На уровне %s можно использовать не более %s активных блоков «Плыть». Сейчас их: %s.' % (level, limit, swims)
     loops = [node for node in active_nodes(root) if node.get('type') in
              ('controls_whileUntil', 'controls_repeat_ext', 'controls_repeat', 'controls_for', 'controls_forEach')]
+    if level == 6 and len(loops) > 1:
+        return 'На уровне 6 можно использовать не более одного активного цикла. Сейчас их: %s.' % len(loops)
     if level == 9 and len(loops) > 2:
         return 'На уровне 9 можно использовать не более двух циклов. Сейчас их: %s.' % len(loops)
     if level == 10 and len(loops) > 3:

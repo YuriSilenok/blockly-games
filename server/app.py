@@ -97,7 +97,7 @@ class Handler(BaseHTTPRequestHandler):
                     user.pop('token')
                     user['completed'] = self.progress(user['id'])
                     user['unlocked'] = all(i in user['completed'] for i in range(1, LESSONS + 1))
-                self.send_json({'user': user, 'lessons': LESSONS, 'course_revision': 5})
+                self.send_json({'user': user, 'lessons': LESSONS, 'course_revision': 6})
             elif path == '/api/tournaments':
                 self.session()
                 with db() as c:

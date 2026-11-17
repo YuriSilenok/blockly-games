@@ -40,9 +40,9 @@ def concept_error(level, xml, metrics):
         return nested_loop_problem(root, level)
     if level in (10, 11) and (not metrics.get('getX') or not metrics.get('getY') or not types.intersection(loops)):
         return 'Используй обе координаты и циклы, чтобы управлять маршрутом.'
-    if level in (1, 2, 3, 4, 12, 13) and not metrics.get('cannon'):
+    if level in (1, 2, 3, 4, 12, 14) and not metrics.get('cannon'):
         return 'На этом уровне нужно исследовать стрельбу.'
-    if level in (5, 6, 7, 8, 9, 10, 11, 14, 15) and metrics.get('cannon'):
+    if level in (5, 6, 7, 8, 9, 10, 11, 13, 15) and metrics.get('cannon'):
         return 'На этом уровне цели нужно протаранить без выстрелов.'
     return None
 

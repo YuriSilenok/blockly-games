@@ -65,6 +65,7 @@ def initialize():
     backup_before_course_split('duplicate-level-eight', 'before-duplicate-level-eight')
     backup_before_course_split('duplicate-level-ten', 'before-duplicate-level-ten')
     backup_before_course_split('duplicate-level-twelve', 'before-duplicate-level-twelve')
+    backup_before_course_split('swap-levels-thirteen-fourteen', 'before-swap-levels-thirteen-fourteen')
     with db() as c:
         c.execute('PRAGMA journal_mode=WAL')
         c.executescript('''
@@ -159,6 +160,11 @@ def initialize():
             c.execute('UPDATE progress SET level=level-99 WHERE level>=113')
             c.execute("UPDATE jobs SET level=level+1 WHERE kind='training' AND level>=13")
             c.execute("INSERT INTO course_migrations VALUES('duplicate-level-twelve')")
+        if not c.execute("SELECT 1 FROM course_migrations WHERE name='swap-levels-thirteen-fourteen'").fetchone():
+            c.execute('UPDATE progress SET level=level+100 WHERE level IN (13,14)')
+            c.execute('UPDATE progress SET level=CASE level WHEN 113 THEN 14 ELSE 13 END WHERE level IN (113,114)')
+            c.execute("UPDATE jobs SET level=CASE level WHEN 13 THEN 14 ELSE 13 END WHERE kind='training' AND level IN (13,14)")
+            c.execute("INSERT INTO course_migrations VALUES('swap-levels-thirteen-fourteen')")
         if not c.execute("SELECT 1 FROM users WHERE login='silenok'").fetchone():
             encoded = os.environ.get('POND_ADMIN_PASSWORD_HASH')
             if not encoded or not encoded.startswith('pbkdf2_sha256$260000$'):

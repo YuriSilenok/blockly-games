@@ -15,7 +15,7 @@ window.installPondCourse = function () {
   var metrics = {}, running = null, pending = false, ready = false, checkingSession = false;
   var runtimeFailure='',programFinished=false,idleReported=false,consoleSolution=null;
   var loops = ['controls_whileUntil','controls_repeat_ext','controls_repeat','controls_for','controls_forEach'];
-  function key(level) { return 'pond-course-v5:' + (portal.user ? portal.user.id : 'preview') + ':' + level; }
+  function key(level) { return 'pond-course-v6:' + (portal.user ? portal.user.id : 'preview') + ':' + level; }
   function completed(level) { return portal.user ? portal.user.completed.indexOf(level) !== -1 : !!localStorage.getItem(key(level)); }
   pm = function (level) { return completed(level) ? localStorage.getItem(key(level)) || '<xml></xml>' : null; };
   // A new level starts empty; only this level's saved work is restored below.
@@ -31,8 +31,8 @@ window.installPondCourse = function () {
     if(nm===9){var loopCount=types.filter(function(type){return loops.includes(type);}).length;if(loopCount>2)return 'На уровне 9 можно использовать не более двух циклов. Сейчас их: '+loopCount+'.';}
     if(nm===10){var loopCount=types.filter(function(type){return loops.includes(type);}).length;if(loopCount>3)return 'На уровне 10 можно использовать не более трёх циклов. Сейчас их: '+loopCount+'.';}
     if(nm===11){var loopCount=types.filter(function(type){return loops.includes(type);}).length;if(loopCount>2)return 'На уровне 11 можно использовать не более двух циклов. Сейчас их: '+loopCount+'.';}
-    if ([5,6,7,8,9,10,11,14,15].indexOf(nm) !== -1 && has('pond_cannon')) return 'На этом уровне исследуем таран: убери выстрелы из активной программы.';
-    if ([1,2,3,4,12,13].indexOf(nm) !== -1 && !has('pond_cannon')) return 'Попробуй исследовать стрельбу с помощью cannon.';
+    if ([5,6,7,8,9,10,11,13,15].indexOf(nm) !== -1 && has('pond_cannon')) return 'На этом уровне исследуем таран: убери выстрелы из активной программы.';
+    if ([1,2,3,4,12,14].indexOf(nm) !== -1 && !has('pond_cannon')) return 'Попробуй исследовать стрельбу с помощью cannon.';
     if ([2,3,4,12,13,14,15].indexOf(nm) !== -1 && !has('pond_scan')) return 'Добавь измерение расстояния с помощью scan.';
     if(nm===2&&!PondFeedback.scanInCannon(xml))return 'Условие второго уровня: помести scan в параметр расстояния блока cannon. Отдельный блок scan или scan в параметре угла не выполняет это условие.';
     if (nm === 3 && (!has('variables_set') || !has('variables_get'))) return 'Исследуй, как сохранить направление в переменной и использовать его.';
@@ -45,7 +45,7 @@ window.installPondCourse = function () {
     return '';
   }
   function metricError() {
-    if([1,2,3,4,12,13].includes(nm)&&!metrics.cannon)return 'Условие задания не выполнено: команда cannon не была выполнена. Проверь, достигает ли программа блока выстрела.';
+    if([1,2,3,4,12,14].includes(nm)&&!metrics.cannon)return 'Условие задания не выполнено: команда cannon не была выполнена. Проверь, достигает ли программа блока выстрела.';
     if ([2,3,4,12,13,14,15].indexOf(nm)!==-1 && !metrics.scan) return 'Радар должен участвовать в выполнении программы. Попробуй изменить расположение блоков.';
     if (nm===4 && !metrics.log) return 'Измерение нужно вывести через log во время выполнения программы.';
     if (nm===6 && !metrics.speed) return 'Измеряй скорость во время выполнения программы.';
@@ -75,9 +75,9 @@ window.installPondCourse = function () {
     else if(nm===7||nm===8)allowed.push('pond_swim','pond_speed','controls_whileUntil','logic_compare');
     else if(nm===9)allowed.push('pond_swim','pond_health','controls_whileUntil','logic_compare');
     else if(nm===10||nm===11)allowed.push('pond_swim','pond_getX','pond_getY','controls_whileUntil','logic_compare');
-    else if(nm===12||nm===13||nm===14)allowed.push(nm===14?'pond_swim':'pond_cannon','pond_scan','controls_whileUntil','controls_if','logic_compare','logic_boolean');
+    else if(nm===12||nm===13||nm===14)allowed.push(nm===13?'pond_swim':'pond_cannon','pond_scan','controls_whileUntil','controls_if','logic_compare','logic_boolean');
     else allowed=null;
-    if(nm===13)allowed.push('pond_swim','pond_stop');
+    if(nm===14)allowed.push('pond_swim','pond_stop');
     if(nm===11){allowed.push('logic_operation','logic_negate','logic_boolean');var logic=toolbox.querySelector('category[name="'+X('Games.catLogic',false)+'"]');['logic_operation','logic_negate'].forEach(function(type){if(!logic.querySelector('block[type="'+type+'"]'))logic.insertAdjacentHTML('beforeend','<block type="'+type+'"></block>');});}
     if(nm>=4&&allowed){allowed.push('pond_log','pond_math_number');}
     if(nm===9)toolbox.querySelector('category[name="'+X('Games.pond',false)+'"]').insertAdjacentHTML('beforeend','<block type="pond_health"></block>');
@@ -221,13 +221,13 @@ window.installPondCourse = function () {
     W('course-console-form').onsubmit=async function(event){event.preventDefault();if(!consoleSolution||pending)return;W('course-console-error').textContent='Проверяем число и сохраняем результат…';W('course-console-answer').removeAttribute('aria-invalid');await saveVictory(consoleSolution,W('course-console-answer').value.trim());};
     W('course-reset').onclick=async function(){
       if(!confirm('Сбросить пройденные уровни обучения? Турнирные результаты сохранятся.'))return;
-      try{if(portal.user)await portal.request('/api/progress/reset',{});for(var i=1;i<=mm;i++){localStorage.removeItem(key(i));localStorage.removeItem(key(i)+':draft');localStorage.removeItem(key(i)+':migrated');localStorage.removeItem('pond-course:'+portal.user.id+':'+i);localStorage.removeItem('pond-course:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v2:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v2:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v4:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v4:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v3:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v3:'+portal.user.id+':'+i+':draft');}location.href='?level=1';}catch(error){report(error.message);}
+      try{if(portal.user)await portal.request('/api/progress/reset',{});for(var i=1;i<=mm;i++){localStorage.removeItem(key(i));localStorage.removeItem(key(i)+':draft');localStorage.removeItem(key(i)+':migrated');localStorage.removeItem('pond-course:'+portal.user.id+':'+i);localStorage.removeItem('pond-course:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v2:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v2:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v5:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v5:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v4:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v4:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v3:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v3:'+portal.user.id+':'+i+':draft');}location.href='?level=1';}catch(error){report(error.message);}
     };
     quote();await portal.ready;
     if(!portal.user){portal.signIn();return;}
     try{
       var saved=localStorage.getItem(key(nm)+':draft');
-      if(!localStorage.getItem(key(nm)+':migrated')){var prior=nm<13?nm:nm>13?nm-1:null;var previous=prior===null?null:prior<11?prior:prior>11?prior-1:null;if(prior&&!saved)saved=localStorage.getItem('pond-course-v4:'+portal.user.id+':'+prior+':draft');if(previous&&!saved){saved=localStorage.getItem('pond-course-v3:'+portal.user.id+':'+previous+':draft');var second=previous<9?previous:previous>9?previous-1:null;if(!saved&&second){saved=localStorage.getItem('pond-course-v2:'+portal.user.id+':'+second+':draft');var original=second<7?second:second>7?second-1:null;if(!saved&&original)saved=localStorage.getItem('pond-course:'+portal.user.id+':'+original+':draft');}if(saved)localStorage.setItem(key(nm)+':draft',saved);}if(saved)localStorage.setItem(key(nm)+':draft',saved);localStorage.setItem(key(nm)+':migrated','1');}
+      if(!localStorage.getItem(key(nm)+':migrated')){var oldLevel=nm===13?14:nm===14?13:nm;if(!saved)saved=localStorage.getItem('pond-course-v5:'+portal.user.id+':'+oldLevel+':draft');var prior=oldLevel<13?oldLevel:oldLevel>13?oldLevel-1:null;var previous=prior===null?null:prior<11?prior:prior>11?prior-1:null;if(prior&&!saved)saved=localStorage.getItem('pond-course-v4:'+portal.user.id+':'+prior+':draft');if(previous&&!saved){saved=localStorage.getItem('pond-course-v3:'+portal.user.id+':'+previous+':draft');var second=previous<9?previous:previous>9?previous-1:null;if(!saved&&second){saved=localStorage.getItem('pond-course-v2:'+portal.user.id+':'+second+':draft');var original=second<7?second:second>7?second-1:null;if(!saved&&original)saved=localStorage.getItem('pond-course:'+portal.user.id+':'+original+':draft');}if(saved)localStorage.setItem(key(nm)+':draft',saved);}if(saved)localStorage.setItem(key(nm)+':draft',saved);localStorage.setItem(key(nm)+':migrated','1');}
       if(portal.user){var data=await portal.request('/api/training/'+nm);saved=saved||data.xml;}
       if(saved)Im(saved);
       for(var i=1;i<=mm;i++){var node=W('level'+i);if(node)node.classList.toggle('level_done',completed(i));}

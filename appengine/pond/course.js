@@ -57,7 +57,7 @@ window.installPondCourse = function () {
     var container = document.createElement('div'); container.innerHTML = originalHTML();
     ['languageMenu','linkButton','helpUseScan','playerPendulum','playerScared','playerDefense'].forEach(function(id){var e=container.querySelector('#'+id);if(e)e.remove();});
     var help = container.querySelector('#help');
-    help.innerHTML = '<div class="course-scroll"><section><h2>Новые возможности</h2><div id="course-quote" class="level-help-documentation">Загружаем цитату документации…</div></section><section><h2>Задание: '+lesson.title+'</h2><p id="course-task"></p></section></div><div class="course-buttons"><button class="secondary addHideHandler">Понятно</button></div>';
+    help.innerHTML = '<div class="course-scroll"><section id="course-new-blocks" hidden><h2>Новые блоки</h2><p id="course-quote"></p></section><section><h2>Задание: '+lesson.title+'</h2><p id="course-task"></p></section></div><div class="course-buttons"><button class="secondary addHideHandler">Понятно</button></div>';
     help.querySelector('#course-task').textContent=PondRussian.prose(lesson.task);
     if(nm===4)help.querySelector('#course-task').insertAdjacentHTML('afterend','<p>Открой консоль браузера: нажми F12 и выбери вкладку «Консоль» или нажми Ctrl+Shift+J (на macOS — Cmd+Option+J). Запусти программу и найди последнее сообщение «Проверочное число для уровня 4». Возьми следующие за ним шесть цифр. Это отдельное число, а не расстояние, которое выводит блок «вывести в консоль». После победы введи его в окне результата. При новом запуске нужно брать число из нового сообщения.</p>');
     var done=container.querySelector('#dialogDone');
@@ -194,26 +194,12 @@ window.installPondCourse = function () {
       else{running=solution;report(error.message+' Нажми «Сохранить результат», чтобы повторить отправку.','error');var retry=document.createElement('button');retry.textContent='Сохранить результат';retry.onclick=function(){retry.remove();Wn();};W('course-status').appendChild(retry);}
     }finally{pending=false;consoleButton.disabled=false;}
   }
-  async function quote(){
-    var target=W('course-quote');
-    if(!lesson.concepts.length){target.textContent='Новых блоков нет. Комбинируй изученные возможности и исследуй поведение противников.';return;}
-    var map={cannon:['Углы','cannon'],scan:['scan'],variables:['Присваивание','Получение значения'],log:['Отладка'],swim:['swim'],stop:['Остановка'],speed:['Скорость'],health:['Здоровье'],while:['Цикл «пока»'],compare:['Сравнения'],nested:['Вложенные циклы'],repeat:['Цикл «повторить»'],change:['Увеличение значения'],coordinates:['Координаты'],if:['Условия'],logic:['«И» и «или»','Отрицание','Логические значения']};
-    try{
-      var response=await fetch('pond/docs.html');if(!response.ok)throw Error();
-      var doc=new DOMParser().parseFromString(await response.text(),'text/html');target.textContent='';
-      lesson.concepts.forEach(function(concept){(map[concept]||[]).forEach(function(name){
-        var heading=Array.from(doc.querySelectorAll('h3')).find(function(h){return h.textContent.indexOf(name)!==-1;});
-        if(!heading)return;
-        var headings=Array.from(doc.querySelectorAll('h2,h3')),next=headings[headings.indexOf(heading)+1];
-        var range=doc.createRange();range.setStartBefore(heading);if(next)range.setEndBefore(next);else range.setEndAfter(heading.parentNode.lastChild);
-        target.appendChild(range.cloneContents());
-      });});
-      target.querySelectorAll('.js,pre,script').forEach(function(e){e.remove();});
-      target.querySelectorAll('img').forEach(function(e){e.src=new URL(e.getAttribute('src'),new URL('pond/docs.html',location.href)).href;});
-      target.querySelectorAll('[id]').forEach(function(e){e.removeAttribute('id');});
-      PondRussian.images(target);
-      PondRussian.explanations(target);
-    }catch(error){target.textContent='Документация не загрузилась. Открой её кнопкой «Документация» и повтори попытку позже.';}
+  function quote(){
+    var map={cannon:['cannon'],scan:['scan'],variables:['Переменные'],log:['log'],swim:['swim'],stop:['stop'],speed:['speed'],health:['health'],while:['while'],compare:['Сравнение'],repeat:['Повторить'],change:['Увеличить значение переменной'],coordinates:['getX','getY'],if:['if'],logic:['и/или','не','Логические значения']};
+    var names=[];
+    lesson.concepts.forEach(function(concept){(map[concept]||[]).forEach(function(name){names.push(PondRussian.label(name));});});
+    W('course-new-blocks').hidden=!names.length;
+    W('course-quote').textContent=names.length?(names.length===1?'Добавлен новый блок: ':'Добавлены новые блоки: ')+names.map(function(name){return '«'+name+'»';}).join(', ')+'.':'';
   }
   portal.onLoad(async function(){
     document.title='Уровень '+nm+' — '+lesson.title+' — Пруд';

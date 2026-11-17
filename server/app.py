@@ -19,6 +19,7 @@ from .worker import LESSONS, work
 from .blocks import block_errors, number_count, scan_in_cannon, lesson_four_problem, nested_loop_problem
 from . import challenges
 from . import arena
+from .version import REVISION
 from .teams import details as team_details, change as change_team, TeamProblem
 
 STATIC = ROOT / 'appengine'
@@ -389,6 +390,9 @@ class Handler(BaseHTTPRequestHandler):
         if STATIC.resolve() not in filename.parents or not filename.is_file():
             raise Problem('Страница не найдена.', 404)
         content = filename.read_bytes()
+        if filename.suffix.lower() == '.html':
+            version = ('<script defer src="/common/version.js" data-version="%s"></script>' % REVISION).encode('ascii')
+            content = content.replace(b'</body>', version + b'</body>', 1) if b'</body>' in content else content + version
         self.send_response(200)
         self.send_header('Content-Type', mimetypes.guess_type(str(filename))[0] or 'application/octet-stream')
         self.send_header('Content-Length', str(len(content)))

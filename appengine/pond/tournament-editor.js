@@ -13,6 +13,15 @@ window.installTournamentEditor=function(){
     ['languageMenu','linkButton'].forEach(function(id){var e=box.querySelector('#'+id);if(e)e.remove();});
     box.querySelector('#header_cta').insertAdjacentHTML('beforeend',' <a href="portal/account.html">Личный кабинет</a> <a href="portal/tournament.html">Турниры и алгоритмы команды</a>');
     box.querySelector('#visualization').insertAdjacentHTML('afterend','<div id="course-feedback"><div id="course-status" role="status">Загружаем учётную запись…</div><div id="arena-tools"><details open><summary>Мои алгоритмы</summary><form id="algorithm-save"><label>Название алгоритма<input id="algorithm-name" required maxlength="80"></label><button>Сохранить в системе</button></form><label>Сохранённый алгоритм<select id="algorithm-library"></select></label><button id="algorithm-load" type="button">Загрузить в редактор</button></details><details open><summary>Тренировочный пруд</summary><label>Количество противников<select id="opponent-count"></select></label><div id="duck-assignments"></div><p>Для своей утки можно выбрать текущие блоки, сохранённый алгоритм или оставить её без алгоритма. Чужие алгоритмы доступны, если автор разрешил тренировки.</p></details><details open><summary>Заявка на турнир</summary><label>Турнир<select id="tournament-select"></select></label><label><input id="algorithm-shared" type="checkbox"> Разрешить другим командам использовать алгоритм для тренировок</label><label><input id="algorithm-main" type="checkbox" checked> Основной алгоритм команды</label><button id="tournament-submit" type="button">Заявить сохранённый алгоритм</button><p><a href="portal/tournament.html">Изменить основной алгоритм и доступность заявок →</a></p></details></div></div>');
+    var tools=box.querySelector('#arena-tools');
+    tools.setAttribute('aria-label','Настройки турнирного редактора');
+    Array.from(tools.querySelectorAll('details')).forEach(function(menu,index){
+      menu.removeAttribute('open');var summary=menu.querySelector('summary');
+      if(index===2)summary.textContent='Заявки на турнир';
+      var panel=document.createElement('div');panel.className='arena-menu-panel';
+      Array.from(menu.childNodes).forEach(function(node){if(node!==summary)panel.appendChild(node);});menu.appendChild(panel);
+    });
+    box.querySelector('#header_cta').prepend(tools);
     PondFeedback.place(box);return box.innerHTML;
   };
   var originalTab=Po;Po=function(mode){if(mode===0)originalTab(0);};Qo=function(){};
@@ -74,6 +83,10 @@ window.installTournamentEditor=function(){
     var step=this.Dq.step;this.Dq.step=function(){try{return step.apply(this,arguments);}catch(error){report(PondFeedback.runtime(error),'error');throw error;}};
   };
   portal.onLoad(async function(){
+    var tools=U('arena-tools'),menus=Array.from(tools.querySelectorAll('details'));
+    menus.forEach(function(menu){menu.addEventListener('toggle',function(){if(menu.open)menus.forEach(function(other){if(other!==menu)other.open=false;});});});
+    document.addEventListener('click',function(event){if(!tools.contains(event.target))menus.forEach(function(menu){menu.open=false;});});
+    document.addEventListener('keydown',function(event){if(event.key==='Escape')menus.forEach(function(menu){if(menu.open){menu.open=false;menu.querySelector('summary').focus();}});});
     document.title='Редактор и тренировочный пруд';U('avatar-select').style.display='none';await portal.ready;
     if(!portal.user){portal.signIn();return;}
     if((!portal.user.unlocked&&portal.user.role!=='admin')||!portal.user.team_id){location.replace('portal/tournament.html');return;}

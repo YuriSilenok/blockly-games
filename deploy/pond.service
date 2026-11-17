@@ -7,6 +7,7 @@ User=pond
 Group=pond
 WorkingDirectory=/opt/pond
 EnvironmentFile=/etc/pond.env
+ExecStartPre=+/bin/bash /opt/pond/deploy/write-version.sh
 ExecStart=/opt/pond-venv/bin/python -m server.app
 Restart=on-failure
 RestartSec=3

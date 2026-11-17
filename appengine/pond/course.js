@@ -27,7 +27,7 @@ window.installPondCourse = function () {
   function planError(xml) {
     var bs = blocks(xml), types = bs.map(function (b) { return b.getAttribute('type'); });
     function has(type) { return types.indexOf(type) !== -1; }
-    if(nm===12){var loopCount=types.filter(function(type){return loops.includes(type);}).length,ifCount=types.filter(function(type){return type==='controls_if';}).length;if(loopCount!==1||ifCount!==1)return 'На уровне 12 нужны ровно один цикл и один блок «Если». Сейчас циклов: '+loopCount+', блоков «Если»: '+ifCount+'.';}
+    if(nm===12||nm===13){var loopCount=types.filter(function(type){return loops.includes(type);}).length,ifCount=types.filter(function(type){return type==='controls_if';}).length;if(loopCount!==1||ifCount!==1)return 'На уровне '+nm+' нужны ровно один цикл и один блок «Если». Сейчас циклов: '+loopCount+', блоков «Если»: '+ifCount+'.';}
     if(nm===9){var loopCount=types.filter(function(type){return loops.includes(type);}).length;if(loopCount>2)return 'На уровне 9 можно использовать не более двух циклов. Сейчас их: '+loopCount+'.';}
     if(nm===10){var loopCount=types.filter(function(type){return loops.includes(type);}).length;if(loopCount>3)return 'На уровне 10 можно использовать не более трёх циклов. Сейчас их: '+loopCount+'.';}
     if(nm===11){var loopCount=types.filter(function(type){return loops.includes(type);}).length;if(loopCount>2)return 'На уровне 11 можно использовать не более двух циклов. Сейчас их: '+loopCount+'.';}
@@ -75,14 +75,14 @@ window.installPondCourse = function () {
     else if(nm===7||nm===8)allowed.push('pond_swim','pond_speed','controls_whileUntil','logic_compare');
     else if(nm===9)allowed.push('pond_swim','pond_health','controls_whileUntil','logic_compare');
     else if(nm===10||nm===11)allowed.push('pond_swim','pond_getX','pond_getY','controls_whileUntil','logic_compare');
-    else if(nm===12)allowed.push('pond_cannon','pond_scan','controls_whileUntil','controls_if','logic_compare','logic_boolean');
+    else if(nm===12||nm===13)allowed.push(nm===12?'pond_cannon':'pond_swim','pond_scan','controls_whileUntil','controls_if','logic_compare','logic_boolean');
     else allowed=null;
     if(nm===11){allowed.push('logic_operation','logic_negate','logic_boolean');var logic=toolbox.querySelector('category[name="'+X('Games.catLogic',false)+'"]');['logic_operation','logic_negate'].forEach(function(type){if(!logic.querySelector('block[type="'+type+'"]'))logic.insertAdjacentHTML('beforeend','<block type="'+type+'"></block>');});}
     if(nm>=4&&allowed){allowed.push('pond_log','pond_math_number');}
     if(nm===9)toolbox.querySelector('category[name="'+X('Games.pond',false)+'"]').insertAdjacentHTML('beforeend','<block type="pond_health"></block>');
     if(allowed)Array.from(toolbox.querySelectorAll('block')).forEach(function(b){if(allowed.indexOf(b.getAttribute('type'))===-1)b.remove();});
-    if(nm===8||nm===9||nm===11||nm>=13){var category=toolbox.querySelector('category[name="'+X('Games.catLoops',false)+'"]');category.insertAdjacentHTML('beforeend','<block type="controls_repeat_ext"><value name="TIMES"><shadow type="pond_math_number"><field name="NUM">4</field></shadow></value></block>');}
-    if(nm>=13){var math=toolbox.querySelector('category[name="'+X('Games.catMath',false)+'"]');if(math)math.insertAdjacentHTML('beforeend','<block type="pond_math_arithmetic"><value name="A"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value><value name="B"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value></block>');}
+    if(nm===8||nm===9||nm===11||nm>=14){var category=toolbox.querySelector('category[name="'+X('Games.catLoops',false)+'"]');category.insertAdjacentHTML('beforeend','<block type="controls_repeat_ext"><value name="TIMES"><shadow type="pond_math_number"><field name="NUM">4</field></shadow></value></block>');}
+    if(nm>=14){var math=toolbox.querySelector('category[name="'+X('Games.catMath',false)+'"]');if(math)math.insertAdjacentHTML('beforeend','<block type="pond_math_arithmetic"><value name="A"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value><value name="B"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value></block>');}
     Array.from(toolbox.querySelectorAll('category')).forEach(function(c){if(c.getAttribute('custom')){if(nm===5||nm===6||nm===10)c.remove();}else if(!c.querySelector('block'))c.remove();});
     PondFeedback.place(container);
     return container.innerHTML;

@@ -16,6 +16,7 @@
     var copy=Object.assign({},definition);
     Object.keys(copy).forEach(function(key){
       if(/^message\d+$/.test(key))copy[key]=russian.label(copy[key]);
+      if(key==='tooltip'&&typeof copy[key]==='string')copy[key]=russian.prose(copy[key]);
       if(/^args\d+$/.test(key))copy[key]=copy[key].map(function(arg){
         if(typeof arg==='string')return russian.label(arg);
         var item=Object.assign({},arg);
@@ -26,7 +27,24 @@
     });
     return copy;
   };
-  russian.prose=function(text){return String(text).replace(/«(scan|cannon|swim|stop|speed|health|getX|getY|log)»/g,function(match,name){return '«'+labels[name]+'»';}).replace(/\b(scan|cannon|swim|stop|speed|health|getX|getY|log)\b/g,function(name){return '«'+labels[name]+'»';});};
+  var names='Math\\.(?:sqrt|abs|sin_deg|cos_deg|tan_deg|asin_deg|acos_deg|atan_deg|random)|scan|cannon|swim|stop|speed|health|getX|getY|log|else if|while|if|else|var|true|false|null|undefined|Infinity|NaN|return';
+  var proseLabels=Object.assign({},labels,{'Math.random':'случайное число','while':'пока','if':'если','else if':'иначе если'});
+  russian.prose=function(text){
+    return String(text).replace(new RegExp('«('+names+')(?:\\(\\s*\\))?»(?:\\(\\s*\\))?','g'),function(match,name){return '«'+proseLabels[name]+'»';})
+      .replace(new RegExp('\\b('+names+')\\b(?:\\(\\s*\\))?','g'),function(match,name){return '«'+proseLabels[name]+'»';});
+  };
+  russian.catalogues=function(){
+    [window.BlocklyMsg,window.BlocklyGamesMsg].forEach(function(catalogue){if(catalogue)Object.keys(catalogue).forEach(function(key){if(/tooltip/i.test(key)&&typeof catalogue[key]==='string')catalogue[key]=russian.prose(catalogue[key]);});});
+  };
+  russian.explanations=function(root){
+    var walker=document.createTreeWalker(root.nodeType===9?root.body:root,NodeFilter.SHOW_TEXT),node;
+    var examples={angle:'угол',range:'дальность',name:'имя',value:'значение'};
+    while((node=walker.nextNode())){
+      if(!node.parentElement||node.parentElement.closest('svg,pre,script,style'))continue;
+      node.textContent=russian.prose(node.textContent).replace(/Функция\s*$/,'Блок ').replace(/\b(angle|range|name|value)\b/g,function(name){return examples[name];});
+    }
+    root.querySelectorAll('[title],[aria-label]').forEach(function(element){['title','aria-label'].forEach(function(attribute){if(element.hasAttribute(attribute))element.setAttribute(attribute,russian.prose(element.getAttribute(attribute)));});});
+  };
   russian.images=function(root){
     // A viewBox scales the existing paths and fields together instead of cropping them.
     root.querySelectorAll('svg').forEach(function(svg){
@@ -40,7 +58,7 @@
       var originalText=element.textContent.replace(/\s+/g,' ').trim(),changed=false;
       Array.from(element.childNodes).forEach(function(node){
         if(node.nodeType!==3)return;
-        var original=node.textContent.trim(),short={getX:'X',getY:'Y',log:'вывод','var':'зад.','Math.sqrt':'корень'},translated=short[original]||russian.label(original);
+        var original=node.textContent.trim(),translated=russian.label(original);
         if(original&&translated!==original){node.textContent=node.textContent.replace(original,translated);changed=true;}
       });
       if(changed&&context){

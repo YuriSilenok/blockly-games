@@ -1,6 +1,7 @@
 /* Integration layer for the retained, prebuilt Pond Tutor bundle. */
 window.installPondCourse = function () {
   'use strict';
+  PondRussian.catalogues();
   var appendField=P,jsonInit=ei;
   P=function(input,label,name){return appendField(input,PondRussian.label(label),name);};
   ei=function(block,definition){return jsonInit(block,PondRussian.definition(definition));};
@@ -208,6 +209,7 @@ window.installPondCourse = function () {
       target.querySelectorAll('img').forEach(function(e){e.src=new URL(e.getAttribute('src'),new URL('pond/docs.html',location.href)).href;});
       target.querySelectorAll('[id]').forEach(function(e){e.removeAttribute('id');});
       PondRussian.images(target);
+      PondRussian.explanations(target);
     }catch(error){target.textContent='Документация не загрузилась. Открой её кнопкой «Документация» и повтори попытку позже.';}
   }
   portal.onLoad(async function(){

@@ -1,5 +1,6 @@
 window.installTournamentEditor=function(){
   'use strict';
+  PondRussian.catalogues();
   var appendField=P,jsonInit=wi;
   P=function(input,label,name){return appendField(input,PondRussian.label(label),name);};
   wi=function(block,definition){return jsonInit(block,PondRussian.definition(definition));};

@@ -219,13 +219,12 @@ def post(h, user, path, value):
     elif path == '/api/admin/rounds':
         h.admin()
         tournament_id = int(value.get('tournament_id', 0))
-        name = str(value.get('name', '')).strip()
-        if not 1 <= len(name) <= 80:
-            raise h.problem('Укажи название раунда.')
         with db() as c:
             c.execute('BEGIN IMMEDIATE')
             if not c.execute("SELECT 1 FROM tournaments WHERE id=? AND status<>'finished'", (tournament_id,)).fetchone():
                 raise h.problem('Турнир не найден или завершён.')
+            number = c.execute('SELECT count(*)+1 FROM rounds WHERE tournament_id=?', (tournament_id,)).fetchone()[0]
+            name = 'Раунд %s' % number
             round_id = c.execute('INSERT INTO rounds(tournament_id,name,created) VALUES(?,?,?)', (tournament_id, name, time.time())).lastrowid
         h.send_json({'id': round_id}, 201)
     elif re.fullmatch(r'/api/admin/rounds/\d+/(teams|start)', path):

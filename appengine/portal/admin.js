@@ -3,7 +3,7 @@
   await api.ready;
   if (!api.user || api.user.role !== 'admin') { status.hidden=false;status.innerHTML = 'Нужен <a href="/account?next=/admin">вход администратора</a>.'; return; }
   document.getElementById('panel').hidden = false;
-  var roundsPanel=document.createElement('section');roundsPanel.className='card';roundsPanel.innerHTML='<h2>Раунды турнира</h2><form id="create-round"><label>Название раунда<input name="name" required maxlength="80" placeholder="Раунд 1"></label><button>Создать раунд</button></form><div id="round-editors"></div><div id="round-report"></div>';
+  var roundsPanel=document.createElement('section');roundsPanel.className='card';roundsPanel.innerHTML='<h2>Раунды турнира</h2><form id="create-round"><button>Создать раунд</button></form><div id="round-editors"></div><div id="round-report"></div>';
   document.getElementById('panel').appendChild(roundsPanel);
   document.querySelector('#create small').textContent='Общий бой завершается, когда остаётся одна утка или минуту никто не получает урон.';
   document.querySelector('.admin-side .pill').textContent='Общие бои';
@@ -36,13 +36,13 @@
         start.onclick=async function(){start.disabled=true;try{await api.request('/api/admin/rounds/'+round.id+'/teams',{team_ids:Array.from(choices.querySelectorAll('input:checked')).map(function(i){return Number(i.value);})});await api.request('/api/admin/rounds/'+round.id+'/start',{});await table(true);}catch(error){fail(error);start.disabled=false;}};box.appendChild(start);
       }else if(round.status==='done'||round.status==='error'){
         var again=document.createElement('button');again.className='secondary';again.textContent='Новый раунд с этим составом';again.disabled=t.status==='finished';
-        again.onclick=async function(){again.disabled=true;try{var created=await api.request('/api/admin/rounds',{tournament_id:t.id,name:('Повтор: '+round.name).slice(0,80)});await api.request('/api/admin/rounds/'+created.id+'/teams',{team_ids:round.players.map(function(p){return p.team_id;})});await api.request('/api/admin/rounds/'+created.id+'/start',{});await table(true);}catch(error){fail(error);await table(true);}};box.appendChild(again);
+        again.onclick=async function(){again.disabled=true;try{var created=await api.request('/api/admin/rounds',{tournament_id:t.id});await api.request('/api/admin/rounds/'+created.id+'/teams',{team_ids:round.players.map(function(p){return p.team_id;})});await api.request('/api/admin/rounds/'+created.id+'/start',{});await table(true);}catch(error){fail(error);await table(true);}};box.appendChild(again);
       }else{var note=document.createElement('p');note.textContent=round.status==='queued'?'Раунд в очереди.':'Идёт бой.';box.appendChild(note);}
       target.appendChild(box);
     });
   }
   select.onchange = function () { table(true).catch(fail); };
-  document.getElementById('create-round').onsubmit=async function(event){event.preventDefault();var button=this.querySelector('button');button.disabled=true;try{await api.request('/api/admin/rounds',{tournament_id:Number(select.value),name:this.elements.name.value});this.reset();await table(true);}catch(error){fail(error);}finally{button.disabled=false;}};
+  document.getElementById('create-round').onsubmit=async function(event){event.preventDefault();var button=this.querySelector('button');button.disabled=true;try{await api.request('/api/admin/rounds',{tournament_id:Number(select.value)});await table(true);}catch(error){fail(error);}finally{button.disabled=false;}};
   finish.onclick=async function(){if(!confirm('Завершить турнир? Приём и изменение заявок будут закрыты, новые раунды создать будет нельзя.'))return;try{await api.request('/api/admin/tournaments/'+select.value+'/status',{status:'finished'});await load();}catch(error){fail(error);}};
   document.getElementById('create').onsubmit = async function (event) {
     event.preventDefault(); var button = this.querySelector('button'); button.disabled = true;

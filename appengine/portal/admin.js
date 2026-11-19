@@ -55,18 +55,17 @@
     try { await api.request('/api/admin/tournaments/' + t.id + '/status', {status: t.status === 'open' ? 'closed' : 'open'}); await load(); } catch (error) { fail(error); }
   };
   function fail(error) { status.textContent = error.message;status.hidden=false; }
-  var canvas = document.getElementById('pond'), ctx = canvas.getContext('2d'), colors = ['#fff394','#e87979','#79cf92','#414c64'];
+  var canvas=document.getElementById('pond'),pondView=new PondRenderer(canvas),shown=null,target=null,targetMatch=null,transitionAt=0;
+  function displayed(now){return !shown||!target?target:PondRenderer.interpolate(shown,target,Math.min(1,Math.max(0,(now-transitionAt)/250)));}
+  function animate(now){pondView.draw(displayed(now));requestAnimationFrame(animate);}requestAnimationFrame(animate);
   async function live() {
     try {
       var data = await api.request('/api/admin/live'); var m = data.match, frame = m && m.snapshot;
       document.getElementById('queue').textContent = 'Решений в работе и очереди: ' + data.waiting;
       document.getElementById('battle').textContent = m ? m.title + (frame ? ' · ' + frame.time.toFixed(1) + ' с' : '') + (m.status === 'running' ? '' : ' · завершён') : 'Ожидание решений';
-      ctx.fillStyle = '#7cb8da'; ctx.fillRect(0,0,500,500); ctx.strokeStyle = '#ffffff55';
-      for (var i=0;i<=10;i++) { ctx.beginPath(); ctx.moveTo(i*50,0);ctx.lineTo(i*50,500);ctx.moveTo(0,i*50);ctx.lineTo(500,i*50);ctx.stroke(); }
       if (frame) {
-        frame.avatars.forEach(function (a,i) {ctx.globalAlpha=a.dead ? .3 : 1;ctx.fillStyle=colors[i%4];ctx.beginPath();ctx.arc(a.x*5,500-a.y*5,13,0,Math.PI*2);ctx.fill();ctx.fillStyle='#263645';ctx.font='14px sans-serif';ctx.fillText(String(i+1),a.x*5-4,500-a.y*5+5);ctx.globalAlpha=1;});
-        ctx.fillStyle='#ffedab';frame.missiles.forEach(function (p) {ctx.beginPath();ctx.arc(p.x*5,500-p.y*5,4,0,Math.PI*2);ctx.fill();});
-        document.getElementById('ducks').textContent=frame.avatars.map(function(a,i){return(i+1)+'. '+a.name+' — '+Number(a.health.toFixed(3))+' ХП';}).join(' · ');
+        var now=performance.now();if(targetMatch!==m.id){pondView.reset();shown=target=frame;targetMatch=m.id;transitionAt=now;}else if(!target||frame.time!==target.time){shown=displayed(now);target=frame;transitionAt=now;}
+        document.getElementById('ducks').textContent=frame.avatars.map(function(a,i){return(i+1)+'. '+a.name+' — '+PondRenderer.formatHealth(a.health)+' ХП';}).join(' · ');
       }
     } catch (error) { fail(error); }
     setTimeout(live,250);

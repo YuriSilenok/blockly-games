@@ -116,8 +116,14 @@ window.installPondCourse = function () {
     this.xq.step=function(){try{var result=step.apply(this,arguments);if(result===false)programFinished=true;return result;}catch(error){runtimeFailure=runtimeFailure||PondFeedback.runtime(error);report(runtimeFailure,'error');throw error;}};
   };
   var originalDraw=Pn;
+  var pondView=null,resetPond=Z.reset;
+  Z.reset=function(){if(pondView)pondView.reset();return resetPond.apply(this,arguments);};
   Pn=function(){
+    var frame=PondRenderer.fromNative(Z.Jb,Z.zg,Z.Nd,{position:'P',dead:'td',damage:'aa',color:'xl',degree:'Vd',start:'$i',end:'Yh',owner:'bt'});
+    // Keep the saved bundle's sounds and health bookkeeping; share the visible display.
     originalDraw();
+    if(!pondView)pondView=new PondRenderer(W('display'),{sprites:Kn});
+    pondView.draw(frame);
     PondHealth.update(Z.Jb,'aa','Nu');
     if(running&&programFinished&&!idleReported&&!runtimeFailure&&!En.td&&En.speed===0&&Z.zg.length===0){
       idleReported=true;var remaining=Z.Jb.filter(function(a){return a!==En&&!a.td;}).length;

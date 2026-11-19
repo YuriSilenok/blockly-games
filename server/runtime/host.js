@@ -33,6 +33,7 @@ function startMatch(spec) {
   battle.eliminationCount = 0;
   battle.nextMissileId = 0;
   battle.recordReplay = !!spec.record_replay;
+  battle.captureVisuals = battle.recordReplay || !spec.level;
   battle.replayScans = [];
   battle.replayFlights = [];
   battle.nextScanId = 0;
@@ -80,7 +81,8 @@ function advanceMatch(frames) {
     b.updateInterpreters_();
     b.updateMissiles_();
     b.updateAvatars_();
-    if (b.recordReplay) {
+    // Live tournament views and recordings use the same visual event stream.
+    if (b.captureVisuals) {
       var seenScans = {};
       b.EVENTS.forEach(function (event) {
         var avatar = b.AVATARS.indexOf(event.avatar);
@@ -113,9 +115,10 @@ function advanceMatch(frames) {
     time: (matchClock - 1000) / 1000,
     metrics: matchMetrics,
     replay_version: b.recordReplay ? 2 : 0,
+    visual_version: b.captureVisuals ? 2 : 0,
     scans: b.replayScans,
     flights: b.replayFlights,
-    avatars: b.AVATARS.map(function (a) { return {name: a.name, x: a.loc.x, y: a.loc.y, facing: a.facing, health: Math.max(0, 100 - a.damage), dead: a.dead, eliminated: a.eliminatedOrder || b.eliminationCount + 1, kills: a.kills || 0, error: a.loadError || null}; }),
-    missiles: b.MISSILES.map(function (m) { return {id: m.replayId, x: m.startLoc.x + (m.endLoc.x - m.startLoc.x) * Math.min(1, m.progress / Math.max(1, m.range)), y: m.startLoc.y + (m.endLoc.y - m.startLoc.y) * Math.min(1, m.progress / Math.max(1, m.range))}; })
+    avatars: b.AVATARS.map(function (a) { return {name: a.name, x: a.loc.x, y: a.loc.y, facing: a.facing, speed: a.speed, degree: a.degree, health: Math.max(0, 100 - a.damage), dead: a.dead, eliminated: a.eliminatedOrder || b.eliminationCount + 1, kills: a.kills || 0, error: a.loadError || null}; }),
+    missiles: b.MISSILES.map(function (m) { return {id: m.replayId, avatar: b.AVATARS.indexOf(m.avatar), startX: m.startLoc.x, startY: m.startLoc.y, endX: m.endLoc.x, endY: m.endLoc.y, progress: m.progress, range: m.range, x: m.startLoc.x + (m.endLoc.x - m.startLoc.x) * Math.min(1, m.progress / Math.max(1, m.range)), y: m.startLoc.y + (m.endLoc.y - m.startLoc.y) * Math.min(1, m.progress / Math.max(1, m.range))}; })
   });
 }

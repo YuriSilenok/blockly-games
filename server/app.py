@@ -11,7 +11,7 @@ import secrets
 import sqlite3
 import threading
 import time
-from urllib.parse import unquote, urlsplit, quote, parse_qs
+from urllib.parse import unquote, urlsplit, quote
 import xml.etree.ElementTree as ET
 
 from .store import ROOT, db, initialize, password_hash, password_matches
@@ -358,15 +358,13 @@ class Handler(BaseHTTPRequestHandler):
         self.send_json({'id': job_id}, 202)
 
     def static(self, path):
-        if path in ('/pond-duck.html', '/portal/tournament.html', '/tournament', '/portal/sandbox.html', '/sandbox'):
+        if path in ('/pond-duck.html', '/editor', '/portal/tournament.html', '/tournament', '/portal/sandbox.html', '/sandbox'):
             user = self.session(False)
             destination = None
             if not user:
                 destination = '/portal/account.html?next=' + quote(self.path, safe='')
-            elif user['role'] != 'admin' and any(i not in self.progress(user['id']) for i in range(1, LESSONS + 1)):
+            elif (user['role'] != 'admin' or path in ('/pond-duck.html','/editor')) and any(i not in self.progress(user['id']) for i in range(1, LESSONS + 1)):
                 destination = '/portal/account.html?training_required=1'
-            elif path == '/pond-duck.html' and not user['team_id'] and parse_qs(urlsplit(self.path).query).get('sandbox') != ['1']:
-                destination = '/portal/tournament.html'
             if destination:
                 self.send_response(302)
                 self.send_header('Location', destination)
@@ -381,10 +379,11 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header('Content-Length', '0')
             self.end_headers()
             return
-        aliases = {'/': '/index.html', '/admin': '/portal/admin.html', '/account': '/portal/account.html', '/tournament': '/portal/tournament.html', '/sandbox': '/portal/sandbox.html'}
+        aliases = {'/': '/index.html', '/admin': '/portal/admin.html', '/account': '/portal/account.html', '/tournament': '/portal/tournament.html', '/sandbox': '/portal/sandbox.html', '/editor': '/pond-duck.html'}
         if path in aliases and path != '/':
             self.send_response(302)
-            self.send_header('Location', aliases[path])
+            query = urlsplit(self.path).query
+            self.send_header('Location', aliases[path] + ('?' + query if query else ''))
             self.send_header('Content-Length', '0')
             self.end_headers()
             return

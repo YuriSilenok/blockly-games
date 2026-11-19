@@ -19,17 +19,33 @@
       options.headers['X-CSRF-Token'] = api.user ? api.user.csrf : '';
       options.body = JSON.stringify(value);
     }
-    var response = await fetch(path, options);
+    var response;
+    try{response=await fetch(path,options);}catch(error){throw Error('Не удалось связаться с сервером. Проверь соединение и повтори действие.');}
     var data;
-    try { data = await response.json(); } catch (e) { throw Error('Сервис учётных записей доступен на силенок.рф.'); }
+    try { data = await response.json(); } catch (e) {
+      if(response.status===413)throw Error('Размер запроса превышает допустимый. Уменьши программу и повтори сохранение.');
+      if(response.status>=500)throw Error('Сервер не смог обработать запрос. Повтори действие позже.');
+      throw Error('Сервер вернул неполный или некорректный ответ. Обнови страницу и повтори действие.');
+    }
     if (!response.ok) { if(response.status===401)api.user=null; throw Error(data.error || 'Не удалось выполнить запрос.'); }
     return data;
   };
   api.refresh = async function () {
     var data = await api.request('/api/me');
     api.user = data.user; api.online = true;
+    api.editorNavigation();
     return api.user;
   };
+  api.editorNavigation=function(){
+    document.querySelectorAll('.nav-links,#header_cta').forEach(function(menu){
+      var link=menu.querySelector('[data-editor-link]');
+      if(!link){link=document.createElement('a');link.href='/editor';link.dataset.editorLink='true';link.textContent='Редактор алгоритмов';menu.appendChild(link);if(menu.id==='header_cta')requestAnimationFrame(function(){window.dispatchEvent(new Event('resize'));});}
+      link.hidden=!(api.user&&api.user.unlocked);
+      if(location.pathname==='/pond-duck.html'||location.pathname==='/editor'){link.setAttribute('aria-current','page');link.classList.add('nav-active');}
+    });
+  };
+  function watchNavigation(){api.editorNavigation();new MutationObserver(api.editorNavigation).observe(document.body,{childList:true});}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watchNavigation);else watchNavigation();
   api.ready = api.refresh().catch(function () { return null; });
   api.roundReport=function(rounds,target){
     target.replaceChildren();var heading=document.createElement('h3');heading.textContent='Статистика раундов';target.appendChild(heading);

@@ -4,10 +4,11 @@
   var spriteUrl=new URL('sprites.png',document.currentScript.src).href;
   var colors=['#ff8b00','#c90015','#166c0b','#223068'];
   var healthFormat=new Intl.NumberFormat('ru-RU',{maximumFractionDigits:3});
+  var mergedEvents={left:null,right:null},scanTextures=new Map();
   function coordinate(value){return value*3.65+17.5;}
   function radians(value){return value*Math.PI/180;}
   function color(index){return colors[((index||0)%colors.length+colors.length)%colors.length];}
-  function merge(left,right,key){var values=new Map();(left[key]||[]).concat(right[key]||[]).forEach(function(event){values.set(event.id,event);});return Array.from(values.values());}
+  function merge(left,right,key){if(mergedEvents.left!==left||mergedEvents.right!==right)mergedEvents={left:left,right:right};if(mergedEvents[key])return mergedEvents[key];var values=new Map();(left[key]||[]).concat(right[key]||[]).forEach(function(event){values.set(event.id,event);});mergedEvents[key]=Array.from(values.values());return mergedEvents[key];}
   function Renderer(canvas,options){
     this.canvas=canvas;this.ctx=canvas.getContext('2d');this.sprites=options&&options.sprites||new Image();this.scans=[];this.impacts=[];this.sequence=0;this.lastFrame=null;this.lastTime=-Infinity;
     canvas.classList.add('pond-canvas');var self=this;
@@ -55,9 +56,9 @@
     ctx.beginPath();ctx.arc(x,ground-height*3.65,5,0,Math.PI*2);ctx.fillStyle=color(avatar);ctx.fill();ctx.restore();
   };
   Renderer.prototype.scan=function(scan,now){
-    var ctx=this.ctx,x=coordinate(scan.x),y=coordinate(100-scan.y),half=Math.max(.5,scan.resolution/2),from=-radians(scan.degree+half),to=-radians(scan.degree-half);
-    ctx.save();ctx.globalAlpha=Math.max(0,1-(now-scan.time)/.16);ctx.beginPath();ctx.moveTo(x,y);ctx.arc(x,y,200,from,to);ctx.closePath();
-    var gradient=ctx.createRadialGradient(x,y,17.5,x,y,200);gradient.addColorStop(0,'rgba(255,255,255,.3)');gradient.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=gradient;ctx.fill();ctx.restore();
+    var ctx=this.ctx,half=Math.max(.5,scan.resolution/2),texture=scanTextures.get(half);
+    if(!texture){texture=document.createElement('canvas');texture.width=texture.height=400;var pen=texture.getContext('2d');pen.beginPath();pen.moveTo(200,200);pen.arc(200,200,200,-radians(half),radians(half));pen.closePath();var gradient=pen.createRadialGradient(200,200,17.5,200,200,200);gradient.addColorStop(0,'rgba(255,255,255,.3)');gradient.addColorStop(1,'rgba(255,255,255,0)');pen.fillStyle=gradient;pen.fill();if(scanTextures.size>=32)scanTextures.delete(scanTextures.keys().next().value);scanTextures.set(half,texture);}
+    ctx.save();ctx.globalAlpha=Math.max(0,1-(now-scan.time)/.16);ctx.translate(coordinate(scan.x),coordinate(100-scan.y));ctx.rotate(-radians(scan.degree));ctx.drawImage(texture,-200,-200);ctx.restore();
   };
   Renderer.prototype.impact=function(x,y,age){var ctx=this.ctx;ctx.save();ctx.lineWidth=5;ctx.strokeStyle='rgba(255,255,255,'+Math.max(0,1-age/.15)+')';ctx.beginPath();ctx.arc(coordinate(x),coordinate(100-y),1+Math.max(0,age)/.15*10,0,Math.PI*2);ctx.stroke();ctx.restore();};
   Renderer.fromNative=function(avatars,missiles,events,keys){

@@ -11,7 +11,7 @@ import secrets
 import sqlite3
 import threading
 import time
-from urllib.parse import unquote, urlsplit, quote
+from urllib.parse import unquote, urlsplit, quote, parse_qs
 import xml.etree.ElementTree as ET
 
 from .store import ROOT, db, initialize, password_hash, password_matches
@@ -147,7 +147,7 @@ class Handler(BaseHTTPRequestHandler):
             elif re.fullmatch(r'/api/admin/algorithms/\d+', path):
                 self.admin()
                 with db() as c:
-                    row = c.execute('''SELECT a.id,a.name,a.code,a.xml,a.archived,u.login AS author
+                    row = c.execute('''SELECT a.id,a.name,a.xml,a.archived,u.login AS author
                       FROM algorithms a JOIN users u ON u.id=a.user_id WHERE a.id=?''',
                                     (int(path.split('/')[-1]),)).fetchone()
                 if not row:
@@ -375,10 +375,13 @@ class Handler(BaseHTTPRequestHandler):
     def static(self, path):
         if path in ('/pond-duck.html', '/editor', '/portal/tournament.html', '/tournament', '/portal/sandbox.html', '/sandbox'):
             user = self.session(False)
+            admin_view = path == '/pond-duck.html' and 'admin_algorithm' in parse_qs(urlsplit(self.path).query)
+            if admin_view and user and user['role'] != 'admin':
+                raise Problem('Просмотр алгоритмов доступен только администратору.', 403)
             destination = None
             if not user:
                 destination = '/portal/account.html?next=' + quote(self.path, safe='')
-            elif (user['role'] != 'admin' or path in ('/pond-duck.html','/editor')) and any(i not in self.progress(user['id']) for i in range(1, LESSONS + 1)):
+            elif not admin_view and (user['role'] != 'admin' or path in ('/pond-duck.html','/editor')) and any(i not in self.progress(user['id']) for i in range(1, LESSONS + 1)):
                 destination = '/portal/account.html?training_required=1'
             if destination:
                 self.send_response(302)

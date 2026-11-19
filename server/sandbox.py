@@ -90,6 +90,13 @@ def rank(job, duel):
         entries = [dict(r) for r in c.execute('SELECT * FROM sandbox_entries ORDER BY position')]
     job = dict(job, name=submission['name'], algorithm_id=submission['algorithm_id'])
     incumbent = next((e for e in entries if e['algorithm_id'] == job['algorithm_id']), None)
+    if incumbent:
+        # A legacy queued duplicate cannot replace an already ranked immutable submission.
+        result = {'accepted': False, 'position': incumbent['position'],
+                  'message': 'Этот алгоритм уже находится в таблице. Для нового решения сохрани алгоритм под другим названием.'}
+        with db() as c:
+            c.execute('UPDATE sandbox_submissions SET result=? WHERE job_id=?', (json.dumps(result, ensure_ascii=False), job['id']))
+        return result
     opponents = [e for e in entries if e['algorithm_id'] != job['algorithm_id']]
     low, high, encounter = 0, len(opponents), 0
     if not opponents:
@@ -103,18 +110,16 @@ def rank(job, duel):
         else:
             low = middle + 1
     candidate = low + 1
-    retained = incumbent is not None and candidate >= incumbent['position']
-    result = {'accepted': not retained, 'position': incumbent['position'] if retained else candidate,
+    result = {'accepted': True, 'position': candidate,
               'candidate_position': candidate,
-              'message': 'В таблице сохранена прежняя лучшая версия алгоритма.' if retained else 'Алгоритм занял место в таблице песочницы.'}
+              'message': 'Алгоритм занял место в таблице песочницы.'}
     with db() as c:
         c.execute('BEGIN IMMEDIATE')
-        if not retained:
-            opponents.insert(low, dict(algorithm_id=job['algorithm_id'], user_id=job['user_id'], name=job['name'], code=job['code'], xml=job['xml'], job_id=job['id']))
-            c.execute('DELETE FROM sandbox_entries')
-            for position, entry in enumerate(opponents, 1):
-                c.execute('INSERT INTO sandbox_entries(algorithm_id,user_id,position,name,code,xml,job_id) VALUES(?,?,?,?,?,?,?)',
-                          (entry['algorithm_id'], entry['user_id'], position, entry['name'], entry['code'], entry['xml'], entry['job_id']))
+        opponents.insert(low, dict(algorithm_id=job['algorithm_id'], user_id=job['user_id'], name=job['name'], code=job['code'], xml=job['xml'], job_id=job['id']))
+        c.execute('DELETE FROM sandbox_entries')
+        for position, entry in enumerate(opponents, 1):
+            c.execute('INSERT INTO sandbox_entries(algorithm_id,user_id,position,name,code,xml,job_id) VALUES(?,?,?,?,?,?,?)',
+                      (entry['algorithm_id'], entry['user_id'], position, entry['name'], entry['code'], entry['xml'], entry['job_id']))
         c.execute('UPDATE sandbox_submissions SET result=? WHERE job_id=?', (json.dumps(result, ensure_ascii=False), job['id']))
     return result
 
@@ -176,8 +181,8 @@ def submit(h, user, value):
         if not algorithm:
             raise h.problem('Выбери свой сохранённый алгоритм.')
         code, xml, root = h.program(dict(code=algorithm['code'], xml=algorithm['xml']))
-        if c.execute("SELECT 1 FROM jobs j JOIN sandbox_submissions s ON s.job_id=j.id WHERE s.algorithm_id=? AND j.status IN ('queued','running')", (algorithm_id,)).fetchone():
-            raise h.problem('Этот алгоритм уже в очереди или участвует в боях.', 409)
+        if c.execute('SELECT 1 FROM sandbox_submissions WHERE algorithm_id=?', (algorithm_id,)).fetchone():
+            raise h.problem('Этот алгоритм уже отправлен в песочницу. Для новой отправки сохрани доработанное решение под другим названием.', 409)
         job_id = c.execute("INSERT INTO jobs(user_id,kind,code,xml,created) VALUES(?,'sandbox',?,?,?)", (user['id'], code, xml, time.time())).lastrowid
         c.execute('INSERT INTO sandbox_submissions(job_id,algorithm_id,name) VALUES(?,?,?)', (job_id, algorithm_id, algorithm['name']))
     h.send_json({'id': job_id}, 202)

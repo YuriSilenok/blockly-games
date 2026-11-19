@@ -172,6 +172,11 @@ def post(h, user, path, value):
             raise h.problem('Укажи название алгоритма: от 1 до 80 символов.')
         with db() as c:
             c.execute('BEGIN IMMEDIATE')
+            published = c.execute('''SELECT 1 FROM algorithms a WHERE a.user_id=? AND a.name=? AND
+              (EXISTS(SELECT 1 FROM tournament_algorithms s WHERE s.algorithm_id=a.id)
+               OR EXISTS(SELECT 1 FROM sandbox_submissions s WHERE s.algorithm_id=a.id)) LIMIT 1''', (user['id'], name)).fetchone()
+            if published:
+                raise h.problem('Алгоритм с этим названием уже отправлен в песочницу или на турнир и не может быть изменён. Сохрани доработанное решение под другим названием.', 409)
             previous = c.execute('SELECT id FROM algorithms WHERE user_id=? AND name=? AND archived=0 ORDER BY updated DESC,id DESC LIMIT 1', (user['id'], name)).fetchone()
             if previous:
                 algorithm_id = previous['id']
@@ -204,7 +209,7 @@ def post(h, user, path, value):
                 c.execute('UPDATE tournament_algorithms SET is_main=0 WHERE tournament_id=? AND team_id=?', (tournament_id, team['id']))
             existing = c.execute('SELECT id FROM tournament_algorithms WHERE tournament_id=? AND team_id=? AND algorithm_id=?', (tournament_id, team['id'], saved['id'])).fetchone()
             if existing:
-                c.execute('UPDATE tournament_algorithms SET name=?,code=?,xml=?,shared=?,is_main=? WHERE id=?', (saved['name'], saved['code'], saved['xml'], shared, main, existing['id']))
+                c.execute('UPDATE tournament_algorithms SET shared=?,is_main=? WHERE id=?', (shared, main, existing['id']))
             else:
                 c.execute('''INSERT INTO tournament_algorithms(tournament_id,team_id,algorithm_id,user_id,name,code,xml,shared,is_main,created)
                   VALUES(?,?,?,?,?,?,?,?,?,?)''', (tournament_id, team['id'], saved['id'], saved['user_id'], saved['name'], saved['code'], saved['xml'], shared, main, time.time()))

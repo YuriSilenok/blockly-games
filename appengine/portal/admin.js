@@ -3,6 +3,35 @@
   await api.ready;
   if (!api.user || api.user.role !== 'admin') { status.hidden=false;status.innerHTML = 'Нужен <a href="/account?next=/admin">вход администратора</a>.'; return; }
   document.getElementById('panel').hidden = false;
+  var libraryPanel=document.createElement('section');libraryPanel.className='card admin-algorithms';
+  libraryPanel.innerHTML='<h2>Все алгоритмы</h2><p>Сохранённые алгоритмы всех пользователей, включая архивные. Просмотр не изменяет библиотеку и заявки.</p><label>Поиск по названию или автору<input id="admin-algorithm-search" type="search" placeholder="Название или логин"></label><button id="admin-algorithms-refresh" class="secondary">Обновить список</button><p id="admin-algorithms-count" role="status"></p><div id="admin-algorithms-list" class="table-scroll"></div><section id="admin-algorithm-view" hidden><h3 id="admin-algorithm-title"></h3><p id="admin-algorithm-info"></p><details open><summary>Код алгоритма</summary><pre id="admin-algorithm-code" tabindex="0"></pre></details><details><summary>Данные блоков (XML)</summary><pre id="admin-algorithm-xml" tabindex="0"></pre></details></section>';
+  document.getElementById('panel').appendChild(libraryPanel);
+  var allAlgorithms=[],algorithmRequest=0;
+  function algorithmList(){
+    var query=document.getElementById('admin-algorithm-search').value.trim().toLocaleLowerCase('ru-RU');
+    var rows=allAlgorithms.filter(function(a){return (a.name+' '+a.author).toLocaleLowerCase('ru-RU').includes(query);});
+    document.getElementById('admin-algorithms-count').textContent='Найдено: '+rows.length+' из '+allAlgorithms.length;
+    var grid=document.createElement('table'),head=grid.insertRow();
+    ['Название','Автор','Сохранён','Статус','Просмотр'].forEach(function(label){var cell=document.createElement('th');cell.textContent=label;head.appendChild(cell);});
+    rows.forEach(function(a){
+      var row=grid.insertRow();[a.name,a.author,new Date(a.updated*1000).toLocaleString('ru-RU'),a.archived?'Архивный':'В библиотеке'].forEach(function(text){row.insertCell().textContent=text;});
+      var button=document.createElement('button');button.className='secondary';button.textContent='Открыть';row.insertCell().appendChild(button);
+      button.onclick=async function(){
+        var request=++algorithmRequest;button.disabled=true;
+        try{var data=await api.request('/api/admin/algorithms/'+a.id);if(request!==algorithmRequest)return;var item=data.algorithm;
+          document.getElementById('admin-algorithm-title').textContent=item.name;
+          document.getElementById('admin-algorithm-info').textContent='Автор: '+item.author+' · '+(item.archived?'Архивный алгоритм':'В библиотеке');
+          document.getElementById('admin-algorithm-code').textContent=item.code;document.getElementById('admin-algorithm-xml').textContent=item.xml;
+          var view=document.getElementById('admin-algorithm-view');view.hidden=false;view.scrollIntoView({behavior:'smooth',block:'start'});
+        }catch(error){if(request===algorithmRequest)fail(error);}finally{button.disabled=false;}
+      };
+    });
+    document.getElementById('admin-algorithms-list').replaceChildren(grid);
+  }
+  async function loadAlgorithms(){var button=document.getElementById('admin-algorithms-refresh');button.disabled=true;try{allAlgorithms=(await api.request('/api/admin/algorithms')).algorithms;algorithmList();}catch(error){fail(error);}finally{button.disabled=false;}}
+  document.getElementById('admin-algorithm-search').oninput=algorithmList;
+  document.getElementById('admin-algorithms-refresh').onclick=loadAlgorithms;
+  loadAlgorithms();
   var roundsPanel=document.createElement('section');roundsPanel.className='card';roundsPanel.innerHTML='<h2>Раунды турнира</h2><form id="create-round"><button>Создать раунд</button></form><div id="round-editors"></div><div id="round-report"></div>';
   document.getElementById('panel').appendChild(roundsPanel);
   document.querySelector('#create small').textContent='Общий бой завершается, когда остаётся одна утка или минуту никто не получает урон.';

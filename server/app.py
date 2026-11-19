@@ -138,6 +138,21 @@ class Handler(BaseHTTPRequestHandler):
                 with db() as c:
                     row = c.execute('SELECT xml FROM progress WHERE user_id=? AND level=?', (user['id'], int(path.split('/')[-1]))).fetchone()
                 self.send_json({'xml': row['xml'] if row else None})
+            elif path == '/api/admin/algorithms':
+                self.admin()
+                with db() as c:
+                    rows = c.execute('''SELECT a.id,a.name,a.archived,a.updated,u.login AS author
+                      FROM algorithms a JOIN users u ON u.id=a.user_id ORDER BY a.updated DESC,a.id DESC''').fetchall()
+                self.send_json({'algorithms': [dict(row) for row in rows]})
+            elif re.fullmatch(r'/api/admin/algorithms/\d+', path):
+                self.admin()
+                with db() as c:
+                    row = c.execute('''SELECT a.id,a.name,a.code,a.xml,a.archived,u.login AS author
+                      FROM algorithms a JOIN users u ON u.id=a.user_id WHERE a.id=?''',
+                                    (int(path.split('/')[-1]),)).fetchone()
+                if not row:
+                    raise Problem('Алгоритм не найден.', 404)
+                self.send_json({'algorithm': dict(row)})
             elif path == '/api/admin/live':
                 self.admin()
                 with db() as c:

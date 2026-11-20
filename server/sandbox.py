@@ -115,7 +115,12 @@ def rank(job, duel):
               'message': 'Алгоритм занял место в таблице песочницы.'}
     with db() as c:
         c.execute('BEGIN IMMEDIATE')
+        # An administrator may rename the algorithm while its ranking fights run.
         opponents.insert(low, dict(algorithm_id=job['algorithm_id'], user_id=job['user_id'], name=job['name'], code=job['code'], xml=job['xml'], job_id=job['id']))
+        for entry in opponents:
+            current = c.execute('SELECT name FROM algorithms WHERE id=?', (entry['algorithm_id'],)).fetchone()
+            if current:
+                entry['name'] = current['name']
         c.execute('DELETE FROM sandbox_entries')
         for position, entry in enumerate(opponents, 1):
             c.execute('INSERT INTO sandbox_entries(algorithm_id,user_id,position,name,code,xml,job_id) VALUES(?,?,?,?,?,?,?)',

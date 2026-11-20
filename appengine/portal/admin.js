@@ -17,6 +17,15 @@
       var row=grid.insertRow();[a.name,a.author,new Date(a.updated*1000).toLocaleString('ru-RU'),a.archived?'Архивный':'В библиотеке'].forEach(function(text){row.insertCell().textContent=text;});
       var button=document.createElement('button');button.className='secondary';button.textContent='Открыть';row.insertCell().appendChild(button);
       button.onclick=function(){location.assign('/pond-duck.html?admin_algorithm='+a.id);};
+      var rename=document.createElement('button');rename.className='secondary';rename.textContent='Переименовать';row.cells[4].appendChild(rename);
+      rename.onclick=async function(){
+        var name=prompt('Новое название стратегии пользователя '+a.author+' (от 1 до 80 символов):',a.name);
+        if(name===null)return;name=name.trim();
+        if(!name||name.length>80){fail(Error('Укажи название алгоритма: от 1 до 80 символов.'));return;}
+        if(name===a.name)return;rename.disabled=true;
+        try{await api.request('/api/admin/algorithms/'+a.id+'/rename',{name:name});await loadAlgorithms();status.textContent='Стратегия переименована. Код и история боёв сохранены.';status.hidden=false;}
+        catch(error){fail(error);}finally{rename.disabled=false;}
+      };
     });
     document.getElementById('admin-algorithms-list').replaceChildren(grid);
   }

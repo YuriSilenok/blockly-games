@@ -191,6 +191,25 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({'ok': True}, cookie='pond_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict')
             elif path == '/api/password':
                 self.change_password(user, value)
+            elif re.fullmatch(r'/api/admin/algorithms/\d+/rename', path):
+                self.admin()
+                name = str(value.get('name', '')).strip()
+                if not 1 <= len(name) <= 80:
+                    raise Problem('Укажи название алгоритма: от 1 до 80 символов.')
+                algorithm_id = int(path.split('/')[-2])
+                with db() as c:
+                    c.execute('BEGIN IMMEDIATE')
+                    saved = c.execute('SELECT id,user_id FROM algorithms WHERE id=?', (algorithm_id,)).fetchone()
+                    if not saved:
+                        raise Problem('Алгоритм не найден.', 404)
+                    if c.execute('SELECT 1 FROM algorithms WHERE user_id=? AND name=? AND id<>?',
+                                 (saved['user_id'], name, algorithm_id)).fetchone():
+                        raise Problem('У этого автора уже есть алгоритм с таким названием. Укажи другое название.', 409)
+                    c.execute('UPDATE algorithms SET name=?,updated=? WHERE id=?', (name, time.time(), algorithm_id))
+                    c.execute('UPDATE sandbox_entries SET name=? WHERE algorithm_id=?', (name, algorithm_id))
+                    c.execute('''UPDATE tournament_algorithms SET name=? WHERE algorithm_id=? AND
+                      tournament_id IN (SELECT id FROM tournaments WHERE status<>'finished')''', (name, algorithm_id))
+                self.send_json({'ok': True, 'name': name})
             elif path in ('/api/team/create', '/api/team/rename', '/api/team/add', '/api/team/remove', '/api/team/leave', '/api/team/dissolve', '/api/team/accept', '/api/team/decline', '/api/team/cancel'):
                 self.send_json({'team': change_team(user['id'], path.split('/')[-1], value)})
             elif path.startswith('/api/arena/') or path.startswith('/api/admin/rounds'):

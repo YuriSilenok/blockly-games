@@ -13,7 +13,7 @@ window.installTournamentEditor=function(){
       if(!PondPortal.user||PondPortal.user.role!=='admin'){location.replace('/admin');return;}
       Z.stop();
       var style=document.createElement('style');style.textContent='body>table,#visualization,#editorBar,#editor,#toolbox,#header,#dialogShadow,#dialogBorder{display:none!important}#tabarea{position:fixed!important;inset:72px 12px 42px!important;width:auto!important;height:auto!important}#blockly{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}.admin-block-heading{position:fixed;top:0;left:0;right:0;height:60px;padding:6px 16px;background:white;z-index:10;display:flex;align-items:center;gap:20px}.admin-block-heading h1{font:600 18px sans-serif;margin:0}';document.head.appendChild(style);
-      var heading=document.createElement('div');heading.className='admin-block-heading';var back=document.createElement('a');back.href='/admin';back.textContent='← Управление';heading.appendChild(back);var title=document.createElement('h1');title.textContent='Загружаем алгоритм…';heading.appendChild(title);document.body.appendChild(heading);
+      var heading=document.createElement('div');heading.className='admin-block-heading';var back=document.createElement('a');back.href='/portal/admin-algorithms.html';back.textContent='← Все алгоритмы';heading.appendChild(back);var title=document.createElement('h1');title.textContent='Загружаем алгоритм…';heading.appendChild(title);document.body.appendChild(heading);
       try{
         var item=(await PondPortal.request('/api/admin/algorithms/'+encodeURIComponent(adminAlgorithm))).algorithm;
         title.textContent=item.name+' · '+item.author+(item.archived?' · архивный':'');document.title=item.name+' — просмотр алгоритма';

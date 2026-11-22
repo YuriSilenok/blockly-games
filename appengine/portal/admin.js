@@ -1,57 +1,24 @@
 (async function () {
   var api = PondPortal, status = document.getElementById('status'), tournaments = [], select = document.getElementById('tournaments');
   await api.ready;
-  if (!api.user || api.user.role !== 'admin') { status.hidden=false;status.innerHTML = 'Нужен <a href="/account?next=/admin">вход администратора</a>.'; return; }
+  if (!api.user || api.user.role !== 'admin') return;
   document.getElementById('panel').hidden = false;
-  var libraryPanel=document.createElement('section');libraryPanel.className='card admin-algorithms';
-  libraryPanel.innerHTML='<h2>Все алгоритмы</h2><p>Сохранённые алгоритмы всех пользователей, включая архивные. Просмотр не изменяет библиотеку и заявки.</p><label>Поиск по названию или автору<input id="admin-algorithm-search" type="search" placeholder="Название или логин"></label><button id="admin-algorithms-refresh" class="secondary">Обновить список</button><p id="admin-algorithms-count" role="status"></p><div id="admin-algorithms-list" class="table-scroll"></div>';
-  document.getElementById('panel').appendChild(libraryPanel);
-  var allAlgorithms=[];
-  function algorithmList(){
-    var query=document.getElementById('admin-algorithm-search').value.trim().toLocaleLowerCase('ru-RU');
-    var rows=allAlgorithms.filter(function(a){return (a.name+' '+a.author).toLocaleLowerCase('ru-RU').includes(query);});
-    document.getElementById('admin-algorithms-count').textContent='Найдено: '+rows.length+' из '+allAlgorithms.length;
-    var grid=document.createElement('table'),head=grid.insertRow();
-    ['Название','Автор','Сохранён','Статус','Просмотр'].forEach(function(label){var cell=document.createElement('th');cell.textContent=label;head.appendChild(cell);});
-    rows.forEach(function(a){
-      var row=grid.insertRow();[a.name,a.author,new Date(a.updated*1000).toLocaleString('ru-RU'),a.archived?'Архивный':'В библиотеке'].forEach(function(text){row.insertCell().textContent=text;});
-      var button=document.createElement('button');button.className='secondary';button.textContent='Открыть';row.insertCell().appendChild(button);
-      button.onclick=function(){location.assign('/pond-duck.html?admin_algorithm='+a.id);};
-      var rename=document.createElement('button');rename.className='secondary';rename.textContent='Переименовать';row.cells[4].appendChild(rename);
-      rename.onclick=async function(){
-        var name=prompt('Новое название стратегии пользователя '+a.author+' (от 1 до 80 символов):',a.name);
-        if(name===null)return;name=name.trim();
-        if(!name||name.length>80){fail(Error('Укажи название алгоритма: от 1 до 80 символов.'));return;}
-        if(name===a.name)return;rename.disabled=true;
-        try{await api.request('/api/admin/algorithms/'+a.id+'/rename',{name:name});await loadAlgorithms();status.textContent='Стратегия переименована. Код и история боёв сохранены.';status.hidden=false;}
-        catch(error){fail(error);}finally{rename.disabled=false;}
-      };
-    });
-    document.getElementById('admin-algorithms-list').replaceChildren(grid);
-  }
-  async function loadAlgorithms(){var button=document.getElementById('admin-algorithms-refresh');button.disabled=true;try{allAlgorithms=(await api.request('/api/admin/algorithms')).algorithms;algorithmList();}catch(error){fail(error);}finally{button.disabled=false;}}
-  document.getElementById('admin-algorithm-search').oninput=algorithmList;
-  document.getElementById('admin-algorithms-refresh').onclick=loadAlgorithms;
-  loadAlgorithms();
-  var roundsPanel=document.createElement('section');roundsPanel.className='card';roundsPanel.innerHTML='<h2>Раунды турнира</h2><form id="create-round"><button>Создать раунд</button></form><div id="round-editors"></div><div id="round-report"></div>';
-  document.getElementById('panel').appendChild(roundsPanel);
-  document.querySelector('#create small').textContent='Общий бой завершается, когда остаётся одна утка или минуту никто не получает урон.';
-  document.querySelector('.admin-side .pill').textContent='Общие бои';
-  document.getElementById('standings').hidden=true;
-  var finish=document.createElement('button');finish.className='quiet danger';finish.textContent='Завершить турнир';document.getElementById('toggle').after(finish);
+  var finish=document.getElementById('finish-tournament');
   var currentData=null;
-  async function load() {
-    var old = select.value; tournaments = (await api.request('/api/tournaments')).tournaments; select.replaceChildren();
+  async function load(preferred) {
+    var old = preferred?String(preferred):select.value||sessionStorage.getItem('pond-admin-tournament'); tournaments = (await api.request('/api/tournaments')).tournaments; select.replaceChildren();
     tournaments.forEach(function (t) { select.add(new Option(t.name, t.id)); }); if (old) select.value = old;
     if (!select.value && tournaments.length) select.selectedIndex = 0;
+    if(select.value)sessionStorage.setItem('pond-admin-tournament',select.value);
     await table(true);
   }
   async function table(rebuild) {
     var t = tournaments.find(function (t) { return String(t.id) === select.value; });
     document.getElementById('toggle').disabled = !t||t.status==='finished';finish.disabled=!t||t.status==='finished';document.querySelector('#create-round button').disabled=!t||t.status==='finished';
-    if (!t) return;
+    if (!t) {currentData=null;document.getElementById('round-editors').replaceChildren();document.getElementById('round-report').replaceChildren();document.getElementById('tournament-state').textContent='Нет турниров';return;}
+    document.getElementById('tournament-state').textContent={open:'Приём открыт',closed:'Приём закрыт',finished:'Турнир завершён'}[t.status];
     document.getElementById('toggle').textContent = t.status === 'open' ? 'Закрыть приём алгоритмов' : t.status==='finished'?'Турнир завершён':'Открыть приём алгоритмов';
-    var data=await api.request('/api/arena/tournaments/'+t.id);currentData=data;
+    var data=await api.request('/api/arena/tournaments/'+t.id);if(select.value!==String(t.id))return;currentData=data;
     api.roundReport(data.rounds,document.getElementById('round-report'));
     if(rebuild){editors(data,t);lastStates=JSON.stringify(data.rounds.map(function(r){return [r.id,r.status];}));}
   }
@@ -72,12 +39,12 @@
       target.appendChild(box);
     });
   }
-  select.onchange = function () { table(true).catch(fail); };
+  select.onchange = function () { sessionStorage.setItem('pond-admin-tournament',select.value);table(true).catch(fail); };
   document.getElementById('create-round').onsubmit=async function(event){event.preventDefault();var button=this.querySelector('button');button.disabled=true;try{await api.request('/api/admin/rounds',{tournament_id:Number(select.value)});await table(true);}catch(error){fail(error);}finally{button.disabled=false;}};
   finish.onclick=async function(){if(!confirm('Завершить турнир? Приём и изменение заявок будут закрыты, новые раунды создать будет нельзя.'))return;try{await api.request('/api/admin/tournaments/'+select.value+'/status',{status:'finished'});await load();}catch(error){fail(error);}};
   document.getElementById('create').onsubmit = async function (event) {
     event.preventDefault(); var button = this.querySelector('button'); button.disabled = true;
-    try { await api.request('/api/admin/tournaments', Object.fromEntries(new FormData(this))); await load(); status.textContent = 'Турнир создан.';status.hidden=false; } catch (error) { fail(error); }
+    try { var created=await api.request('/api/admin/tournaments', Object.fromEntries(new FormData(this)));await load(created.id);this.reset();document.querySelector('.admin-create').open=false;status.textContent = 'Турнир создан и выбран для работы.';status.hidden=false; } catch (error) { fail(error); }
     finally { button.disabled = false; }
   };
   document.getElementById('toggle').onclick = async function () {
@@ -101,5 +68,5 @@
     setTimeout(live,250);
   }
   var lastStates='';
-  try { await load(); live(); setInterval(async function(){try{await table();var states=JSON.stringify(currentData.rounds.map(function(r){return [r.id,r.status];}));if(states!==lastStates){lastStates=states;var t=tournaments.find(function(t){return String(t.id)===select.value;});editors(currentData,t);}}catch(error){fail(error);}},3000); } catch (error) { fail(error); }
+  try { await load(); live(); setInterval(async function(){try{await table();if(!currentData)return;var states=JSON.stringify(currentData.rounds.map(function(r){return [r.id,r.status];}));if(states!==lastStates){lastStates=states;var t=tournaments.find(function(t){return String(t.id)===select.value;});editors(currentData,t);}}catch(error){fail(error);}},3000); } catch (error) { fail(error); }
 })();

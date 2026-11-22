@@ -79,8 +79,6 @@ def settings(value, problem):
             raise problem('Для «Царя горы» укажи не менее двух потоплений для победы.')
         respawns = 0
     else:
-        if respawns < 2:
-            raise problem('Для выживания укажи не менее двух респавнов.')
         target = 0
     return mode, respawns, target
 
@@ -141,7 +139,7 @@ def report(c, tournament_id):
             if row['mode'] in ('king', 'king_elimination'):
                 item['mode'], item['respawns'], item['kill_target'] = 'king', 0, max(2, row['kill_target'])
             else:
-                item['respawns'], item['kill_target'] = max(2, row['respawns']), 0
+                item['respawns'], item['kill_target'] = max(0, row['respawns']), 0
         replay = c.execute('''SELECT m.id FROM matches m JOIN rounds r ON r.job_id=m.job_id
           WHERE r.id=? AND m.status IN ('done','stopped') AND EXISTS(SELECT 1 FROM match_replay_chunks c WHERE c.match_id=m.id)
           ORDER BY m.id DESC LIMIT 1''', (row['id'],)).fetchone()
@@ -423,7 +421,7 @@ def post(h, user, path, value):
                 job_id = c.execute("INSERT INTO jobs(user_id,tournament_id,kind,code,xml,created) VALUES(?,?,'round','','',?)",
                                    (user['id'], row['tournament_id'], time.time())).lastrowid
                 mode = 'king' if row['mode'] in ('king', 'king_elimination') else 'survival'
-                respawns = 0 if mode == 'king' else max(2, row['respawns'])
+                respawns = 0 if mode == 'king' else max(0, row['respawns'])
                 target = max(2, row['kill_target']) if mode == 'king' else 0
                 c.execute('UPDATE rounds SET mode=?,respawns=?,kill_target=?,rules_version=2 WHERE id=?', (mode, respawns, target, round_id))
                 c.execute("UPDATE rounds SET status='queued',job_id=?,playback_speed=? WHERE id=?", (job_id, speed, round_id))

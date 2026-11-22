@@ -64,13 +64,14 @@ def concept_error(level, xml, metrics):
 
 def duel(spec, job_id, title):
     global _live_match
+    spec = dict(spec, pace_in_worker=bool(spec.get('realtime')))
     with db() as c:
         match_id = c.execute('INSERT INTO matches(job_id,title,status,created) VALUES(?,?,?,?)',
                              (job_id, title, 'running', time.time())).lastrowid
     process = subprocess.Popen([sys.executable, '-m', 'server.runner'], cwd=str(ROOT),
                                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, text=True, encoding='utf-8')
-    lines = queue.Queue(maxsize=1500)
+    lines = queue.Queue(maxsize=100 if spec.get('realtime') else 1500)
     reader_stop = threading.Event()
 
     def read_output():
@@ -115,13 +116,40 @@ def duel(spec, job_id, title):
 
     started = time.monotonic()
     stop_check_at = 0
+    pace_speed = spec.get('playback_speed', 1)
+    paced_game, pace_wall = 0, started
+    pace_started = False
 
     def check_stop():
+        nonlocal pace_speed, paced_game, pace_wall
         if spec.get('realtime'):
             with db() as c:
-                row = c.execute('SELECT stop_requested FROM rounds WHERE job_id=?', (job_id,)).fetchone()
+                row = c.execute('SELECT stop_requested,playback_speed FROM rounds WHERE job_id=?', (job_id,)).fetchone()
+            now = time.monotonic()
+            paced_game += (now - pace_wall) * pace_speed
+            pace_wall = now
             if row and row['stop_requested']:
                 raise RoundStopped(snapshot)
+            if row:
+                pace_speed = row['playback_speed']
+
+    def pace_frame(game_time):
+        nonlocal paced_game, pace_wall, stop_check_at, pace_started
+        if not spec.get('realtime'):
+            return
+        if not pace_started:
+            paced_game, pace_wall, pace_started = game_time, time.monotonic(), True
+        while True:
+            now = time.monotonic()
+            paced_game += (now - pace_wall) * pace_speed
+            pace_wall = now
+            if now >= stop_check_at:
+                check_stop()
+                stop_check_at = now + .2
+            remaining = game_time - paced_game
+            if remaining <= 0:
+                return
+            time.sleep(min(.05, remaining / pace_speed))
     try:
         process.stdin.write(json.dumps(spec, ensure_ascii=False) + '\n')
         process.stdin.close()
@@ -137,9 +165,13 @@ def duel(spec, job_id, title):
                 continue
             if line is None:
                 break
-            snapshot = json.loads(line)
-            if snapshot.get('error'):
-                raise RuntimeError(snapshot['error'])
+            next_snapshot = json.loads(line)
+            if next_snapshot.get('error'):
+                raise RuntimeError(next_snapshot['error'])
+            pace_frame(next_snapshot['time'])
+            snapshot = next_snapshot
+            if spec.get('realtime'):
+                snapshot['playback_speed'] = pace_speed
             if spec.get('realtime'):
                 with _live_lock:
                     _live_frames.append({key: value for key, value in snapshot.items() if key != 'metrics'})

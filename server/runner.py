@@ -51,7 +51,7 @@ def run(spec):
         print(json.dumps(frame, ensure_ascii=True), flush=True)
         if frame['done']:
             return
-        if spec.get('realtime'):
+        if spec.get('realtime') and not spec.get('pace_in_worker'):
             # Match-clock pacing makes the admin viewer show the actual live duel.
             delay = frame['time'] / spec.get('playback_speed', 1) - (time.monotonic() - started)
             if delay > 0:

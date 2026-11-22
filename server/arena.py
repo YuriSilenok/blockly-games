@@ -349,6 +349,18 @@ def post(h, user, path, value):
             name = 'Раунд %s' % number
             round_id = c.execute('INSERT INTO rounds(tournament_id,name,created,mode,respawns,kill_target,rules_version) VALUES(?,?,?,?,?,?,2)', (tournament_id, name, time.time(), mode, respawns, target)).lastrowid
         h.send_json({'id': round_id}, 201)
+    elif re.fullmatch(r'/api/admin/rounds/\d+/speed', path):
+        h.admin()
+        speed = value.get('speed')
+        if isinstance(speed, bool) or speed not in (.1, .25, .5, 1, 2):
+            raise h.problem('Выбери скорость 0,1×, 0,25×, 0,5×, 1× или 2×.')
+        with db() as c:
+            c.execute('BEGIN IMMEDIATE')
+            row = c.execute('SELECT status,stop_requested FROM rounds WHERE id=? AND deleted=0', (int(path.split('/')[-2]),)).fetchone()
+            if not row or row['status'] not in ('queued', 'running') or row['stop_requested']:
+                raise h.problem('Менять скорость можно у ожидающего или идущего раунда.', 409)
+            c.execute('UPDATE rounds SET playback_speed=? WHERE id=?', (speed, int(path.split('/')[-2])))
+        h.send_json({'ok': True, 'speed': speed})
     elif re.fullmatch(r'/api/admin/rounds/\d+/(stop|delete)', path):
         h.admin()
         round_id = int(path.split('/')[-2])

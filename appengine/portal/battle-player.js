@@ -8,10 +8,19 @@ window.PondBattlePlayer=function(options){
   liveControls.className='round-controls';liveControls.hidden=true;options.element.insertBefore(liveControls,byId('replay-controls'));
   if(options.onStart){startButton=document.createElement('button');startButton.textContent='Запустить игру';startButton.disabled=true;startButton.onclick=function(){options.onStart();};liveControls.appendChild(startButton);}
   if(options.speedKey){var savedSpeed=localStorage.getItem(options.speedKey);if(Array.from(speedSelect.options).some(function(option){return option.value===savedSpeed;}))speedSelect.value=savedSpeed;}
-  speedSelect.onchange=function(){if(options.speedKey)localStorage.setItem(options.speedKey,speedSelect.value);};
+  var speedSaving=false,requestedSpeed=null,lastSpeedChange=0;
+  speedSelect.onchange=async function(){
+    if(options.speedKey)localStorage.setItem(options.speedKey,speedSelect.value);
+    if(!liveMode||!liveRunning||!options.onSpeed)return;
+    requestedSpeed={value:Number(speedSelect.value),round:liveRoundId};lastSpeedChange=performance.now();
+    if(speedSaving)return;speedSaving=true;
+    try{while(requestedSpeed!==null){var value=requestedSpeed;requestedSpeed=null;await options.onSpeed(value.value,value.round);}}
+    catch(error){requestedSpeed=null;message(error.message);}
+    finally{speedSaving=false;lastSpeedChange=performance.now();}
+  };
   options.element.appendChild(byId('replay-health'));
   options.element.appendChild(byId('replay-buffer'));
-  var liveMode=false,liveQueue=[],liveTime=null,liveRunning=false,liveWaiting=false,liveDirty=false,liveId=null,liveSpeed=1,reportedFailure=null;
+  var liveMode=false,liveQueue=[],liveTime=null,liveRunning=false,liveWaiting=false,liveDirty=false,liveId=null,liveSpeed=1,reportedFailure=null,liveRoundId=null;
   var playback=null,time=0,playing=false,lastWall=0,dirty=false,buffering=false,lastControls=0,replayRequest=0,pendingSeek=null,opening=false;
   var canvas=byId('replay-pond'),pondView=new PondRenderer(canvas),colors=PondRenderer.colors;
   function background(){pondView.draw({time:0,avatars:[],missiles:[]});}
@@ -86,10 +95,12 @@ window.PondBattlePlayer=function(options){
   function drawLive(elapsed){
     if(!liveQueue.length)return;
     var first=liveQueue[0],last=liveQueue[liveQueue.length-1];
+    var current=lowerBound(liveQueue,liveTime===null?last.time:liveTime,'time');
+    var frameSpeed=liveQueue[Math.max(0,current-1)].playback_speed||liveSpeed;
     if(liveTime===null||liveTime<first.time){liveTime=Math.max(first.time,last.time-.5*liveSpeed);liveDirty=true;}
-    if(liveWaiting&&liveRunning&&last.time-liveTime<.3*liveSpeed){setBuffering(true);return;}
+    if(liveWaiting&&liveRunning&&last.time-liveTime<.3*(last.playback_speed||liveSpeed)){setBuffering(true);return;}
     liveWaiting=false;
-    var at=Math.min(last.time,liveTime+elapsed*liveSpeed);
+    var at=Math.min(last.time,liveTime+elapsed*frameSpeed);
     if(at===last.time&&liveRunning)liveWaiting=true;
     setBuffering(liveWaiting);
     if(at===liveTime&&!liveDirty)return;
@@ -98,10 +109,11 @@ window.PondBattlePlayer=function(options){
   }
   this.live=function(match){
     if(!match)return;
-    if(liveId!==match.id){liveQueue=[];liveTime=null;liveId=match.id;liveWaiting=false;if(liveMode){pondView.reset();if(match.status==='running'){speedSelect.value=String(match.playback_speed||1);if(options.speedKey)localStorage.setItem(options.speedKey,speedSelect.value);}}}
+    liveRoundId=match.round_id||null;
+    if(liveId!==match.id){liveQueue=[];liveTime=null;liveId=match.id;liveWaiting=false;if(liveMode){pondView.reset();if(match.status==='running'&&!speedSaving&&performance.now()-lastSpeedChange>600){speedSelect.value=String(match.playback_speed||1);if(options.speedKey)localStorage.setItem(options.speedKey,speedSelect.value);}}}
     liveRunning=match.status==='running';
     liveSpeed=match.playback_speed||1;
-    if(liveMode)speedSelect.disabled=liveRunning;
+    if(liveMode){speedSelect.disabled=false;if(liveRunning&&!speedSaving&&performance.now()-lastSpeedChange>600){speedSelect.value=String(liveSpeed);if(options.speedKey)localStorage.setItem(options.speedKey,speedSelect.value);}}
     if(startButton)startButton.disabled=!canStart||liveRunning;
     var frames=match.frames&&match.frames.length?match.frames:match.snapshot?[match.snapshot]:[];
     frames.forEach(function(frame){if(!liveQueue.length||frame.time>liveQueue[liveQueue.length-1].time){liveQueue.push(frame);liveDirty=true;}});
@@ -111,7 +123,7 @@ window.PondBattlePlayer=function(options){
     if(liveMode)byId('replay-title').textContent=match.title+' · '+frame.time.toFixed(1)+' с'+(match.status==='running'?' · Прямой показ':match.status==='stopped'?' · Остановлен администратором':failed?' · Бой прерван':' · Бой завершён');
     if(liveMode&&failed&&reportedFailure!==match.id){reportedFailure=match.id;message(match.failure||'Бой прерван из-за ошибки сервера. Завершённые поединки сохранены; серию можно продолжить из статистики.');}
   };
-  this.followLive=function(){++replayRequest;liveMode=true;liveTime=null;liveDirty=true;opening=false;playing=false;pendingSeek=null;liveControls.appendChild(speedSelect);liveControls.hidden=false;speedSelect.disabled=liveRunning;setBuffering(false);pondView.reset();byId('replay-controls').hidden=true;byId('replay-title').textContent='Ожидание раунда';};
+  this.followLive=function(){++replayRequest;liveMode=true;liveTime=null;liveDirty=true;opening=false;playing=false;pendingSeek=null;liveControls.appendChild(speedSelect);liveControls.hidden=false;speedSelect.disabled=false;setBuffering(false);pondView.reset();byId('replay-controls').hidden=true;byId('replay-title').textContent='Ожидание раунда';};
   this.clearLive=function(){liveQueue=[];liveTime=null;liveId=null;liveRunning=false;liveWaiting=false;if(liveMode){speedSelect.disabled=false;setBuffering(false);background();byId('replay-health').replaceChildren();byId('replay-title').textContent='Ожидание раунда';}};
   document.addEventListener('visibilitychange',function(){lastWall=0;});
 };

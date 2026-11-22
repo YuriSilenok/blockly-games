@@ -6,7 +6,7 @@
   var finish=document.getElementById('finish-tournament');
   var currentData=null,repeatBusy=false,startBusy=false,preparedRoundId=null;
   function isKing(round){return ['king','king_elimination'].includes(round.mode);}
-  var player=new PondBattlePlayer({element:document.getElementById('tournament-player'),base:'/api/admin/matches/',speedKey:'pond-admin-playback-speed:'+api.user.id,onStart:startRound,onError:fail,onPause:function(){table(true).catch(fail);}});
+  var player=new PondBattlePlayer({element:document.getElementById('tournament-player'),base:'/api/admin/matches/',speedKey:'pond-admin-playback-speed:'+api.user.id,onStart:startRound,onSpeed:async function(speed,roundId){if(!roundId)throw Error('Активный раунд не найден.');await api.request('/api/admin/rounds/'+roundId+'/speed',{speed:speed});},onError:fail,onPause:function(){table(true).catch(fail);}});
   player.followLive();
   var stopButton=document.createElement('button'),stopPending=false,activeRoundId=null;stopButton.className='quiet danger';stopButton.textContent='Остановить раунд';stopButton.disabled=true;document.getElementById('follow-live').after(stopButton);
   stopButton.onclick=function(){stopRound(activeRoundId);};

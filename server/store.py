@@ -69,6 +69,7 @@ def initialize():
     backup_before_course_split('algorithm-library-v1', 'before-algorithm-library')
     backup_before_course_split('duplicate-level-nine', 'before-duplicate-level-nine')
     backup_before_course_split('sandbox-v1', 'before-sandbox')
+    backup_before_course_split('tournament-modes-v1', 'before-tournament-modes')
     with db() as c:
         c.execute('PRAGMA journal_mode=WAL')
         c.executescript('''
@@ -120,6 +121,7 @@ def initialize():
         from .sandbox import initialize as initialize_sandbox
         initialize_sandbox(c)
         c.execute('BEGIN IMMEDIATE')
+        c.execute("INSERT OR IGNORE INTO course_migrations VALUES('tournament-modes-v1')")
         if 'deleted' not in {r['name'] for r in c.execute('PRAGMA table_info(users)')}:
             c.execute('ALTER TABLE users ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0')
         # Preserve existing accounts, individual teams and their tournament places.

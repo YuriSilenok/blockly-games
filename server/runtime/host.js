@@ -31,6 +31,8 @@ function startMatch(spec) {
   matchClock = 1000;
   battle.lastDamageAt = matchClock;
   battle.eliminationCount = 0;
+  battle.killTarget = spec.kill_target || 0;
+  battle.killWinner = null;
   battle.nextMissileId = 0;
   battle.recordReplay = !!spec.record_replay;
   battle.captureVisuals = battle.recordReplay || !spec.level;
@@ -43,11 +45,12 @@ function startMatch(spec) {
   spec.avatars.forEach(function (item, index) {
     var duck = new Pond.Avatar(item.name, new Blockly.utils.Coordinate(item.x, item.y), item.damage || 0, false, battle);
     duck.setCode(undefined, undefined, item.code);
+    duck.seriesScore = item.series_score;
     if (index === 0) Pond.currentAvatar = duck;
   });
   battle.reset();
   var initialize = battle.initInterpreter;
-  battle.AVATARS.forEach(function (duck, index) {
+  battle.initializeDuck = function (duck, index) {
     try {
       duck.interpreter = new Interpreter(duck.compiled, function (interpreter, scope) {
         initialize(interpreter, scope);
@@ -69,11 +72,25 @@ function startMatch(spec) {
         catch (error) { duck.loadError = learnerError(error); throw error; }
       };
     } catch (error) {
-      duck.die();
       duck.loadError = learnerError(error);
+      duck.lastDamager = null;
+      duck.die();
     }
-  });
+  };
+  battle.AVATARS.forEach(function(duck,index){duck.respawnsLeft=spec.respawns||0;duck.generation=0;battle.initializeDuck(duck,index);});
 }
+function respawnDuck(b,duck,index){
+  var point=null,best=-1;
+  for(var i=0;i<64;i++){
+    var candidate=new Blockly.utils.Coordinate(10+Math.random()*80,10+Math.random()*80),nearest=Infinity;
+    b.AVATARS.forEach(function(other){if(other!==duck&&!other.dead)nearest=Math.min(nearest,Blockly.utils.Coordinate.distance(candidate,other.loc));});
+    if(nearest>best){best=nearest;point=candidate;}if(nearest>=15)break;
+  }
+  duck.respawnsLeft--;duck.generation++;duck.startDamage_=0;duck.startLoc_=point;
+  duck.lastDamager=null;duck.eliminatedOrder=null;duck.eliminatedAt=null;duck.reset();
+  b.lastDamageAt=matchClock;b.initializeDuck(duck,index);
+}
+function matchEnded(b){return !!b.killWinner||b.AVATARS.filter(function(a){return !a.dead;}).length<=1||matchClock>=b.clockLimit||matchClock-b.lastDamageAt>=b.idleLimit;}
 function advanceMatch(frames) {
   var b = Pond.Battle;
   for (var i = 0; i < frames; i++) {
@@ -81,6 +98,7 @@ function advanceMatch(frames) {
     b.updateInterpreters_();
     b.updateMissiles_();
     b.updateAvatars_();
+    if(!b.killWinner)b.AVATARS.forEach(function(duck,index){if(duck.dead&&duck.respawnsLeft>0&&!duck.loadError)respawnDuck(b,duck,index);});
     // Live tournament views and recordings use the same visual event stream.
     if (b.captureVisuals) {
       var seenScans = {};
@@ -107,18 +125,20 @@ function advanceMatch(frames) {
     // Keep only the bounded, serializable recording above, never avatar references.
     b.EVENTS.length = 0;
     var alive = b.AVATARS.filter(function (a) { return !a.dead; });
-    if (alive.length <= 1 || matchClock >= b.clockLimit || matchClock - b.lastDamageAt >= b.idleLimit) break;
+    if (matchEnded(b)) break;
   }
   var alive = b.AVATARS.filter(function (a) { return !a.dead; });
   return JSON.stringify({
-    done: alive.length <= 1 || matchClock >= b.clockLimit || matchClock - b.lastDamageAt >= b.idleLimit,
+    done: matchEnded(b),
+    winner: b.killWinner?b.AVATARS.indexOf(b.killWinner):!b.killTarget&&alive.length===1?b.AVATARS.indexOf(alive[0]):null,
+    end_reason: b.killWinner?'kill_target':alive.length<=1?(b.killTarget?'no_opponents':'survival'):matchClock-b.lastDamageAt>=b.idleLimit?'idle':null,
     time: (matchClock - 1000) / 1000,
     metrics: matchMetrics,
     replay_version: b.recordReplay ? 2 : 0,
     visual_version: b.captureVisuals ? 2 : 0,
     scans: b.replayScans,
     flights: b.replayFlights,
-    avatars: b.AVATARS.map(function (a) { return {name: a.name, x: a.loc.x, y: a.loc.y, facing: a.facing, speed: a.speed, degree: a.degree, health: Math.max(0, 100 - a.damage), dead: a.dead, eliminated: a.eliminatedOrder || b.eliminationCount + 1, kills: a.kills || 0, error: a.loadError || null}; }),
+    avatars: b.AVATARS.map(function (a) { return {name: a.name, x: a.loc.x, y: a.loc.y, facing: a.facing, speed: a.speed, degree: a.degree, health: Math.max(0, 100 - a.damage), dead: a.dead, generation:a.generation||0,respawns_remaining:a.respawnsLeft||0,series_score:a.seriesScore, eliminated: a.eliminatedOrder || b.eliminationCount + 1, kills: a.kills || 0, error: a.loadError || null}; }),
     missiles: b.MISSILES.map(function (m) { return {id: m.replayId, avatar: b.AVATARS.indexOf(m.avatar), startX: m.startLoc.x, startY: m.startLoc.y, endX: m.endLoc.x, endY: m.endLoc.y, progress: m.progress, range: m.range, x: m.startLoc.x + (m.endLoc.x - m.startLoc.x) * Math.min(1, m.progress / Math.max(1, m.range)), y: m.startLoc.y + (m.endLoc.y - m.startLoc.y) * Math.min(1, m.progress / Math.max(1, m.range))}; })
   });
 }

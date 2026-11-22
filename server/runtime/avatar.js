@@ -141,12 +141,15 @@ Pond.Avatar = class {
   die() {
     if (this.dead) return;
     this.eliminatedAt = (Date.now() - 1000) / 1000;
-    this.eliminatedOrder = ++this.battle_.eliminationCount;
-    if (this.lastDamager && this.lastDamager !== this) this.lastDamager.kills = (this.lastDamager.kills || 0) + 1;
+    if (!(this.respawnsLeft > 0) || this.loadError) this.eliminatedOrder = ++this.battle_.eliminationCount;
+    if (this.lastDamager && this.lastDamager !== this) {
+      this.lastDamager.kills = (this.lastDamager.kills || 0) + 1;
+      if (this.battle_.killTarget && this.lastDamager.kills >= this.battle_.killTarget && !this.battle_.killWinner) this.battle_.killWinner = this.lastDamager;
+    }
     this.speed = 0;
     this.dead = true;
     this.damage = 100;
-    this.battle_.RANK.unshift(this);
+    if (!(this.respawnsLeft > 0) || this.loadError) this.battle_.RANK.unshift(this);
     this.battle_.EVENTS.push({'type': 'DIE', 'avatar': this});
     console.log(this + ' sinks.');
   }

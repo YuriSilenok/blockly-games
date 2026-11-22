@@ -107,7 +107,7 @@ class Handler(BaseHTTPRequestHandler):
                     user.pop('token')
                     user['completed'] = self.progress(user['id'])
                     user['unlocked'] = all(i in user['completed'] for i in range(1, LESSONS + 1))
-                self.send_json({'user': user, 'lessons': LESSONS, 'course_revision': 6})
+                self.send_json({'user': user, 'lessons': LESSONS, 'course_revision': 7})
             elif path == '/api/tournaments':
                 self.graduate()
                 with db() as c:
@@ -138,6 +138,16 @@ class Handler(BaseHTTPRequestHandler):
                 with db() as c:
                     row = c.execute('SELECT xml FROM progress WHERE user_id=? AND level=?', (user['id'], int(path.split('/')[-1]))).fetchone()
                 self.send_json({'xml': row['xml'] if row else None})
+            elif path == '/api/admin/training':
+                self.admin()
+                with db() as c:
+                    users = [dict(r) for r in c.execute('''SELECT u.id,u.login,COUNT(p.level) AS completed
+                      FROM users u LEFT JOIN progress p ON p.user_id=u.id AND p.level BETWEEN 1 AND ?
+                      WHERE u.role<>'admin' GROUP BY u.id ORDER BY u.login''', (LESSONS,))]
+                histogram = [0] * (LESSONS + 1)
+                for item in users:
+                    histogram[item['completed']] += 1
+                self.send_json({'users': users, 'histogram': histogram, 'lessons': LESSONS})
             elif path == '/api/admin/algorithms':
                 self.admin()
                 with db() as c:
@@ -191,6 +201,17 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({'ok': True}, cookie='pond_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict')
             elif path == '/api/password':
                 self.change_password(user, value)
+            elif re.fullmatch(r'/api/admin/users/\d+/graduate', path):
+                self.admin()
+                user_id = int(path.split('/')[-2])
+                with db() as c:
+                    c.execute('BEGIN IMMEDIATE')
+                    if not c.execute('SELECT 1 FROM users WHERE id=?', (user_id,)).fetchone():
+                        raise Problem('Пользователь не найден.', 404)
+                    for level in range(1, LESSONS + 1):
+                        c.execute('INSERT OR IGNORE INTO progress(user_id,level,code,xml,completed) VALUES(?,?,?,?,?)',
+                                  (user_id, level, '', '<xml></xml>', time.time()))
+                self.send_json({'ok': True})
             elif re.fullmatch(r'/api/admin/algorithms/\d+/rename', path):
                 self.admin()
                 name = str(value.get('name', '')).strip()
@@ -359,7 +380,7 @@ class Handler(BaseHTTPRequestHandler):
                 error = lesson_four_problem(root)
                 if error:
                     raise Problem(error)
-            if level in (6, 7, 8, 9, 10, 11, 12, 13, 14, 15):
+            if level in (6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16):
                 error = nested_loop_problem(root, level)
                 if error:
                     raise Problem(error)

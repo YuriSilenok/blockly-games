@@ -15,7 +15,7 @@ from . import challenges
 from . import arena
 from . import sandbox
 
-LESSONS = 19
+LESSONS = 20
 PIXELS_PER_UNIT = (400 - 35) / 100  # Pond's canvas includes a half-duck inset at each edge.
 
 
@@ -27,7 +27,7 @@ def concept_error(level, xml, metrics):
     loops = {'controls_whileUntil', 'controls_repeat_ext', 'controls_repeat', 'controls_for', 'controls_forEach'}
     if level == 2 and not scan_in_cannon(root):
         return 'Условие второго уровня: используй scan внутри параметра расстояния блока cannon.'
-    if level in (2, 3, 4, 12, 13, 14, 15) and not metrics.get('scan'):
+    if level in (2, 3, 4, 13, 14, 15, 16) and not metrics.get('scan'):
         return 'Попробуй использовать радар scan во время выполнения программы.'
     if level == 3 and not {'variables_set', 'variables_get'}.issubset(types):
         return 'Исследуй использование переменной для направления.'
@@ -39,13 +39,13 @@ def concept_error(level, xml, metrics):
         return lesson_four_problem(root)
     if level == 6 and (not metrics.get('speed') or not types.intersection(loops)):
         return 'Используй измерение скорости и цикл для ожидания.'
-    if level in (6, 7, 8, 9, 10, 11, 12, 13, 14, 15) and nested_loop_problem(root, level):
+    if level in (6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16) and nested_loop_problem(root, level):
         return nested_loop_problem(root, level)
-    if level in (10, 11) and (not metrics.get('getX') or not metrics.get('getY') or not types.intersection(loops)):
+    if level in (11, 12) and (not metrics.get('getX') or not metrics.get('getY') or not types.intersection(loops)):
         return 'Используй обе координаты и циклы, чтобы управлять маршрутом.'
-    if level in (1, 2, 3, 4, 12, 14) and not metrics.get('cannon'):
+    if level in (1, 2, 3, 4, 13, 15) and not metrics.get('cannon'):
         return 'На этом уровне нужно исследовать стрельбу.'
-    if level in (5, 6, 7, 8, 9, 10, 11, 13, 15) and metrics.get('cannon'):
+    if level in (5, 6, 7, 8, 9, 10, 11, 12, 14, 16) and metrics.get('cannon'):
         return 'На этом уровне цели нужно протаранить без выстрелов.'
     return None
 

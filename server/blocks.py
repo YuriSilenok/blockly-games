@@ -104,13 +104,13 @@ def nested_loop_problem(root, level):
              ('controls_whileUntil', 'controls_repeat_ext', 'controls_repeat', 'controls_for', 'controls_forEach')]
     if level == 6 and len(loops) > 1:
         return 'На уровне 6 можно использовать не более одного активного цикла. Сейчас их: %s.' % len(loops)
-    if level == 9 and len(loops) > 2:
-        return 'На уровне 9 можно использовать не более двух циклов. Сейчас их: %s.' % len(loops)
-    if level == 10 and len(loops) > 3:
-        return 'На уровне 10 можно использовать не более трёх циклов. Сейчас их: %s.' % len(loops)
-    if level == 11 and len(loops) > 2:
-        return 'На уровне 11 можно использовать не более двух циклов. Сейчас их: %s.' % len(loops)
-    if level in (12, 13, 14, 15):
+    if level in (9, 10) and len(loops) > 2:
+        return 'На уровне %s можно использовать не более двух циклов. Сейчас их: %s.' % (level, len(loops))
+    if level == 11 and len(loops) > 3:
+        return 'На уровне 11 можно использовать не более трёх циклов. Сейчас их: %s.' % len(loops)
+    if level == 12 and len(loops) > 2:
+        return 'На уровне 12 можно использовать не более двух циклов. Сейчас их: %s.' % len(loops)
+    if level in (13, 14, 15, 16):
         conditionals = sum(node.get('type') == 'controls_if' for node in active_nodes(root))
         if len(loops) != 1 or conditionals != 1:
             return 'На уровне %s нужны ровно один цикл и один блок «Если». Сейчас циклов: %s, блоков «Если»: %s.' % (level, len(loops), conditionals)

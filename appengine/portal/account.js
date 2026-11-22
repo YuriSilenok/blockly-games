@@ -13,12 +13,12 @@
     document.getElementById('page-title').textContent='Привет, '+api.user.login+'.';
     document.getElementById('page-description').textContent='Твои эксперименты, команда и следующий шаг — всё здесь.';
     document.getElementById('name').textContent='Выполнен вход: '+api.user.login;
-    document.getElementById('progress').textContent=api.user.unlocked?'Обучение завершено. Можно вернуться к любому уровню или перейти к турнирам.':'Пройдено уровней: '+api.user.completed.length+' из 19. Продолжай исследовать, чтобы открыть турнир.';
-    document.getElementById('progress-count').textContent=api.user.completed.length+' / 19';
+    document.getElementById('progress').textContent=api.user.unlocked?'Обучение завершено. Можно вернуться к любому уровню или перейти к турнирам.':'Пройдено уровней: '+api.user.completed.length+' из 20. Продолжай исследовать, чтобы открыть турнир.';
+    document.getElementById('progress-count').textContent=api.user.completed.length+' / 20';
     document.getElementById('learning-progress').value=api.user.completed.length;
     document.getElementById('admin').hidden=api.user.role!=='admin';
-    var next=1;while(next<=19&&api.user.completed.includes(next))next++;
-    document.getElementById('continue').href='../pond-tutor.html?level='+(api.user.unlocked?1:Math.min(19,next));
+    var next=1;while(next<=20&&api.user.completed.includes(next))next++;
+    document.getElementById('continue').href='../pond-tutor.html?level='+(api.user.unlocked?1:Math.min(20,next));
     document.getElementById('continue').textContent=api.user.unlocked?'Вернуться к обучению ↗':'Продолжить обучение ↗';
     var tournaments=document.getElementById('graduated-tournaments');if(!tournaments){tournaments=document.createElement('a');tournaments.id='graduated-tournaments';tournaments.className='button secondary';tournaments.href='tournament.html';tournaments.textContent='Открыть турниры ↗';document.getElementById('continue').after(tournaments);}tournaments.hidden=!api.user.unlocked;
     var teamData=await api.request('/api/team');team=teamData.team;renderTeam();renderInvitations(teamData.invitations||[]);
@@ -32,7 +32,7 @@
     items.forEach(function(invitation){var row=document.createElement('p');row.textContent='Команда «'+invitation.team+'», капитан '+invitation.captain+' ';['accept','decline'].forEach(function(action){var button=document.createElement('button');button.textContent=action==='accept'?'Присоединиться':'Отклонить';button.className='secondary';button.onclick=function(){mutate(action,{invitation_id:invitation.id},button);};row.appendChild(button);});panel.appendChild(row);});
   }
   function renderTeam(){
-    document.getElementById('create-team').hidden=!!team;document.getElementById('team-current').hidden=!team;
+    document.getElementById('create-team').hidden=!!team||!api.user.unlocked;document.getElementById('team-current').hidden=!team;
     document.getElementById('team-size').textContent=team?team.members.length+' / 3 участника':'1–3 игрока';
     if(!team)return;
     var captain=team.captain_id===api.user.id;

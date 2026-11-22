@@ -38,6 +38,10 @@ def change(user_id, action, value):
                 c.execute("UPDATE team_invitations SET status='declined' WHERE user_id=? AND status='pending'", (user_id,))
             c.execute('UPDATE team_invitations SET status=? WHERE id=?', ('accepted' if action == 'accept' else 'declined', invitation['id']))
         elif action == 'create':
+            from .worker import LESSONS
+            passed = {r['level'] for r in c.execute('SELECT level FROM progress WHERE user_id=?', (user_id,))}
+            if any(level not in passed for level in range(1, LESSONS + 1)):
+                raise TeamProblem('Создать команду можно только после завершения обучения.')
             if team:
                 raise TeamProblem('Ты уже состоишь в команде.')
             name = str(value.get('name', '')).strip()

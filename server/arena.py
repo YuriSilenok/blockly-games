@@ -4,6 +4,7 @@ import re
 import time
 import json
 from .store import db
+from .control import RoundStopped
 
 
 def initialize(c):
@@ -49,7 +50,8 @@ def initialize(c):
         c.execute('ALTER TABLE rounds ADD COLUMN playback_speed REAL NOT NULL DEFAULT 1')
     for name, definition in [('mode', "TEXT NOT NULL DEFAULT 'survival'"), ('respawns', 'INTEGER NOT NULL DEFAULT 0'),
                              ('kill_target', 'INTEGER NOT NULL DEFAULT 0'), ('series_state', 'TEXT'),
-                             ('winner_team_id', 'INTEGER REFERENCES teams(id)'), ('end_reason', 'TEXT')]:
+                             ('winner_team_id', 'INTEGER REFERENCES teams(id)'), ('end_reason', 'TEXT'),
+                             ('stop_requested', 'INTEGER NOT NULL DEFAULT 0'), ('deleted', 'INTEGER NOT NULL DEFAULT 0')]:
         if name not in {r['name'] for r in c.execute('PRAGMA table_info(rounds)')}:
             c.execute('ALTER TABLE rounds ADD COLUMN %s %s' % (name, definition))
     for name in ('queue_order', 'disqualified', 'respawns_used'):
@@ -125,10 +127,10 @@ def submissions(c, tournament_id, user):
 
 def report(c, tournament_id):
     rounds = []
-    for row in c.execute('SELECT id,name,status,created,finished,mode,respawns,kill_target,winner_team_id,end_reason FROM rounds WHERE tournament_id=? ORDER BY id DESC', (tournament_id,)).fetchall():
+    for row in c.execute('SELECT id,name,status,created,finished,mode,respawns,kill_target,winner_team_id,end_reason,stop_requested FROM rounds WHERE tournament_id=? AND deleted=0 ORDER BY id DESC', (tournament_id,)).fetchall():
         item = dict(row)
         replay = c.execute('''SELECT m.id FROM matches m JOIN rounds r ON r.job_id=m.job_id
-          WHERE r.id=? AND m.status='done' AND EXISTS(SELECT 1 FROM match_replay_chunks c WHERE c.match_id=m.id)
+          WHERE r.id=? AND m.status IN ('done','stopped') AND EXISTS(SELECT 1 FROM match_replay_chunks c WHERE c.match_id=m.id)
           ORDER BY m.id DESC LIMIT 1''', (row['id'],)).fetchone()
         item['replay_match_id'] = replay['id'] if replay else None
         item['players'] = [dict(r) for r in c.execute('''SELECT p.team_id,COALESCE(p.team_name,t.name) AS team,
@@ -164,6 +166,8 @@ def run_round(job, duel):
         players = [dict(p) for p in c.execute('SELECT * FROM round_players WHERE round_id=? ORDER BY queue_order,team_id', (row['id'],))]
         c.execute("UPDATE rounds SET status='running' WHERE id=?", (row['id'],))
     try:
+        if row['stop_requested']:
+            raise RoundStopped()
         if row['mode'] == 'king':
             from .king import run_series
             return run_series(dict(row), players, job, duel)
@@ -180,6 +184,18 @@ def run_round(job, duel):
             winner_id = players[winner]['team_id'] if winner is not None else None
             c.execute("UPDATE rounds SET status='done',finished=?,winner_team_id=?,end_reason=? WHERE id=?", (time.time(), winner_id, result.get('end_reason'), row['id']))
         return {'message': 'Раунд завершён. Отчёт сохранён.', 'round_id': row['id']}
+    except RoundStopped as error:
+        with db() as c:
+            if error.snapshot:
+                selected = error.team_ids or [p['team_id'] for p in players]
+                for team_id, avatar in zip(selected, error.snapshot.get('avatars', [])):
+                    if row['mode'] == 'king':
+                        c.execute('UPDATE round_players SET health=?,respawns_used=respawns_used+? WHERE round_id=? AND team_id=?', (avatar['health'], avatar.get('generation', 0), row['id'], team_id))
+                    else:
+                        c.execute('UPDATE round_players SET health=?,kills=?,eliminated=?,respawns_used=? WHERE round_id=? AND team_id=?',
+                                  (avatar['health'], avatar.get('kills', 0), avatar.get('eliminated'), avatar.get('generation', 0), row['id'], team_id))
+            c.execute("UPDATE rounds SET status='stopped',finished=?,winner_team_id=NULL,end_reason='stopped' WHERE id=?", (time.time(), row['id']))
+        raise
     except Exception:
         with db() as c:
             c.execute("UPDATE rounds SET status='error',finished=? WHERE id=?", (time.time(), row['id']))
@@ -290,6 +306,27 @@ def post(h, user, path, value):
             name = 'Раунд %s' % number
             round_id = c.execute('INSERT INTO rounds(tournament_id,name,created,mode,respawns,kill_target) VALUES(?,?,?,?,?,?)', (tournament_id, name, time.time(), mode, respawns, target)).lastrowid
         h.send_json({'id': round_id}, 201)
+    elif re.fullmatch(r'/api/admin/rounds/\d+/(stop|delete)', path):
+        h.admin()
+        round_id = int(path.split('/')[-2])
+        with db() as c:
+            c.execute('BEGIN IMMEDIATE')
+            row = c.execute('''SELECT r.*,j.status AS job_status FROM rounds r LEFT JOIN jobs j ON j.id=r.job_id
+              WHERE r.id=? AND r.deleted=0''', (round_id,)).fetchone()
+            if not row:
+                raise h.problem('Раунд не найден.', 404)
+            if path.endswith('/delete'):
+                if row['status'] in ('queued', 'running') or row['job_status'] in ('queued', 'running'):
+                    raise h.problem('Сначала останови раунд и дождись остановки исполнителя.', 409)
+                c.execute('UPDATE rounds SET deleted=1 WHERE id=?', (round_id,))
+            else:
+                if row['status'] not in ('queued', 'running'):
+                    raise h.problem('Остановить можно только запущенный раунд или раунд в очереди.', 409)
+                c.execute('UPDATE rounds SET stop_requested=1 WHERE id=?', (round_id,))
+                if row['job_status'] != 'running':
+                    c.execute("UPDATE jobs SET status='cancelled',result=? WHERE id=?", (json.dumps({'message': 'Раунд остановлен администратором.'}, ensure_ascii=False), row['job_id']))
+                    c.execute("UPDATE rounds SET status='stopped',finished=?,end_reason='stopped' WHERE id=?", (time.time(), round_id))
+        h.send_json({'ok': True})
     elif re.fullmatch(r'/api/admin/rounds/\d+/resume', path):
         h.admin()
         round_id = int(path.split('/')[-2])
@@ -297,7 +334,7 @@ def post(h, user, path, value):
             c.execute('BEGIN IMMEDIATE')
             row = c.execute('''SELECT r.*,t.status AS tournament_status,j.status AS job_status FROM rounds r
               JOIN tournaments t ON t.id=r.tournament_id JOIN jobs j ON j.id=r.job_id WHERE r.id=?''', (round_id,)).fetchone()
-            if not row or row['mode'] != 'king' or row['status'] != 'error' or row['job_status'] != 'error' or row['tournament_status'] == 'finished':
+            if not row or row['deleted'] or row['mode'] != 'king' or row['status'] != 'error' or row['job_status'] != 'error' or row['tournament_status'] == 'finished':
                 raise h.problem('Продолжить можно только прерванную серию незавершённого турнира.', 409)
             c.execute("UPDATE jobs SET status='queued',result=NULL WHERE id=?", (row['job_id'],))
             c.execute("UPDATE rounds SET status='queued',finished=NULL,end_reason=NULL WHERE id=?", (round_id,))
@@ -308,7 +345,7 @@ def post(h, user, path, value):
         with db() as c:
             c.execute('BEGIN IMMEDIATE')
             row = c.execute('SELECT r.*,t.status AS tournament_status FROM rounds r JOIN tournaments t ON t.id=r.tournament_id WHERE r.id=?', (round_id,)).fetchone()
-            if not row or row['status'] != 'draft' or row['tournament_status'] == 'finished':
+            if not row or row['deleted'] or row['status'] != 'draft' or row['tournament_status'] == 'finished':
                 raise h.problem('Менять состав и запускать можно только подготовленный раунд незавершённого турнира.', 409)
             if path.endswith('/teams'):
                 team_ids = value.get('team_ids', [])

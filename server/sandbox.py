@@ -182,11 +182,11 @@ def admin_replay(h, path):
     parts = path.split('/')
     match_id = int(parts[4])
     with db() as c:
-        match = c.execute('''SELECT m.* FROM matches m JOIN jobs j ON j.id=m.job_id
-          WHERE m.id=? AND j.kind IN ('round','tournament')''', (match_id,)).fetchone()
+        match = c.execute('''SELECT m.* FROM matches m JOIN jobs j ON j.id=m.job_id LEFT JOIN rounds r ON r.job_id=j.id
+          WHERE m.id=? AND j.kind IN ('round','tournament') AND COALESCE(r.deleted,0)=0''', (match_id,)).fetchone()
         if not match:
             raise h.problem('Запись боя недоступна.', 404)
-        if match['status'] != 'done':
+        if match['status'] not in ('done', 'stopped'):
             raise h.problem('Запись доступна после завершения боя.', 409)
         if len(parts) == 8:
             row = c.execute('SELECT payload FROM match_replay_chunks WHERE match_id=? AND chunk_index=?', (match_id, int(parts[7]))).fetchone()
@@ -198,7 +198,7 @@ def admin_replay(h, path):
             if not chunks:
                 raise h.problem('Этот бой прошёл до включения записи. Повтор недоступен.', 404)
             result = json.loads(match['result'])
-            h.send_json({'id': match_id, 'title': match['title'], 'duration': result['time'],
+            h.send_json({'id': match_id, 'title': match['title'] + (' · Остановлен администратором' if match['status'] == 'stopped' else ''), 'duration': result['time'],
                          'visuals': result.get('replay_version', 0) >= 2, 'chunks': chunks})
 
 

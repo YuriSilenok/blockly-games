@@ -53,7 +53,7 @@
     var note=document.createElement('p');note.className='muted';note.textContent='«Выбыл» — номер выбытия. Оставшиеся к концу боя утки получают одинаковый следующий номер.';target.appendChild(note);
     var scroll=document.createElement('div');scroll.className='table-scroll';var table=document.createElement('table'),head=table.createTHead().insertRow();
     ['Команда','Алгоритм','Выбыл','Здоровье','Потоплений'].forEach(function(label){var th=document.createElement('th');th.scope='col';th.textContent=label;head.appendChild(th);});
-    var states={draft:'Подготовка',queued:'В очереди',running:'Идёт бой',done:'Завершён',error:'Не завершён'};
+    var states={draft:'Подготовка',queued:'В очереди',running:'Идёт бой',done:'Завершён',error:'Не завершён',stopped:'Остановлен'};
     rounds.forEach(function(round){
       var group=table.createTBody(),heading=group.insertRow(),label=document.createElement('th');label.colSpan=5;label.scope='rowgroup';label.className='round-group-heading';heading.appendChild(label);
       var groupHeader=document.createElement('div'),groupContent=document.createElement('div'),groupActions=document.createElement('div'),groupTitle=document.createElement('strong');groupHeader.className='round-group-top';groupContent.className='round-group-content';groupActions.className='round-group-actions';groupTitle.textContent=round.name+' · '+(states[round.status]||round.status);groupContent.appendChild(groupTitle);groupHeader.appendChild(groupContent);groupHeader.appendChild(groupActions);label.appendChild(groupHeader);
@@ -63,12 +63,14 @@
       if(round.end_reason==='all_disqualified'){var noWinner=document.createElement('p');noWinner.textContent='Все участники дисквалифицированы. Победителя нет.';groupContent.appendChild(noWinner);}
       if(round.end_reason==='no_opponents'){var noGoal=document.createElement('p');noGoal.textContent='Соперников больше нет, заданное число потоплений не достигнуто. Победителя нет.';groupContent.appendChild(noGoal);}
       if(round.end_reason==='idle'&&!winner){var idle=document.createElement('p');idle.textContent='Бой завершён после минуты без урона, победитель не определён.';groupContent.appendChild(idle);}
+      if(round.status==='stopped'){var stopped=document.createElement('p');stopped.textContent='Остановлен администратором. Победитель не назначается.';groupContent.appendChild(stopped);}
       if(options&&options.onReplay&&round.replay_match_id){
         var boutSelect=null;
         if(round.mode==='king'&&round.bouts&&round.bouts.length){boutSelect=document.createElement('select');boutSelect.setAttribute('aria-label','Поединок для просмотра');round.bouts.forEach(function(bout){var option=new Option('Бой '+bout.sequence,bout.match_id);option.title=bout.left_name+' — '+bout.right_name;boutSelect.add(option);});boutSelect.value=String(round.bouts[round.bouts.length-1].match_id);groupActions.appendChild(boutSelect);}
         var replay=document.createElement('button');replay.className='secondary';replay.textContent='Смотреть запись';replay.onclick=function(){options.onReplay(boutSelect?Number(boutSelect.value):round.replay_match_id);};groupActions.appendChild(replay);
       }
       if(options&&options.onResume&&round.mode==='king'&&round.status==='error'){var resume=document.createElement('button');resume.textContent='Продолжить прерванную серию';resume.onclick=async function(){resume.disabled=true;try{await options.onResume(round.id);}finally{resume.disabled=false;}};groupActions.appendChild(resume);}
+      if(options&&options.onDelete&&['done','error','stopped'].includes(round.status)){var remove=document.createElement('button');remove.className='quiet danger';remove.textContent='Удалить раунд';remove.onclick=async function(){remove.disabled=true;try{await options.onDelete(round.id);}finally{remove.disabled=false;}};groupActions.appendChild(remove);}
       var players=round.players.length?round.players.slice().sort(function(a,b){return (b.eliminated==null?-1:b.eliminated)-(a.eliminated==null?-1:a.eliminated)||a.team.localeCompare(b.team,'ru');}):[{team:'Состав не выбран'}];
       players.forEach(function(player){var row=group.insertRow();if(api.user&&player.team_id===api.user.team_id)row.className='my-team';
         var health=player.health==null?'—':(player.health>0&&player.health<.001?'<0,001':Number(player.health.toFixed(3)).toLocaleString('ru-RU'))+' ХП';
@@ -79,7 +81,7 @@
         var detailRow=group.insertRow(),detailCell=detailRow.insertCell();detailCell.colSpan=5;
         var details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Поединки серии: '+round.bouts.length;details.appendChild(summary);var list=document.createElement('ol');list.className='round-bout-list';
         round.bouts.forEach(function(bout){var entry=document.createElement('li'),result=bout.result,winning=bout.winner_team===bout.left_team?bout.left_name:bout.right_name;
-          entry.textContent='Бой '+bout.sequence+': '+bout.left_name+' — '+bout.right_name+' · ХП '+result.health.map(function(value){return Number(value.toFixed(3)).toLocaleString('ru-RU');}).join(' : ')+' · счёт '+result.scores.join(' : ')+(bout.winner_team?' · победитель: '+winning:result.full_draw?' · 100:100, бездействие '+result.idle_streaks.join(' : '):' · равное ХП, обе команды в конец очереди')+(result.disqualified.length?' · дисквалифицированы: '+result.disqualified.map(function(id){return id===bout.left_team?bout.left_name:bout.right_name;}).join(', '):'');
+          entry.textContent='Бой '+bout.sequence+': '+bout.left_name+' — '+bout.right_name+' · ХП '+result.health.map(function(value){return Number(value.toFixed(3)).toLocaleString('ru-RU');}).join(' : ')+' · счёт '+result.scores.join(' : ')+(result.stopped?' · остановлен администратором, очки не начислены':bout.winner_team?' · победитель: '+winning:result.full_draw?' · 100:100, бездействие '+result.idle_streaks.join(' : '):' · равное ХП, обе команды в конец очереди')+(result.disqualified.length?' · дисквалифицированы: '+result.disqualified.map(function(id){return id===bout.left_team?bout.left_name:bout.right_name;}).join(', '):'');
           list.appendChild(entry);
         });details.appendChild(list);detailCell.appendChild(details);
       }

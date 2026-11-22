@@ -2,6 +2,7 @@
 import json
 import time
 from .store import db
+from .control import RoundStopped
 
 
 def run_series(round_row, players, job, duel):
@@ -16,6 +17,9 @@ def run_series(round_row, players, job, duel):
     if target < 1:
         raise ValueError('Для серии нужно указать число потоплений (побед).')
     while len(state['queue']) >= 2 and max(state['points'].values()) < target:
+        with db() as c:
+            if c.execute('SELECT stop_requested FROM rounds WHERE id=?', (round_row['id'],)).fetchone()['stop_requested']:
+                raise RoundStopped()
         left, right = state['queue'][:2]
         remaining = state['queue'][2:]
         sequence = state['sequence'] + 1
@@ -27,11 +31,21 @@ def run_series(round_row, players, job, duel):
             result = dict(json.loads(saved['result']), match_id=saved['id'])
         else:
             starts = positions(2)
-            result = duel({
-                'avatars': [dict(name=by_id[team]['team_name'], code=by_id[team]['code'], x=point[0], y=point[1], series_score=state['points'][str(team)]) for team, point in zip((left, right), starts)],
-                'no_damage_seconds': 60, 'realtime': True, 'record_replay': True,
-                'playback_speed': round_row['playback_speed'], 'respawns': round_row['respawns'],
-            }, job['id'], title)
+            try:
+                result = duel({
+                    'avatars': [dict(name=by_id[team]['team_name'], code=by_id[team]['code'], x=point[0], y=point[1], series_score=state['points'][str(team)]) for team, point in zip((left, right), starts)],
+                    'no_damage_seconds': 60, 'realtime': True, 'record_replay': True,
+                    'playback_speed': round_row['playback_speed'], 'respawns': round_row['respawns'],
+                }, job['id'], title)
+            except RoundStopped as error:
+                error.team_ids = (left, right)
+                if error.snapshot:
+                    partial = {'health': [a['health'] for a in error.snapshot['avatars']], 'scores': [state['points'][str(left)], state['points'][str(right)]],
+                               'full_draw': False, 'idle_streaks': [state['idle'][str(left)], state['idle'][str(right)]], 'disqualified': [], 'stopped': True}
+                    with db() as c:
+                        c.execute('INSERT INTO round_bouts(round_id,sequence,match_id,left_team,right_team,winner_team,result) VALUES(?,?,?,?,?,NULL,?)',
+                                  (round_row['id'], sequence, error.snapshot['match_id'], left, right, json.dumps(partial, ensure_ascii=False)))
+                raise
         a, b = result['avatars']
         difference = a['health'] - b['health']
         winner = left if difference > .0001 else right if difference < -.0001 else None

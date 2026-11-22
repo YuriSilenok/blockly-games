@@ -15,6 +15,7 @@ from .blocks import block_errors, active_nodes, number_count, scan_in_cannon, le
 from . import challenges
 from . import arena
 from . import sandbox
+from .control import RoundStopped
 
 LESSONS = 20
 _live_lock = threading.Lock()
@@ -70,13 +71,26 @@ def duel(spec, job_id, title):
                                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, text=True, encoding='utf-8')
     lines = queue.Queue(maxsize=1500)
+    reader_stop = threading.Event()
 
     def read_output():
         try:
             for line in process.stdout:
-                lines.put(line)
+                while not reader_stop.is_set():
+                    try:
+                        lines.put(line, timeout=.2)
+                        break
+                    except queue.Full:
+                        continue
+                if reader_stop.is_set():
+                    break
         finally:
-            lines.put(None)
+            while not reader_stop.is_set():
+                try:
+                    lines.put(None, timeout=.2)
+                    break
+                except queue.Full:
+                    continue
 
     thread = threading.Thread(target=read_output, daemon=True)
     thread.start()
@@ -100,10 +114,21 @@ def duel(spec, job_id, title):
         replay_index += 1
 
     started = time.monotonic()
+    stop_check_at = 0
+
+    def check_stop():
+        if spec.get('realtime'):
+            with db() as c:
+                row = c.execute('SELECT stop_requested FROM rounds WHERE job_id=?', (job_id,)).fetchone()
+            if row and row['stop_requested']:
+                raise RoundStopped(snapshot)
     try:
         process.stdin.write(json.dumps(spec, ensure_ascii=False) + '\n')
         process.stdin.close()
         while True:
+            if time.monotonic() >= stop_check_at:
+                check_stop()
+                stop_check_at = time.monotonic() + .2
             if not spec.get('no_damage_seconds') and time.monotonic() - started > (int(spec.get('seconds', 60)) + 100):
                 raise RuntimeError('Превышено время выполнения боя')
             try:
@@ -125,6 +150,7 @@ def duel(spec, job_id, title):
             if not spec.get('record_replay') or snapshot.get('done') or round(snapshot['time'] * 50) % 5 == 0:
                 with db() as c:
                     c.execute('UPDATE matches SET snapshot=? WHERE id=?', (json.dumps(snapshot), match_id))
+        check_stop()
         process.wait(timeout=5)
         if process.returncode:
             print('Battle runner exited: job=%s match=%s returncode=%s game_time=%s' % (job_id, match_id, process.returncode, snapshot.get('time') if snapshot else None), file=sys.stderr, flush=True)
@@ -135,14 +161,31 @@ def duel(spec, job_id, title):
         with db() as c:
             c.execute("UPDATE matches SET status='done',result=? WHERE id=?", (json.dumps(snapshot), match_id))
         return dict(snapshot, match_id=match_id)
+    except RoundStopped as error:
+        if process.poll() is None:
+            process.kill()
+        if snapshot:
+            stopped = dict(snapshot, done=True, winner=None, end_reason='stopped', match_id=match_id)
+            if spec.get('record_replay'):
+                if replay_frames and replay_frames[-1]['time'] == stopped['time']:
+                    replay_frames[-1] = stopped
+                else:
+                    replay_frames.append(stopped)
+                flush_replay()
+            error.snapshot = stopped
+        with db() as c:
+            c.execute("UPDATE matches SET status='stopped',snapshot=?,result=?,failure=NULL WHERE id=?", (json.dumps(error.snapshot) if error.snapshot else None, json.dumps(error.snapshot) if error.snapshot else None, match_id))
+        raise
     except Exception as error:
         with db() as c:
             c.execute("UPDATE matches SET status='error',failure=? WHERE id=?", (str(error)[:300], match_id))
         raise
     finally:
+        reader_stop.set()
         if process.poll() is None:
             process.kill()
         process.wait(timeout=5)
+        thread.join(timeout=1)
         process.stdout.close()
         process.stderr.close()
 
@@ -271,6 +314,9 @@ def work(stop):
             else:
                 result = {'accepted': False, 'message': 'Автоматическое ранжирование заменено раундами. Сохрани и заяви алгоритм в новой библиотеке.'}
             status = 'done'
+        except RoundStopped as error:
+            result = {'message': str(error)}
+            status = 'cancelled'
         except Exception as error:
             result = {'message': str(error)[:300] or 'Ошибка выполнения боя'}
             status = 'error'

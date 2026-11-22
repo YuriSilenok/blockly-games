@@ -108,7 +108,7 @@ window.PondBattlePlayer=function(options){
     if(liveQueue.length>150)liveQueue.splice(0,liveQueue.length-150);
     var frame=liveQueue[liveQueue.length-1];if(!frame)return;
     var failed=match.status==='error'||match.status==='interrupted';
-    if(liveMode)byId('replay-title').textContent=match.title+' · '+frame.time.toFixed(1)+' с'+(match.status==='running'?' · Прямой показ':failed?' · Бой прерван':' · Бой завершён');
+    if(liveMode)byId('replay-title').textContent=match.title+' · '+frame.time.toFixed(1)+' с'+(match.status==='running'?' · Прямой показ':match.status==='stopped'?' · Остановлен администратором':failed?' · Бой прерван':' · Бой завершён');
     if(liveMode&&failed&&reportedFailure!==match.id){reportedFailure=match.id;message(match.failure||'Бой прерван из-за ошибки сервера. Завершённые поединки сохранены; серию можно продолжить из статистики.');}
   };
   this.followLive=function(){++replayRequest;liveMode=true;liveTime=null;liveDirty=true;opening=false;playing=false;pendingSeek=null;liveControls.appendChild(speedSelect);liveControls.hidden=false;speedSelect.disabled=liveRunning;setBuffering(false);pondView.reset();byId('replay-controls').hidden=true;byId('replay-title').textContent='Ожидание раунда';};

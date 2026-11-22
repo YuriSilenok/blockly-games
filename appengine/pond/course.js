@@ -16,6 +16,25 @@ window.installPondCourse = function () {
   var runtimeFailure='',programFinished=false,idleReported=false,consoleSolution=null;
   var loops = ['controls_whileUntil','controls_repeat_ext','controls_repeat','controls_for','controls_forEach'];
   function key(level) { return 'pond-course-v7:' + (portal.user ? portal.user.id : 'preview') + ':' + level; }
+  var draftTimer=null,lastDraft=null,draftWarning=false;
+  function saveDraft() {
+    clearTimeout(draftTimer);draftTimer=null;
+    if(!ready||!portal.user)return;
+    try{
+      var xml=Jm();
+      if(xml!==lastDraft){localStorage.setItem(key(nm)+':draft',xml);lastDraft=xml;}
+      draftWarning=false;
+    }catch(error){
+      if(!draftWarning)report('Не удалось сохранить черновик в браузере. Проверь, разрешено ли сайту сохранять данные и достаточно ли свободного места.','error');
+      draftWarning=true;
+    }
+  }
+  function scheduleDraft(event) {
+    if(!ready||(event&&event.type==='ui'))return;
+    clearTimeout(draftTimer);draftTimer=setTimeout(saveDraft,400);
+  }
+  window.addEventListener('pagehide',saveDraft);
+  document.addEventListener('visibilitychange',function(){if(document.hidden)saveDraft();});
   function completed(level) { return portal.user ? portal.user.completed.indexOf(level) !== -1 : !!localStorage.getItem(key(level)); }
   pm = function (level) { return completed(level) ? localStorage.getItem(key(level)) || '<xml></xml>' : null; };
   // A new level starts empty; only this level's saved work is restored below.
@@ -85,7 +104,7 @@ window.installPondCourse = function () {
     if((nm===9||nm===10))toolbox.querySelector('category[name="'+X('Games.pond',false)+'"]').insertAdjacentHTML('beforeend','<block type="pond_health"></block>');
     if(allowed)Array.from(toolbox.querySelectorAll('block')).forEach(function(b){if(allowed.indexOf(b.getAttribute('type'))===-1)b.remove();});
     if(nm===8||(nm===9||nm===10)||nm===12||nm>=17){var category=toolbox.querySelector('category[name="'+X('Games.catLoops',false)+'"]');category.insertAdjacentHTML('beforeend','<block type="controls_repeat_ext"><value name="TIMES"><shadow type="pond_math_number"><field name="NUM">4</field></shadow></value></block>');}
-    if(nm>=17){var math=toolbox.querySelector('category[name="'+X('Games.catMath',false)+'"]');if(math)math.insertAdjacentHTML('beforeend','<block type="pond_math_arithmetic"><value name="A"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value><value name="B"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value></block>');}
+    if(nm===10||nm>=17){var math=toolbox.querySelector('category[name="'+X('Games.catMath',false)+'"]');if(math)math.insertAdjacentHTML('beforeend','<block type="pond_math_arithmetic"><value name="A"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value><value name="B"><shadow type="pond_math_number"><field name="NUM">1</field></shadow></value></block>');}
     if(nm>=17)PondToolbox.complete(toolbox);
     Array.from(toolbox.querySelectorAll('category')).forEach(function(c){if(c.getAttribute('custom')){if(nm===5||nm===6||nm===11)c.remove();}else if(!c.querySelector('block'))c.remove();});
     PondFeedback.place(container);
@@ -207,15 +226,16 @@ window.installPondCourse = function () {
     }finally{pending=false;consoleButton.disabled=false;}
   }
   async function quote(){
-    var map={cannon:['cannon'],scan:['scan'],variables:['Переменные'],log:['log'],swim:['swim'],stop:['stop'],speed:['speed'],health:['health'],while:['while'],compare:['Сравнение'],repeat:['Повторить'],change:['Увеличить значение переменной'],coordinates:['getX','getY'],if:['if'],logic:['и/или','не','Логические значения']};
+    var map={arithmetic:['Арифметика'],cannon:['cannon'],scan:['scan'],variables:['Переменные'],log:['log'],swim:['swim'],stop:['stop'],speed:['speed'],health:['health'],while:['while'],compare:['Сравнение'],repeat:['Повторить'],change:['Увеличить значение переменной'],coordinates:['getX','getY'],if:['if'],logic:['и/или','не','Логические значения']};
     var names=[];
     lesson.concepts.forEach(function(concept){(map[concept]||[]).forEach(function(name){names.push(PondRussian.label(name));});});
     W('course-new-blocks').hidden=!names.length;
     W('course-quote').textContent=names.length?(names.length===1?'Добавлен новый блок: ':'Добавлены новые блоки: ')+names.map(function(name){return '«'+name+'»';}).join(', ')+'.':'';
     if(!names.length)return;
     var images=W('course-block-images');
-    var sections={cannon:['Выстрел'],scan:['Поиск противника'],variables:['Присваивание','Получение значения'],log:['Отладка'],swim:['Движение'],stop:['Остановка'],speed:['Скорость'],health:['Здоровье'],while:['Цикл «пока»'],compare:['Сравнения'],repeat:['Цикл «повторить»'],change:['Увеличение значения'],coordinates:['Координаты'],if:['Условия'],logic:['«И» и «или»','Отрицание','Логические значения']};
+    var sections={arithmetic:['Арифметика'],cannon:['Выстрел'],scan:['Поиск противника'],variables:['Присваивание','Получение значения'],log:['Отладка'],swim:['Движение'],stop:['Остановка'],speed:['Скорость'],health:['Здоровье'],while:['Цикл «пока»'],compare:['Сравнения'],repeat:['Цикл «повторить»'],change:['Увеличение значения'],coordinates:['Координаты'],if:['Условия'],logic:['«И» и «или»','Отрицание','Логические значения']};
     var descriptions={
+      'Арифметика':'Выполняет сложение, вычитание, умножение или деление. Вход: два числа и выбранная операция. Возвращает результат вычисления.',
       'Выстрел':'Стреляет в заданном направлении. Параметры: угол в градусах и дальность от 0 до 70. Блок команды не возвращает значение.',
       'Поиск противника':'Измеряет расстояние до ближайшей утки в указанном направлении. Параметр: угол в градусах. Возвращает расстояние или бесконечность, если цели нет.',
       'Присваивание':'Сохраняет значение в переменной. Выбери переменную и задай значение. Блок команды не возвращает значение.',
@@ -261,7 +281,8 @@ window.installPondCourse = function () {
     W('course-console-form').onsubmit=async function(event){event.preventDefault();if(!consoleSolution||pending)return;W('course-console-error').textContent='Проверяем число и сохраняем результат…';W('course-console-answer').removeAttribute('aria-invalid');await saveVictory(consoleSolution,W('course-console-answer').value.trim());};
     W('course-reset').onclick=async function(){
       if(!confirm('Сбросить пройденные уровни обучения? Турнирные результаты сохранятся.'))return;
-      try{if(portal.user)await portal.request('/api/progress/reset',{});for(var i=1;i<=mm;i++){localStorage.removeItem('pond-course-v6:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v6:'+portal.user.id+':'+i+':draft');localStorage.removeItem(key(i));localStorage.removeItem(key(i)+':draft');localStorage.removeItem(key(i)+':migrated');localStorage.removeItem('pond-course:'+portal.user.id+':'+i);localStorage.removeItem('pond-course:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v2:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v2:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v5:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v5:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v4:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v4:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v3:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v3:'+portal.user.id+':'+i+':draft');}location.href='?level=1';}catch(error){report(error.message);}
+      ready=false;clearTimeout(draftTimer);
+      try{if(portal.user)await portal.request('/api/progress/reset',{});for(var i=1;i<=mm;i++){localStorage.removeItem('pond-course-v6:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v6:'+portal.user.id+':'+i+':draft');localStorage.removeItem(key(i));localStorage.removeItem(key(i)+':draft');localStorage.removeItem(key(i)+':migrated');localStorage.removeItem('pond-course:'+portal.user.id+':'+i);localStorage.removeItem('pond-course:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v2:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v2:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v5:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v5:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v4:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v4:'+portal.user.id+':'+i+':draft');localStorage.removeItem('pond-course-v3:'+portal.user.id+':'+i);localStorage.removeItem('pond-course-v3:'+portal.user.id+':'+i+':draft');}location.href='?level=1';}catch(error){ready=true;report(error.message);}
     };
     quote();await portal.ready;
     if(!portal.user){portal.signIn();return;}
@@ -281,6 +302,9 @@ window.installPondCourse = function () {
       for(var i=1;i<=mm;i++){var node=W('level'+i);if(node)node.classList.toggle('level_done',completed(i));}
       report('Уровень '+nm+' · '+lesson.title+'\nПрогресс сохраняется для '+portal.user.login+'.');
       ready=true;
+      // xg is the retained bundle's workspace change-listener adapter.
+      xg(li,scheduleDraft);
+      saveDraft();
     }catch(error){report(['TypeError','ReferenceError','SyntaxError','RangeError'].includes(error.name)?PondFeedback.runtime(error):error.message,'error');}
   });
 };

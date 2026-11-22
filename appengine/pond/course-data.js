@@ -34,7 +34,7 @@
   var tougherRam=JSON.parse(JSON.stringify(lessons[8]));
   tougherRam.title='Разная прочность целей';
   tougherRam.task='Протарань все цели. У красной цели осталось 10 ХП, у зелёной — 20 ХП, у чёрной — 40 ХП. В активной программе допускается не более двух циклов. Стрелять нельзя.';
-  tougherRam.concepts=[];
+  tougherRam.concepts=['arithmetic'];
   tougherRam.scene[2].damage=80;tougherRam.scene[3].damage=60;
   lessons.splice(9,0,tougherRam);
   all.forEach(function (id) {

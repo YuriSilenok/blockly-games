@@ -44,6 +44,8 @@ def initialize(c):
     ''')
     if 'archived' not in {r['name'] for r in c.execute('PRAGMA table_info(algorithms)')}:
         c.execute('ALTER TABLE algorithms ADD COLUMN archived INTEGER NOT NULL DEFAULT 0')
+    if 'playback_speed' not in {r['name'] for r in c.execute('PRAGMA table_info(rounds)')}:
+        c.execute('ALTER TABLE rounds ADD COLUMN playback_speed REAL NOT NULL DEFAULT 1')
 
 
 def invitations(user_id):
@@ -128,7 +130,8 @@ def run_round(job, duel):
     try:
         starts = positions(len(players))
         result = duel({'avatars': [dict(name=p['team_name'], code=p['code'], x=xy[0], y=xy[1])
-                                  for p, xy in zip(players, starts)], 'no_damage_seconds': 60, 'realtime': True, 'record_replay': True}, job['id'], row['name'])
+                                  for p, xy in zip(players, starts)], 'no_damage_seconds': 60, 'realtime': True,
+                       'playback_speed': row['playback_speed'], 'record_replay': True}, job['id'], row['name'])
         with db() as c:
             for p, avatar in zip(players, result['avatars']):
                 c.execute('UPDATE round_players SET eliminated=?,health=?,kills=?,error=? WHERE round_id=? AND team_id=?',
@@ -264,6 +267,9 @@ def post(h, user, path, value):
                         raise h.problem('У выбранной команды нет основного алгоритма.')
                     c.execute('INSERT INTO round_players(round_id,team_id) VALUES(?,?)', (round_id, team_id))
             else:
+                speed = value.get('speed', 1)
+                if isinstance(speed, bool) or speed not in (.1, .25, .5, 1, 2):
+                    raise h.problem('Выбери скорость боя: 0,1×, 0,25×, 0,5×, 1× или 2×.')
                 players = c.execute('SELECT team_id FROM round_players WHERE round_id=? ORDER BY team_id', (round_id,)).fetchall()
                 if len(players) < 2:
                     raise h.problem('Добавь в раунд хотя бы две команды.')
@@ -278,7 +284,7 @@ def post(h, user, path, value):
                               (saved['id'], saved['team'], saved['name'], saved['code'], saved['xml'], round_id, p['team_id']))
                 job_id = c.execute("INSERT INTO jobs(user_id,tournament_id,kind,code,xml,created) VALUES(?,?,'round','','',?)",
                                    (user['id'], row['tournament_id'], time.time())).lastrowid
-                c.execute("UPDATE rounds SET status='queued',job_id=? WHERE id=?", (job_id, round_id))
+                c.execute("UPDATE rounds SET status='queued',job_id=?,playback_speed=? WHERE id=?", (job_id, speed, round_id))
         h.send_json({'ok': True})
     else:
         raise h.problem('Адрес не найден.', 404)

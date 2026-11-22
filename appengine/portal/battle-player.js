@@ -4,9 +4,14 @@ window.PondBattlePlayer=function(options){
   var self=this,api=PondPortal,message=options.onError||function(){};
   options.element.innerHTML="<h2>\u0417\u0430\u043f\u0438\u0441\u044c \u0431\u043e\u044f</h2><p id=\"replay-title\">\u0412\u044b\u0431\u0435\u0440\u0438 \u043f\u0440\u043e\u0432\u0435\u0434\u0451\u043d\u043d\u044b\u0439 \u0431\u043e\u0439 \u0438\u0437 \u0441\u043f\u0438\u0441\u043a\u0430 \u043d\u0438\u0436\u0435.</p><canvas id=\"replay-pond\" width=\"400\" height=\"400\" aria-label=\"\u0412\u043e\u0441\u043f\u0440\u043e\u0438\u0437\u0432\u0435\u0434\u0435\u043d\u0438\u0435 \u0437\u0430\u043f\u0438\u0441\u0438 \u0441\u0435\u0440\u0432\u0435\u0440\u043d\u043e\u0433\u043e \u0431\u043e\u044f\"></canvas><div id=\"replay-controls\" hidden><div class=\"round-controls\"><button id=\"replay-play\" type=\"button\">\u0412\u043e\u0441\u043f\u0440\u043e\u0438\u0437\u0432\u0435\u0441\u0442\u0438</button><button id=\"replay-restart\" class=\"secondary\" type=\"button\">\u0421 \u043d\u0430\u0447\u0430\u043b\u0430</button><select id=\"replay-speed\" aria-label=\"\u0421\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u0432\u043e\u0441\u043f\u0440\u043e\u0438\u0437\u0432\u0435\u0434\u0435\u043d\u0438\u044f\"><option value=\"0.1\">0,1\u00d7</option><option value=\"0.25\">0,25\u00d7</option><option value=\"0.5\">0,5\u00d7</option><option value=\"1\" selected>1\u00d7</option><option value=\"2\">2\u00d7</option></select></div><label for=\"replay-seek\">\u041f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u0435 \u0432 \u0437\u0430\u043f\u0438\u0441\u0438</label><input id=\"replay-seek\" type=\"range\" min=\"0\" max=\"0\" step=\"0.02\" value=\"0\"><output id=\"replay-time\"></output><p id=\"replay-buffer\" class=\"muted\" role=\"status\" hidden>\u041f\u043e\u0434\u0433\u0440\u0443\u0436\u0430\u0435\u043c \u0437\u0430\u043f\u0438\u0441\u044c\u2026</p><ul id=\"replay-health\"></ul><p class=\"muted\">\u042d\u0442\u043e \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u044b\u0435 \u043a\u0430\u0434\u0440\u044b \u0440\u0430\u043d\u0435\u0435 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d\u043d\u043e\u0433\u043e \u0431\u043e\u044f. \u041f\u0440\u043e\u0441\u043c\u043e\u0442\u0440 \u0438 \u043f\u0435\u0440\u0435\u043c\u043e\u0442\u043a\u0430 \u043d\u0435 \u0437\u0430\u043f\u0443\u0441\u043a\u0430\u044e\u0442 \u043d\u043e\u0432\u0443\u044e \u0438\u0433\u0440\u0443 \u043d\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0435.</p></div>";
   var byId=function(id){return options.element.querySelector('#'+id);};
+  var speedSelect=byId('replay-speed'),speedHome=speedSelect.parentElement,liveControls=document.createElement('div'),startButton=null,canStart=false;
+  liveControls.className='round-controls';liveControls.hidden=true;options.element.insertBefore(liveControls,byId('replay-controls'));
+  if(options.onStart){startButton=document.createElement('button');startButton.textContent='Запустить игру';startButton.disabled=true;startButton.onclick=function(){options.onStart();};liveControls.appendChild(startButton);}
+  if(options.speedKey){var savedSpeed=localStorage.getItem(options.speedKey);if(Array.from(speedSelect.options).some(function(option){return option.value===savedSpeed;}))speedSelect.value=savedSpeed;}
+  speedSelect.onchange=function(){if(options.speedKey)localStorage.setItem(options.speedKey,speedSelect.value);};
   options.element.appendChild(byId('replay-health'));
   options.element.appendChild(byId('replay-buffer'));
-  var liveMode=false,liveQueue=[],liveTime=null,liveRunning=false,liveWaiting=false,liveDirty=false,liveId=null;
+  var liveMode=false,liveQueue=[],liveTime=null,liveRunning=false,liveWaiting=false,liveDirty=false,liveId=null,liveSpeed=1;
   var playback=null,time=0,playing=false,lastWall=0,dirty=false,buffering=false,lastControls=0,replayRequest=0,pendingSeek=null,opening=false;
   var canvas=byId('replay-pond'),pondView=new PondRenderer(canvas),colors=PondRenderer.colors;
   function background(){pondView.draw({time:0,avatars:[],missiles:[]});}
@@ -43,6 +48,7 @@ window.PondBattlePlayer=function(options){
   }
   function setBuffering(value){if(buffering===value)return;buffering=value;byId('replay-buffer').hidden=!value;}
   async function openReplay(id){
+    speedHome.appendChild(speedSelect);liveControls.hidden=true;speedSelect.disabled=false;
     liveMode=false;var request=++replayRequest;playing=false;dirty=false;pendingSeek=null;opening=true;setBuffering(true);byId('replay-title').textContent='Загружаем запись боя…';byId('replay-play').disabled=true;
     try{
       var record=await api.request(options.base+id+'/replay');if(request!==replayRequest)return;if(!record.chunks.length)throw Error('Запись боя не содержит кадров.');
@@ -73,15 +79,17 @@ window.PondBattlePlayer=function(options){
   background();requestAnimationFrame(tick);
 
   this.open=openReplay;
+  this.speed=function(){return Number(speedSelect.value);};
+  this.setStartEnabled=function(enabled){canStart=enabled;if(startButton)startButton.disabled=!enabled||liveRunning;};
   this.fetchLive=function(url){if(!loader)return api.request(url);return new Promise(function(resolve,reject){var id=++loaderSequence;loaderPending.set(id,{resolve:resolve,reject:reject,url:url,live:true});loader.postMessage({id:id,url:url,live:true});});};
   this.busy=function(){return playing||!!pendingSeek||opening||(liveMode&&(liveRunning||liveTime!==null&&liveQueue.length&&liveTime<liveQueue[liveQueue.length-1].time));};
   function drawLive(elapsed){
     if(!liveQueue.length)return;
     var first=liveQueue[0],last=liveQueue[liveQueue.length-1];
-    if(liveTime===null||liveTime<first.time){liveTime=Math.max(first.time,last.time-.5);liveDirty=true;}
-    if(liveWaiting&&liveRunning&&last.time-liveTime<.3){setBuffering(true);return;}
+    if(liveTime===null||liveTime<first.time){liveTime=Math.max(first.time,last.time-.5*liveSpeed);liveDirty=true;}
+    if(liveWaiting&&liveRunning&&last.time-liveTime<.3*liveSpeed){setBuffering(true);return;}
     liveWaiting=false;
-    var at=Math.min(last.time,liveTime+elapsed);
+    var at=Math.min(last.time,liveTime+elapsed*liveSpeed);
     if(at===last.time&&liveRunning)liveWaiting=true;
     setBuffering(liveWaiting);
     if(at===liveTime&&!liveDirty)return;
@@ -90,15 +98,18 @@ window.PondBattlePlayer=function(options){
   }
   this.live=function(match){
     if(!match)return;
-    if(liveId!==match.id){liveQueue=[];liveTime=null;liveId=match.id;liveWaiting=false;if(liveMode)pondView.reset();}
+    if(liveId!==match.id){liveQueue=[];liveTime=null;liveId=match.id;liveWaiting=false;if(liveMode){pondView.reset();if(match.status==='running'){speedSelect.value=String(match.playback_speed||1);if(options.speedKey)localStorage.setItem(options.speedKey,speedSelect.value);}}}
     liveRunning=match.status==='running';
+    liveSpeed=match.playback_speed||1;
+    if(liveMode)speedSelect.disabled=liveRunning;
+    if(startButton)startButton.disabled=!canStart||liveRunning;
     var frames=match.frames&&match.frames.length?match.frames:match.snapshot?[match.snapshot]:[];
     frames.forEach(function(frame){if(!liveQueue.length||frame.time>liveQueue[liveQueue.length-1].time){liveQueue.push(frame);liveDirty=true;}});
     if(liveQueue.length>150)liveQueue.splice(0,liveQueue.length-150);
     var frame=liveQueue[liveQueue.length-1];if(!frame)return;
     if(liveMode)byId('replay-title').textContent=match.title+' · '+frame.time.toFixed(1)+' с'+(match.status==='running'?' · Прямой показ':' · Бой завершён');
   };
-  this.followLive=function(){++replayRequest;liveMode=true;liveTime=null;liveDirty=true;opening=false;playing=false;pendingSeek=null;setBuffering(false);pondView.reset();byId('replay-controls').hidden=true;byId('replay-title').textContent='Ожидание раунда';};
-  this.clearLive=function(){liveQueue=[];liveTime=null;liveId=null;liveRunning=false;liveWaiting=false;if(liveMode){setBuffering(false);background();byId('replay-health').replaceChildren();byId('replay-title').textContent='Ожидание раунда';}};
+  this.followLive=function(){++replayRequest;liveMode=true;liveTime=null;liveDirty=true;opening=false;playing=false;pendingSeek=null;liveControls.appendChild(speedSelect);liveControls.hidden=false;speedSelect.disabled=liveRunning;setBuffering(false);pondView.reset();byId('replay-controls').hidden=true;byId('replay-title').textContent='Ожидание раунда';};
+  this.clearLive=function(){liveQueue=[];liveTime=null;liveId=null;liveRunning=false;liveWaiting=false;if(liveMode){speedSelect.disabled=false;setBuffering(false);background();byId('replay-health').replaceChildren();byId('replay-title').textContent='Ожидание раунда';}};
   document.addEventListener('visibilitychange',function(){lastWall=0;});
 };

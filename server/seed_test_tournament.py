@@ -15,17 +15,17 @@ from .worker import LESSONS
 def strategy(index):
     # Build the executable program and editor XML together, without compiling a client.
     specs = [
-        ('Круговой дозор', 0, 10, 'none', 1),
-        ('Обратный дозор', 180, -10, 'none', 1),
-        ('Точный поиск', 45, 5, 'none', 1),
-        ('Быстрый обзор', 90, 20, 'none', 1),
-        ('Двойной выстрел', 270, 15, 'none', 2),
-        ('Преследователь', 0, 10, 'approach', 1),
-        ('Обратное преследование', 180, -15, 'approach', 1),
-        ('Боковой манёвр', 90, 10, 'strafe', 1),
-        ('Обратный манёвр', 270, -10, 'strafe', 1),
-        ('Отход с огнём', 45, 15, 'retreat', 1),
-        ('Подвижная батарея', 135, -5, 'strafe', 2),
+        ('Круговой дозор', 0, 1, 'none', 3),
+        ('Обратный дозор', 180, -1, 'none', 3),
+        ('Точный поиск', 45, 1, 'none', 4),
+        ('Быстрый обзор', 90, 2, 'none', 3),
+        ('Двойной выстрел', 270, 2, 'none', 4),
+        ('Преследователь', 0, 1, 'approach', 3),
+        ('Обратное преследование', 180, -2, 'approach', 3),
+        ('Боковой манёвр', 90, 1, 'strafe', 3),
+        ('Обратный манёвр', 270, -1, 'strafe', 4),
+        ('Отход с огнём', 45, 2, 'retreat', 3),
+        ('Подвижная батарея', 135, -1, 'strafe', 4),
     ]
     title, start, step, movement, burst = specs[index - 1]
 
@@ -62,21 +62,25 @@ def strategy(index):
         shots.append(block('pond_swim', values={'DEGREE': variable('a')}))
         code_shots += 'swim(a); '
     elif movement in ('strafe', 'retreat'):
-        offset = 90 if movement == 'strafe' else 180
+        offset = 30 if movement == 'strafe' else -30
         shots.append(block('pond_swim', values={'DEGREE': add(variable('a'), number(offset))}))
         code_shots += 'swim(a + %s); ' % offset
+    else:
+        shots.append(block('pond_stop'))
+        code_shots += 'stop(); '
     condition = block('logic_compare', {'OP': 'LTE'}, {'A': variable('d'), 'B': number(70)})
     statements = {'DO0': chain(shots)}
     branch = block('controls_if', values={'IF0': condition}, statements=statements)
-    otherwise = ''
-    if movement != 'none':
-        mutation = ET.Element('mutation', {'else': '1'})
-        branch.insert(0, mutation)
-        ET.SubElement(branch, 'statement', name='ELSE').append(block('pond_swim', values={'DEGREE': variable('a')}))
-        otherwise = ' else { swim(a); }'
+    mutation = ET.Element('mutation', {'else': '1'})
+    branch.insert(0, mutation)
+    ET.SubElement(branch, 'statement', name='ELSE').append(block('pond_swim', values={'DEGREE': variable('a')}))
+    # Keep firing at a detected target, and approach targets beyond cannon range.
+    tracking = block('controls_whileUntil', {'MODE': 'WHILE'},
+                     {'BOOL': block('logic_compare', {'OP': 'LT'}, {'A': variable('d'), 'B': number(150)})},
+                     {'DO': chain([branch, assign('d', block('pond_scan', values={'DEGREE': variable('a')}))])})
     body = chain([
         assign('d', block('pond_scan', values={'DEGREE': variable('a')})),
-        branch,
+        tracking,
         assign('a', add(variable('a'), number(step))),
     ])
     loop = block('controls_whileUntil', {'MODE': 'WHILE'}, {'BOOL': block('logic_boolean', {'BOOL': 'TRUE'})}, {'DO': body})
@@ -89,7 +93,7 @@ def strategy(index):
     for field in root.iter('field'):
         if field.get('name') == 'VAR':
             field.set('id', field.text)
-    code = 'var a = %s, d;\nwhile (true) { d = scan(a); if (d <= 70) { %s}%s a = a + (%s); }\n' % (start, code_shots, otherwise, step)
+    code = 'var a = %s, d;\nwhile (true) { d = scan(a); while (d < 150) { if (d <= 70) { %s} else { swim(a); } d = scan(a); } a = a + (%s); }\n' % (start, code_shots, step)
     return title, code, ET.tostring(root, encoding='unicode')
 
 

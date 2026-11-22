@@ -13,9 +13,9 @@
   async function stopRound(id){if(stopPending||!id)return;if(!confirm('Остановить раунд? Текущий бой и дальнейшие поединки будут остановлены. Завершённые поединки и запись остановленного боя сохранятся.'))return;stopPending=true;stopButton.disabled=true;try{await api.request('/api/admin/rounds/'+id+'/stop',{});status.textContent='Остановка раунда запрошена. Дождись завершения исполнителя.';status.hidden=false;await table(true);}catch(error){fail(error);}finally{stopPending=false;}};
   function showLive(){player.followLive();document.getElementById('live').scrollIntoView({behavior:'smooth',block:'start'});}
   document.getElementById('follow-live').onclick=showLive;
-  function roundSettings(){return {mode:document.getElementById('round-mode').value,respawns:Number(document.getElementById('round-respawns').value),kill_target:document.getElementById('round-score-enabled').checked?Number(document.getElementById('round-kill-target').value):0};}
-  function syncSettings(){var king=document.getElementById('round-mode').value==='king_elimination',enabled=document.getElementById('round-score-enabled');enabled.disabled=king||Number(document.getElementById('round-respawns').value)===0;if(king)enabled.checked=false;else if(enabled.disabled)enabled.checked=false;document.getElementById('round-kill-target').disabled=!enabled.checked;enabled.closest('label').hidden=king;document.getElementById('round-kill-target').closest('label').hidden=king;}
-  ['round-mode','round-respawns','round-score-enabled'].forEach(function(id){document.getElementById(id).onchange=syncSettings;});syncSettings();
+  function roundSettings(){var king=document.getElementById('round-mode').value==='king';return {mode:king?'king':'survival',respawns:king?0:Number(document.getElementById('round-respawns').value),kill_target:king?Number(document.getElementById('round-kill-target').value):0};}
+  function syncSettings(){var king=document.getElementById('round-mode').value==='king',respawns=document.getElementById('round-respawns'),target=document.getElementById('round-kill-target');respawns.disabled=king;respawns.closest('label').hidden=king;target.disabled=!king;target.closest('label').hidden=!king;}
+  document.getElementById('round-mode').onchange=syncSettings;syncSettings();
   async function load(preferred) {
     var old = preferred?String(preferred):select.value||sessionStorage.getItem('pond-admin-tournament'); tournaments = (await api.request('/api/tournaments')).tournaments; select.replaceChildren();
     tournaments.forEach(function (t) { select.add(new Option(t.name, t.id)); }); if (old) select.value = old;
@@ -43,7 +43,7 @@
     data.rounds.forEach(function(round){
       if(['done','error','stopped'].includes(round.status))return;
       var box=document.createElement('section');box.className='round-editor';var title=document.createElement('h3');title.textContent=round.name;box.appendChild(title);
-      var modeInfo=document.createElement('p');modeInfo.className='muted';modeInfo.textContent=(round.mode==='king_elimination'?'Царь горы на вылет':isKing(round)?'Царь горы (прежние правила)':'Общий бой')+' · Возрождений: '+round.respawns+(round.kill_target?' · До '+round.kill_target+' потоплений (побед)':' · До последней утки');box.appendChild(modeInfo);
+      var modeInfo=document.createElement('p');modeInfo.className='muted';modeInfo.textContent=(round.mode==='king_elimination'?'Царь горы на вылет (прежние правила)':isKing(round)?(round.rules_version>=2?'Царь горы':'Царь горы (прежние правила)'):'Выживание')+(isKing(round)&&round.rules_version>=2?'':' · Респавнов: '+round.respawns)+(round.kill_target?' · До '+round.kill_target+(round.rules_version>=2?' потоплений':' потоплений (побед)'):' · До последней утки');box.appendChild(modeInfo);
       if(round.status==='draft'){
         var hint=document.createElement('p');hint.textContent=isKing(round)?'Выбери от 2 до 64 команд. Порядок списка задаёт очередь, стрелками можно его изменить.':'Выбери от двух до четырёх команд. Утки стартуют в углах с отступом 10.';box.appendChild(hint);
         var choices=document.createElement('div');choices.className='team-choices';
@@ -94,7 +94,7 @@
     var last=currentData&&currentData.rounds[0],t=tournaments.find(function(t){return String(t.id)===select.value;});
     if(repeatBusy||!last||!t||t.status==='finished'||!['done','error','stopped'].includes(last.status))return;
     repeatBusy=true;this.disabled=true;
-    try{var latest=await api.request('/api/arena/tournaments/'+t.id);last=latest.rounds[0];if(!last||!['done','error','stopped'].includes(last.status))throw Error('Последний раунд ещё не завершён. Обнови страницу турнира.');var created=await api.request('/api/admin/rounds',{tournament_id:t.id,mode:last.mode,respawns:last.respawns,kill_target:last.kill_target});await api.request('/api/admin/rounds/'+created.id+'/teams',{team_ids:last.players.slice().sort(function(a,b){return a.queue_order-b.queue_order;}).map(function(p){return p.team_id;})});preparedRoundId=created.id;showLive();status.textContent='Раунд создан с составом последнего раунда. Бой можно запустить отдельно.';status.hidden=false;}
+    try{var latest=await api.request('/api/arena/tournaments/'+t.id);last=latest.rounds[0];if(!last||!['done','error','stopped'].includes(last.status))throw Error('Последний раунд ещё не завершён. Обнови страницу турнира.');var created=await api.request('/api/admin/rounds',{tournament_id:t.id,mode:isKing(last)?'king':'survival',respawns:isKing(last)?0:Math.max(2,last.respawns),kill_target:isKing(last)?Math.max(2,last.kill_target):0});await api.request('/api/admin/rounds/'+created.id+'/teams',{team_ids:last.players.slice().sort(function(a,b){return a.queue_order-b.queue_order;}).map(function(p){return p.team_id;})});preparedRoundId=created.id;showLive();status.textContent='Раунд создан с составом последнего раунда. Бой можно запустить отдельно.';status.hidden=false;}
     catch(error){fail(error);}finally{repeatBusy=false;await table(true);}
   };
   var lastStates='';

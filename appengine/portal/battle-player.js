@@ -18,7 +18,7 @@ window.PondBattlePlayer=function(options){
   function draw(frame){
     pondView.draw(frame);var health=byId('replay-health');if(health.children.length!==frame.avatars.length){health.replaceChildren();frame.avatars.forEach(function(a,index){var row=document.createElement('li');row.style.borderColor=colors[index%4];health.appendChild(row);});}
     frame.avatars.forEach(function(a,index){
-      var label=a.name+' — '+PondRenderer.formatHealth(a.health)+' ХП'+(a.dead?' · выбыл':'')+((a.generation||a.respawns_remaining)?' · возрождений осталось: '+a.respawns_remaining:'')+(a.series_score!=null?' · побед в серии: '+a.series_score:'');if(health.children[index].textContent!==label)health.children[index].textContent=label;
+      var label=a.name+' — '+PondRenderer.formatHealth(a.health)+' ХП'+(a.dead?' · выбыл':'')+((a.generation||a.respawns_remaining)?' · респавнов осталось: '+a.respawns_remaining:'')+(a.series_kills!=null?' · потоплений в раунде: '+a.series_kills:a.series_score!=null?' · побед в серии: '+a.series_score:'');if(health.children[index].textContent!==label)health.children[index].textContent=label;
     });
   }
   var loader=null,loaderSequence=0,loaderPending=new Map();

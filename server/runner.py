@@ -46,7 +46,7 @@ def run(spec):
             import resource
             usage = resource.getrusage(resource.RUSAGE_SELF)
             resource.setrlimit(resource.RLIMIT_CPU, (int(usage.ru_utime + usage.ru_stime) + 90, resource.RLIM_INFINITY))
-        if not spec.get('no_damage_seconds') and frame['time'] >= limit:
+        if not spec.get('no_damage_seconds') and not spec.get('survival_until_last') and frame['time'] >= limit:
             frame['done'] = True
         print(json.dumps(frame, ensure_ascii=True), flush=True)
         if frame['done']:

@@ -129,7 +129,7 @@ def duel(spec, job_id, title):
             if time.monotonic() >= stop_check_at:
                 check_stop()
                 stop_check_at = time.monotonic() + .2
-            if not spec.get('no_damage_seconds') and time.monotonic() - started > (int(spec.get('seconds', 60)) + 100):
+            if not spec.get('no_damage_seconds') and not spec.get('survival_until_last') and time.monotonic() - started > (int(spec.get('seconds', 60)) + 100):
                 raise RuntimeError('Превышено время выполнения боя')
             try:
                 line = lines.get(timeout=1)

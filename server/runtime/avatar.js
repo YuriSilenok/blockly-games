@@ -145,7 +145,7 @@ Pond.Avatar = class {
     if (!(this.respawnsLeft > 0) || this.loadError) this.eliminatedOrder = ++this.battle_.eliminationCount;
     if (this.lastDamager && this.lastDamager !== this) {
       this.lastDamager.kills = (this.lastDamager.kills || 0) + 1;
-      if (this.battle_.killTarget && this.lastDamager.kills >= this.battle_.killTarget && !this.battle_.killWinner) this.battle_.killWinner = this.lastDamager;
+      if (this.battle_.killTarget && this.lastDamager.kills + (this.lastDamager.seriesKills || 0) >= this.battle_.killTarget && !this.battle_.killWinner) this.battle_.killWinner = this.lastDamager;
     }
     this.speed = 0;
     this.dead = true;

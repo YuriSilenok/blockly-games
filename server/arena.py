@@ -51,7 +51,8 @@ def initialize(c):
     for name, definition in [('mode', "TEXT NOT NULL DEFAULT 'survival'"), ('respawns', 'INTEGER NOT NULL DEFAULT 0'),
                              ('kill_target', 'INTEGER NOT NULL DEFAULT 0'), ('series_state', 'TEXT'),
                              ('winner_team_id', 'INTEGER REFERENCES teams(id)'), ('end_reason', 'TEXT'),
-                             ('stop_requested', 'INTEGER NOT NULL DEFAULT 0'), ('deleted', 'INTEGER NOT NULL DEFAULT 0')]:
+                             ('stop_requested', 'INTEGER NOT NULL DEFAULT 0'), ('deleted', 'INTEGER NOT NULL DEFAULT 0'),
+                             ('rules_version', 'INTEGER NOT NULL DEFAULT 1')]:
         if name not in {r['name'] for r in c.execute('PRAGMA table_info(rounds)')}:
             c.execute('ALTER TABLE rounds ADD COLUMN %s %s' % (name, definition))
     for name in ('queue_order', 'disqualified', 'respawns_used'):
@@ -66,17 +67,21 @@ def initialize(c):
 
 def settings(value, problem):
     mode = value.get('mode', 'survival')
-    if mode == 'king':
-        mode = 'king_elimination'
+    if mode == 'king_elimination':
+        mode = 'king'
     respawns, target = value.get('respawns', 0), value.get('kill_target', 0)
-    if mode not in ('survival', 'king_elimination'):
-        raise problem('Выбери режим «Выживание» или «Царь горы на вылет».')
+    if mode not in ('survival', 'king'):
+        raise problem('Выбери режим «Выживание» или «Царь горы».')
     if any(type(number) is not int or not 0 <= number <= 1000 for number in (respawns, target)):
         raise problem('Возрождения и потопления должны быть целыми числами от 0 до 1000.')
-    if mode == 'king_elimination':
+    if mode == 'king':
+        if target < 2:
+            raise problem('Для «Царя горы» укажи не менее двух потоплений для победы.')
+        respawns = 0
+    else:
+        if respawns < 2:
+            raise problem('Для выживания укажи не менее двух респавнов.')
         target = 0
-    if target and not respawns:
-        raise problem('Победа по потоплениям доступна только в общем бою с возрождениями.')
     return mode, respawns, target
 
 
@@ -129,10 +134,14 @@ def submissions(c, tournament_id, user):
 
 def report(c, tournament_id):
     rounds = []
-    for row in c.execute('SELECT id,name,status,created,finished,mode,respawns,kill_target,winner_team_id,end_reason,stop_requested FROM rounds WHERE tournament_id=? AND deleted=0 ORDER BY id DESC', (tournament_id,)).fetchall():
+    for row in c.execute('SELECT id,name,status,created,finished,mode,respawns,kill_target,winner_team_id,end_reason,stop_requested,rules_version FROM rounds WHERE tournament_id=? AND deleted=0 ORDER BY id DESC', (tournament_id,)).fetchall():
         item = dict(row)
-        if row['mode'] == 'king' and row['status'] == 'draft':
-            item['mode'], item['kill_target'] = 'king_elimination', 0
+        if row['status'] == 'draft':
+            item['rules_version'] = 2
+            if row['mode'] in ('king', 'king_elimination'):
+                item['mode'], item['respawns'], item['kill_target'] = 'king', 0, max(2, row['kill_target'])
+            else:
+                item['respawns'], item['kill_target'] = max(2, row['respawns']), 0
         replay = c.execute('''SELECT m.id FROM matches m JOIN rounds r ON r.job_id=m.job_id
           WHERE r.id=? AND m.status IN ('done','stopped') AND EXISTS(SELECT 1 FROM match_replay_chunks c WHERE c.match_id=m.id)
           ORDER BY m.id DESC LIMIT 1''', (row['id'],)).fetchone()
@@ -153,12 +162,14 @@ def report(c, tournament_id):
         if row['mode'] in ('king', 'king_elimination'):
             totals = {p['team_id']: p for p in item['players']}
             for player in item['players']:
-                player.update(sunk=0, health_total=0, opponent_kills=0, series_wins=player['kills'] or 0, stats_complete=True, health_complete=True)
+                player.update(sunk=0, health_total=0, opponent_kills=0, series_wins=0, stats_complete=True, health_complete=True)
             for bout in item['bouts']:
                 snapshot = json.loads(bout.pop('battle_snapshot') or '{}')
                 avatars = snapshot.get('avatars', [])
                 for index, team_id in enumerate((bout['left_team'], bout['right_team'])):
                     player = totals[team_id]
+                    if bout['winner_team'] == team_id and not bout['result'].get('stopped'):
+                        player['series_wins'] += 1
                     if index < len(avatars):
                         avatar = avatars[index]
                         # Older recordings have life expenditure and final dead state.
@@ -207,7 +218,9 @@ def run_round(job, duel):
         result = duel({'avatars': [dict(name=p['team_name'], code=p['code'], x=xy[0], y=xy[1])
                                   for p, xy in zip(players, starts)], 'no_damage_seconds': 60, 'realtime': True,
                        'playback_speed': row['playback_speed'], 'respawns': row['respawns'],
-                       'kill_target': row['kill_target'], 'record_replay': True}, job['id'], row['name'])
+                       'kill_target': row['kill_target'], 'record_replay': True,
+                       'survival_until_last': row['rules_version'] >= 2,
+                       'respawn_farthest': row['rules_version'] >= 2}, job['id'], row['name'])
         with db() as c:
             for p, avatar in zip(players, result['avatars']):
                 c.execute('UPDATE round_players SET eliminated=?,health=?,kills=?,error=?,respawns_used=? WHERE round_id=? AND team_id=?',
@@ -336,7 +349,7 @@ def post(h, user, path, value):
                 raise h.problem('Турнир не найден или завершён.')
             number = c.execute('SELECT count(*)+1 FROM rounds WHERE tournament_id=?', (tournament_id,)).fetchone()[0]
             name = 'Раунд %s' % number
-            round_id = c.execute('INSERT INTO rounds(tournament_id,name,created,mode,respawns,kill_target) VALUES(?,?,?,?,?,?)', (tournament_id, name, time.time(), mode, respawns, target)).lastrowid
+            round_id = c.execute('INSERT INTO rounds(tournament_id,name,created,mode,respawns,kill_target,rules_version) VALUES(?,?,?,?,?,?,2)', (tournament_id, name, time.time(), mode, respawns, target)).lastrowid
         h.send_json({'id': round_id}, 201)
     elif re.fullmatch(r'/api/admin/rounds/\d+/(stop|delete)', path):
         h.admin()
@@ -400,8 +413,6 @@ def post(h, user, path, value):
                     raise h.problem('Добавь в раунд хотя бы две команды.')
                 if len(players) > (64 if row['mode'] in ('king', 'king_elimination') else 4):
                     raise h.problem('В общем бою допускается до 4 команд, в «Царе горы» — до 64. Измени состав раунда.')
-                if row['mode'] not in ('king', 'king_elimination') and row['kill_target'] > (len(players) - 1) * (row['respawns'] + 1):
-                    raise h.problem('Такой счёт недостижим при выбранном составе и числе возрождений. Создай раунд с меньшим лимитом потоплений или большим числом возрождений.')
                 for p in players:
                     saved = c.execute('''SELECT s.*,t.name AS team FROM tournament_algorithms s JOIN teams t ON t.id=s.team_id
                       WHERE s.tournament_id=? AND s.team_id=? AND s.is_main=1 AND t.dissolved=0''', (row['tournament_id'], p['team_id'])).fetchone()
@@ -411,8 +422,10 @@ def post(h, user, path, value):
                               (saved['id'], saved['team'], saved['name'], saved['code'], saved['xml'], round_id, p['team_id']))
                 job_id = c.execute("INSERT INTO jobs(user_id,tournament_id,kind,code,xml,created) VALUES(?,?,'round','','',?)",
                                    (user['id'], row['tournament_id'], time.time())).lastrowid
-                if row['mode'] == 'king':
-                    c.execute("UPDATE rounds SET mode='king_elimination',kill_target=0 WHERE id=?", (round_id,))
+                mode = 'king' if row['mode'] in ('king', 'king_elimination') else 'survival'
+                respawns = 0 if mode == 'king' else max(2, row['respawns'])
+                target = max(2, row['kill_target']) if mode == 'king' else 0
+                c.execute('UPDATE rounds SET mode=?,respawns=?,kill_target=?,rules_version=2 WHERE id=?', (mode, respawns, target, round_id))
                 c.execute("UPDATE rounds SET status='queued',job_id=?,playback_speed=? WHERE id=?", (job_id, speed, round_id))
         h.send_json({'ok': True})
     else:

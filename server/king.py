@@ -35,7 +35,7 @@ def run_series(round_row, players, job, duel):
                 result = duel({
                     'avatars': [dict(name=by_id[team]['team_name'], code=by_id[team]['code'], x=point[0], y=point[1], series_score=state['points'][str(team)]) for team, point in zip((left, right), starts)],
                     'no_damage_seconds': 60, 'realtime': True, 'record_replay': True,
-                    'playback_speed': round_row['playback_speed'], 'respawns': round_row['respawns'],
+                    'playback_speed': round_row['playback_speed'], 'respawns': round_row['respawns'], 'restart_on_respawn': True,
                 }, job['id'], title)
             except RoundStopped as error:
                 error.team_ids = (left, right)
@@ -53,7 +53,7 @@ def run_series(round_row, players, job, duel):
         for team, avatar in zip((left, right), (a, b)):
             key = str(team)
             state['health'][key] = avatar['health']
-            state['respawns'][key] += avatar.get('generation', 0)
+            state['respawns'][key] += avatar.get('respawns_used', avatar.get('generation', 0))
             state['errors'][key] = avatar.get('error')
             state['idle'][key] = state['idle'][key] + 1 if full_draw else 0
             if state['idle'][key] >= 2:

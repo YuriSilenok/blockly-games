@@ -33,6 +33,7 @@ function startMatch(spec) {
   battle.eliminationCount = 0;
   battle.killTarget = spec.kill_target || 0;
   battle.killWinner = null;
+  battle.restartOnRespawn = !!spec.restart_on_respawn;
   battle.nextMissileId = 0;
   battle.recordReplay = !!spec.record_replay;
   battle.captureVisuals = battle.recordReplay || !spec.level;
@@ -77,7 +78,7 @@ function startMatch(spec) {
       duck.die();
     }
   };
-  battle.AVATARS.forEach(function(duck,index){duck.respawnsLeft=spec.respawns||0;duck.generation=0;battle.initializeDuck(duck,index);});
+  battle.AVATARS.forEach(function(duck,index){duck.respawnsLeft=spec.respawns||0;duck.respawnsUsed=0;duck.generation=0;battle.initializeDuck(duck,index);});
 }
 function respawnDuck(b,duck,index){
   var point=null,best=-1;
@@ -86,9 +87,26 @@ function respawnDuck(b,duck,index){
     b.AVATARS.forEach(function(other){if(other!==duck&&!other.dead)nearest=Math.min(nearest,Blockly.utils.Coordinate.distance(candidate,other.loc));});
     if(nearest>best){best=nearest;point=candidate;}if(nearest>=15)break;
   }
-  duck.respawnsLeft--;duck.generation++;duck.startDamage_=0;duck.startLoc_=point;
+  duck.respawnsLeft--;duck.respawnsUsed++;duck.generation++;duck.startDamage_=0;duck.startLoc_=point;
   duck.lastDamager=null;duck.eliminatedOrder=null;duck.eliminatedAt=null;duck.reset();
   b.lastDamageAt=matchClock;b.initializeDuck(duck,index);
+}
+function restartDuel(b){
+  var corners=[[10,10],[90,10],[90,90],[10,90]];
+  for(var i=corners.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),point=corners[i];corners[i]=corners[j];corners[j]=point;}
+  // Both algorithms and the physical encounter start again; lifetime scores
+  // and unused respawns survive. Only a sunk duck spends an extra life.
+  b.MISSILES.length=0;b.EVENTS.length=0;b.replayScans=[];b.replayFlights=[];
+  b.ticks=0;b.heroLastFire_=-Infinity;b.lastDamageAt=matchClock;
+  var position=0;
+  b.AVATARS.forEach(function(duck,index){
+    if(duck.dead&&(!(duck.respawnsLeft>0)||duck.loadError))return;
+    if(duck.dead){duck.respawnsLeft--;duck.respawnsUsed++;}
+    var point=corners[position++];
+    duck.generation++;duck.startDamage_=0;duck.startLoc_=new Blockly.utils.Coordinate(point[0],point[1]);
+    duck.lastDamager=null;duck.eliminatedOrder=null;duck.eliminatedAt=null;duck.reset();
+    b.initializeDuck(duck,index);
+  });
 }
 function matchEnded(b){return !!b.killWinner||b.AVATARS.filter(function(a){return !a.dead;}).length<=1||matchClock>=b.clockLimit||matchClock-b.lastDamageAt>=b.idleLimit;}
 function advanceMatch(frames) {
@@ -98,7 +116,10 @@ function advanceMatch(frames) {
     b.updateInterpreters_();
     b.updateMissiles_();
     b.updateAvatars_();
-    if(!b.killWinner)b.AVATARS.forEach(function(duck,index){if(duck.dead&&duck.respawnsLeft>0&&!duck.loadError)respawnDuck(b,duck,index);});
+    if(!b.killWinner){
+      if(b.restartOnRespawn&&b.AVATARS.some(function(duck){return duck.dead&&duck.respawnsLeft>0&&!duck.loadError;}))restartDuel(b);
+      else b.AVATARS.forEach(function(duck,index){if(duck.dead&&duck.respawnsLeft>0&&!duck.loadError)respawnDuck(b,duck,index);});
+    }
     // Live tournament views and recordings use the same visual event stream.
     if (b.captureVisuals) {
       var seenScans = {};
@@ -138,7 +159,7 @@ function advanceMatch(frames) {
     visual_version: b.captureVisuals ? 2 : 0,
     scans: b.replayScans,
     flights: b.replayFlights,
-    avatars: b.AVATARS.map(function (a) { return {name: a.name, x: a.loc.x, y: a.loc.y, facing: a.facing, speed: a.speed, degree: a.degree, health: Math.max(0, 100 - a.damage), dead: a.dead, generation:a.generation||0,respawns_remaining:a.respawnsLeft||0,series_score:a.seriesScore, eliminated: a.eliminatedOrder || b.eliminationCount + 1, kills: a.kills || 0, error: a.loadError || null}; }),
+    avatars: b.AVATARS.map(function (a) { return {name: a.name, x: a.loc.x, y: a.loc.y, facing: a.facing, speed: a.speed, degree: a.degree, health: Math.max(0, 100 - a.damage), dead: a.dead, generation:a.generation||0,respawns_remaining:a.respawnsLeft||0,respawns_used:a.respawnsUsed||0,series_score:a.seriesScore, eliminated: a.eliminatedOrder || b.eliminationCount + 1, kills: a.kills || 0, error: a.loadError || null}; }),
     missiles: b.MISSILES.map(function (m) { return {id: m.replayId, avatar: b.AVATARS.indexOf(m.avatar), startX: m.startLoc.x, startY: m.startLoc.y, endX: m.endLoc.x, endY: m.endLoc.y, progress: m.progress, range: m.range, x: m.startLoc.x + (m.endLoc.x - m.startLoc.x) * Math.min(1, m.progress / Math.max(1, m.range)), y: m.startLoc.y + (m.endLoc.y - m.startLoc.y) * Math.min(1, m.progress / Math.max(1, m.range))}; })
   });
 }

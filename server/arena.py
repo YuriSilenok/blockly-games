@@ -179,7 +179,7 @@ def run_round(job, duel):
         with db() as c:
             for p, avatar in zip(players, result['avatars']):
                 c.execute('UPDATE round_players SET eliminated=?,health=?,kills=?,error=?,respawns_used=? WHERE round_id=? AND team_id=?',
-                          (avatar.get('eliminated'), avatar['health'], avatar.get('kills', 0), avatar.get('error'), avatar.get('generation', 0), row['id'], p['team_id']))
+                          (avatar.get('eliminated'), avatar['health'], avatar.get('kills', 0), avatar.get('error'), avatar.get('respawns_used', avatar.get('generation', 0)), row['id'], p['team_id']))
             winner = result.get('winner')
             winner_id = players[winner]['team_id'] if winner is not None else None
             c.execute("UPDATE rounds SET status='done',finished=?,winner_team_id=?,end_reason=? WHERE id=?", (time.time(), winner_id, result.get('end_reason'), row['id']))
@@ -190,10 +190,10 @@ def run_round(job, duel):
                 selected = error.team_ids or [p['team_id'] for p in players]
                 for team_id, avatar in zip(selected, error.snapshot.get('avatars', [])):
                     if row['mode'] == 'king':
-                        c.execute('UPDATE round_players SET health=?,respawns_used=respawns_used+? WHERE round_id=? AND team_id=?', (avatar['health'], avatar.get('generation', 0), row['id'], team_id))
+                        c.execute('UPDATE round_players SET health=?,respawns_used=respawns_used+? WHERE round_id=? AND team_id=?', (avatar['health'], avatar.get('respawns_used', avatar.get('generation', 0)), row['id'], team_id))
                     else:
                         c.execute('UPDATE round_players SET health=?,kills=?,eliminated=?,respawns_used=? WHERE round_id=? AND team_id=?',
-                                  (avatar['health'], avatar.get('kills', 0), avatar.get('eliminated'), avatar.get('generation', 0), row['id'], team_id))
+                                  (avatar['health'], avatar.get('kills', 0), avatar.get('eliminated'), avatar.get('respawns_used', avatar.get('generation', 0)), row['id'], team_id))
             c.execute("UPDATE rounds SET status='stopped',finished=?,winner_team_id=NULL,end_reason='stopped' WHERE id=?", (time.time(), row['id']))
         raise
     except Exception:

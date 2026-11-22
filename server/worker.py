@@ -126,15 +126,18 @@ def duel(spec, job_id, title):
                 with db() as c:
                     c.execute('UPDATE matches SET snapshot=? WHERE id=?', (json.dumps(snapshot), match_id))
         process.wait(timeout=5)
-        if process.returncode or not snapshot or not snapshot.get('done'):
+        if process.returncode:
+            print('Battle runner exited: job=%s match=%s returncode=%s game_time=%s' % (job_id, match_id, process.returncode, snapshot.get('time') if snapshot else None), file=sys.stderr, flush=True)
+            raise RuntimeError('Исполнитель боя остановлен ограничением ресурсов. Завершённые поединки сохранены; прерванную серию можно продолжить.')
+        if not snapshot or not snapshot.get('done'):
             raise RuntimeError('Сервер не смог завершить проверку. Попробуй отправить решение ещё раз.')
         flush_replay()
         with db() as c:
             c.execute("UPDATE matches SET status='done',result=? WHERE id=?", (json.dumps(snapshot), match_id))
         return dict(snapshot, match_id=match_id)
-    except Exception:
+    except Exception as error:
         with db() as c:
-            c.execute("UPDATE matches SET status='error' WHERE id=?", (match_id,))
+            c.execute("UPDATE matches SET status='error',failure=? WHERE id=?", (str(error)[:300], match_id))
         raise
     finally:
         if process.poll() is None:

@@ -29,7 +29,7 @@
     var draft=data.rounds.find(function(round){return round.id===preparedRoundId&&round.status==='draft';})||data.rounds.find(function(round){return round.status==='draft';});
     preparedRoundId=draft?draft.id:null;
     player.setStartEnabled(!startBusy&&t.status!=='finished'&&!!draft&&draft.players.length>=2&&draft.players.length<=(draft.mode==='king'?64:4)&&!data.rounds.some(function(round){return ['queued','running'].includes(round.status);}));
-    if(!player.busy())api.roundReport(data.rounds,document.getElementById('round-report'),{onReplay:function(id){player.open(id).catch(fail);}});
+    if(!player.busy())api.roundReport(data.rounds,document.getElementById('round-report'),{onReplay:function(id){player.open(id).catch(fail);},onResume:t.status!=='finished'?resumeRound:null});
     var last=data.rounds[0];document.getElementById('repeat-round').disabled=repeatBusy||t.status==='finished'||!last||!['done','error'].includes(last.status);
     if(rebuild&&!player.busy()){editors(data,t);lastStates=JSON.stringify(data.rounds.map(function(r){return [r.id,r.status];}));}
   }
@@ -63,6 +63,10 @@
     try { await api.request('/api/admin/tournaments/' + t.id + '/status', {status: t.status === 'open' ? 'closed' : 'open'}); await load(); } catch (error) { fail(error); }
   };
   function fail(error) { status.textContent = error.message;status.hidden=false; }
+  async function resumeRound(id){
+    if(!confirm('Продолжить прерванную серию? Завершённые поединки и счёт сохранятся, прерванный поединок начнётся заново.'))return;
+    try{await api.request('/api/admin/rounds/'+id+'/resume',{});showLive();await table(true);status.textContent='Серия продолжится с сохранённым счётом и очередью.';status.hidden=false;}catch(error){fail(error);}
+  }
   async function startRound(){
     if(startBusy||!preparedRoundId)return;
     startBusy=true;player.setStartEnabled(false);

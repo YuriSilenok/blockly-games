@@ -11,7 +11,7 @@ window.PondBattlePlayer=function(options){
   speedSelect.onchange=function(){if(options.speedKey)localStorage.setItem(options.speedKey,speedSelect.value);};
   options.element.appendChild(byId('replay-health'));
   options.element.appendChild(byId('replay-buffer'));
-  var liveMode=false,liveQueue=[],liveTime=null,liveRunning=false,liveWaiting=false,liveDirty=false,liveId=null,liveSpeed=1;
+  var liveMode=false,liveQueue=[],liveTime=null,liveRunning=false,liveWaiting=false,liveDirty=false,liveId=null,liveSpeed=1,reportedFailure=null;
   var playback=null,time=0,playing=false,lastWall=0,dirty=false,buffering=false,lastControls=0,replayRequest=0,pendingSeek=null,opening=false;
   var canvas=byId('replay-pond'),pondView=new PondRenderer(canvas),colors=PondRenderer.colors;
   function background(){pondView.draw({time:0,avatars:[],missiles:[]});}
@@ -107,7 +107,9 @@ window.PondBattlePlayer=function(options){
     frames.forEach(function(frame){if(!liveQueue.length||frame.time>liveQueue[liveQueue.length-1].time){liveQueue.push(frame);liveDirty=true;}});
     if(liveQueue.length>150)liveQueue.splice(0,liveQueue.length-150);
     var frame=liveQueue[liveQueue.length-1];if(!frame)return;
-    if(liveMode)byId('replay-title').textContent=match.title+' · '+frame.time.toFixed(1)+' с'+(match.status==='running'?' · Прямой показ':' · Бой завершён');
+    var failed=match.status==='error'||match.status==='interrupted';
+    if(liveMode)byId('replay-title').textContent=match.title+' · '+frame.time.toFixed(1)+' с'+(match.status==='running'?' · Прямой показ':failed?' · Бой прерван':' · Бой завершён');
+    if(liveMode&&failed&&reportedFailure!==match.id){reportedFailure=match.id;message(match.failure||'Бой прерван из-за ошибки сервера. Завершённые поединки сохранены; серию можно продолжить из статистики.');}
   };
   this.followLive=function(){++replayRequest;liveMode=true;liveTime=null;liveDirty=true;opening=false;playing=false;pendingSeek=null;liveControls.appendChild(speedSelect);liveControls.hidden=false;speedSelect.disabled=liveRunning;setBuffering(false);pondView.reset();byId('replay-controls').hidden=true;byId('replay-title').textContent='Ожидание раунда';};
   this.clearLive=function(){liveQueue=[];liveTime=null;liveId=null;liveRunning=false;liveWaiting=false;if(liveMode){speedSelect.disabled=false;setBuffering(false);background();byId('replay-health').replaceChildren();byId('replay-title').textContent='Ожидание раунда';}};

@@ -290,6 +290,18 @@ def post(h, user, path, value):
             name = 'Раунд %s' % number
             round_id = c.execute('INSERT INTO rounds(tournament_id,name,created,mode,respawns,kill_target) VALUES(?,?,?,?,?,?)', (tournament_id, name, time.time(), mode, respawns, target)).lastrowid
         h.send_json({'id': round_id}, 201)
+    elif re.fullmatch(r'/api/admin/rounds/\d+/resume', path):
+        h.admin()
+        round_id = int(path.split('/')[-2])
+        with db() as c:
+            c.execute('BEGIN IMMEDIATE')
+            row = c.execute('''SELECT r.*,t.status AS tournament_status,j.status AS job_status FROM rounds r
+              JOIN tournaments t ON t.id=r.tournament_id JOIN jobs j ON j.id=r.job_id WHERE r.id=?''', (round_id,)).fetchone()
+            if not row or row['mode'] != 'king' or row['status'] != 'error' or row['job_status'] != 'error' or row['tournament_status'] == 'finished':
+                raise h.problem('Продолжить можно только прерванную серию незавершённого турнира.', 409)
+            c.execute("UPDATE jobs SET status='queued',result=NULL WHERE id=?", (row['job_id'],))
+            c.execute("UPDATE rounds SET status='queued',finished=NULL,end_reason=NULL WHERE id=?", (round_id,))
+        h.send_json({'ok': True})
     elif re.fullmatch(r'/api/admin/rounds/\d+/(teams|start)', path):
         h.admin()
         round_id = int(path.split('/')[-2])

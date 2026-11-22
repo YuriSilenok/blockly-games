@@ -176,7 +176,7 @@ class Handler(BaseHTTPRequestHandler):
                 except ValueError:
                     raise Problem('Некорректный номер турнира.')
                 with db() as c:
-                    row = c.execute("SELECT m.id,m.title,m.status,m.snapshot,j.tournament_id,j.kind,COALESCE(r.playback_speed,1) AS playback_speed FROM matches m JOIN jobs j ON j.id=m.job_id LEFT JOIN rounds r ON r.job_id=j.id WHERE j.kind IN ('tournament','round') AND (?=0 OR j.tournament_id=?) ORDER BY CASE m.status WHEN 'running' THEN 0 ELSE 1 END,m.id DESC LIMIT 1", (tournament_id, tournament_id)).fetchone()
+                    row = c.execute("SELECT m.id,m.title,m.status,m.snapshot,m.failure,j.tournament_id,j.kind,COALESCE(r.playback_speed,1) AS playback_speed FROM matches m JOIN jobs j ON j.id=m.job_id LEFT JOIN rounds r ON r.job_id=j.id WHERE j.kind IN ('tournament','round') AND (?=0 OR j.tournament_id=?) ORDER BY CASE m.status WHEN 'running' THEN 0 ELSE 1 END,m.id DESC LIMIT 1", (tournament_id, tournament_id)).fetchone()
                     waiting = c.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running') AND kind IN ('tournament','round') AND (?=0 OR tournament_id=?)", (tournament_id, tournament_id)).fetchone()[0]
                 match = dict(row) if row else None
                 if match:

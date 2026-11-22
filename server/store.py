@@ -121,6 +121,8 @@ def initialize():
         from .sandbox import initialize as initialize_sandbox
         initialize_sandbox(c)
         c.execute('BEGIN IMMEDIATE')
+        if 'failure' not in {r['name'] for r in c.execute('PRAGMA table_info(matches)')}:
+            c.execute('ALTER TABLE matches ADD COLUMN failure TEXT')
         c.execute("INSERT OR IGNORE INTO course_migrations VALUES('tournament-modes-v1')")
         if 'deleted' not in {r['name'] for r in c.execute('PRAGMA table_info(users)')}:
             c.execute('ALTER TABLE users ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0')

@@ -30,6 +30,7 @@
   function editors(data,t){
     var target=document.getElementById('round-editors');target.replaceChildren();
     data.rounds.forEach(function(round){
+      if(round.status==='done'||round.status==='error')return;
       var box=document.createElement('section');box.className='round-editor';var title=document.createElement('h3');title.textContent=round.name;box.appendChild(title);
       if(round.status==='draft'){
         var hint=document.createElement('p');hint.textContent='Выбери от двух до четырёх команд. Утки стартуют в углах с отступом 10.';box.appendChild(hint);
@@ -37,9 +38,6 @@
         data.teams.forEach(function(team){var label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=team.team_id;input.checked=round.players.some(function(p){return p.team_id===team.team_id;});label.appendChild(input);label.appendChild(document.createTextNode(team.team+' · '+team.algorithm));choices.appendChild(label);});box.appendChild(choices);
         var start=document.createElement('button');start.textContent='Сохранить состав и запустить';start.disabled=t.status==='finished';
         start.onclick=async function(){start.disabled=true;try{await api.request('/api/admin/rounds/'+round.id+'/teams',{team_ids:Array.from(choices.querySelectorAll('input:checked')).map(function(i){return Number(i.value);})});await api.request('/api/admin/rounds/'+round.id+'/start',{});await table(true);}catch(error){fail(error);start.disabled=false;}};box.appendChild(start);
-      }else if(round.status==='done'||round.status==='error'){
-        if(round.replay_match_id){var replay=document.createElement('button');replay.className='secondary';replay.textContent='Смотреть запись';replay.onclick=function(){player.open(round.replay_match_id).catch(fail);};box.appendChild(replay);}
-        else{var unavailable=document.createElement('p');unavailable.className='muted';unavailable.textContent='Запись этого боя не сохранена.';box.appendChild(unavailable);}
       }else{var note=document.createElement('p');note.textContent=round.status==='queued'?'Раунд в очереди.':'Идёт бой.';box.appendChild(note);}
       target.appendChild(box);
     });

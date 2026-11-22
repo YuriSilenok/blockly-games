@@ -7,7 +7,8 @@
   var currentData=null,repeatBusy=false;
   var player=new PondBattlePlayer({element:document.getElementById('tournament-player'),base:'/api/admin/matches/',onError:fail,onPause:function(){table(true).catch(fail);}});
   player.followLive();
-  document.getElementById('follow-live').onclick=function(){player.followLive();};
+  function showLive(){player.followLive();document.getElementById('live').scrollIntoView({behavior:'smooth',block:'start'});}
+  document.getElementById('follow-live').onclick=showLive;
   async function load(preferred) {
     var old = preferred?String(preferred):select.value||sessionStorage.getItem('pond-admin-tournament'); tournaments = (await api.request('/api/tournaments')).tournaments; select.replaceChildren();
     tournaments.forEach(function (t) { select.add(new Option(t.name, t.id)); }); if (old) select.value = old;
@@ -44,7 +45,7 @@
     });
   }
   select.onchange = function () { currentData=null;document.getElementById('repeat-round').disabled=true;player.followLive();player.clearLive(); sessionStorage.setItem('pond-admin-tournament',select.value);table(true).catch(fail); };
-  document.getElementById('create-round').onsubmit=async function(event){event.preventDefault();var button=this.querySelector('button');button.disabled=true;try{await api.request('/api/admin/rounds',{tournament_id:Number(select.value)});await table(true);}catch(error){fail(error);}finally{button.disabled=false;}};
+  document.getElementById('create-round').onsubmit=async function(event){event.preventDefault();var button=this.querySelector('button');button.disabled=true;try{await api.request('/api/admin/rounds',{tournament_id:Number(select.value)});showLive();await table(true);status.textContent='Раунд создан. Выбери состав и запусти бой отдельно.';status.hidden=false;}catch(error){fail(error);}finally{button.disabled=false;}};
   finish.onclick=async function(){if(!confirm('Завершить турнир? Приём и изменение заявок будут закрыты, новые раунды создать будет нельзя.'))return;try{await api.request('/api/admin/tournaments/'+select.value+'/status',{status:'finished'});await load();}catch(error){fail(error);}};
   document.getElementById('create').onsubmit = async function (event) {
     event.preventDefault(); var button = this.querySelector('button'); button.disabled = true;
@@ -65,7 +66,7 @@
     var last=currentData&&currentData.rounds[0],t=tournaments.find(function(t){return String(t.id)===select.value;});
     if(repeatBusy||!last||!t||t.status==='finished'||!['done','error'].includes(last.status))return;
     repeatBusy=true;this.disabled=true;
-    try{var latest=await api.request('/api/arena/tournaments/'+t.id);last=latest.rounds[0];if(!last||!['done','error'].includes(last.status))throw Error('Последний раунд ещё не завершён. Обнови страницу турнира.');var created=await api.request('/api/admin/rounds',{tournament_id:t.id});await api.request('/api/admin/rounds/'+created.id+'/teams',{team_ids:last.players.map(function(p){return p.team_id;})});await api.request('/api/admin/rounds/'+created.id+'/start',{});player.followLive();}
+    try{var latest=await api.request('/api/arena/tournaments/'+t.id);last=latest.rounds[0];if(!last||!['done','error'].includes(last.status))throw Error('Последний раунд ещё не завершён. Обнови страницу турнира.');var created=await api.request('/api/admin/rounds',{tournament_id:t.id});await api.request('/api/admin/rounds/'+created.id+'/teams',{team_ids:last.players.map(function(p){return p.team_id;})});showLive();status.textContent='Раунд создан с составом последнего раунда. Бой можно запустить отдельно.';status.hidden=false;}
     catch(error){fail(error);}finally{repeatBusy=false;await table(true);}
   };
   var lastStates='';

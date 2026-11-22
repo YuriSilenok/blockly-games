@@ -64,7 +64,7 @@ class Handler(BaseHTTPRequestHandler):
         raw = jar.get('pond_session')
         token = hashlib.sha256(raw.value.encode()).hexdigest() if raw else ''
         with db() as c:
-            row = c.execute('SELECT s.token,s.csrf,u.id,u.login,u.role,t.name AS team,t.id AS team_id,t.captain_id FROM sessions s JOIN users u ON u.id=s.user_id LEFT JOIN team_members m ON m.user_id=u.id LEFT JOIN teams t ON t.id=m.team_id WHERE s.token=? AND s.expires>?', (token, time.time())).fetchone()
+            row = c.execute('SELECT s.token,s.csrf,u.id,u.login,u.role,t.name AS team,t.id AS team_id,t.captain_id FROM sessions s JOIN users u ON u.id=s.user_id LEFT JOIN team_members m ON m.user_id=u.id LEFT JOIN teams t ON t.id=m.team_id WHERE u.deleted=0 AND s.token=? AND s.expires>?', (token, time.time())).fetchone()
         if required and not row:
             raise Problem('Войди в учётную запись.', 401)
         return dict(row) if row else None
@@ -143,7 +143,7 @@ class Handler(BaseHTTPRequestHandler):
                 with db() as c:
                     users = [dict(r) for r in c.execute('''SELECT u.id,u.login,COUNT(p.level) AS completed
                       FROM users u LEFT JOIN progress p ON p.user_id=u.id AND p.level BETWEEN 1 AND ?
-                      WHERE u.role<>'admin' GROUP BY u.id ORDER BY u.login''', (LESSONS,))]
+                      WHERE u.role<>'admin' AND u.deleted=0 GROUP BY u.id ORDER BY u.login''', (LESSONS,))]
                 histogram = [0] * (LESSONS + 1)
                 for item in users:
                     histogram[item['completed']] += 1
@@ -201,12 +201,41 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({'ok': True}, cookie='pond_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict')
             elif path == '/api/password':
                 self.change_password(user, value)
+            elif re.fullmatch(r'/api/admin/users/\d+/delete', path):
+                self.admin()
+                user_id = int(path.split('/')[-2])
+                with db() as c:
+                    c.execute('BEGIN IMMEDIATE')
+                    target = c.execute('SELECT id,login,role,deleted FROM users WHERE id=?', (user_id,)).fetchone()
+                    if not target or target['deleted']:
+                        raise Problem('Пользователь не найден.', 404)
+                    if target['role'] == 'admin' or user_id == user['id']:
+                        raise Problem('Удаление учётной записи администратора запрещено.', 403)
+                    if value.get('login') != target['login']:
+                        raise Problem('Для подтверждения удаления введи логин пользователя.')
+                    if c.execute("SELECT 1 FROM jobs WHERE user_id=? AND status IN ('queued','running')", (user_id,)).fetchone():
+                        raise Problem('Дождись завершения проверок и боёв пользователя перед удалением.', 409)
+                    team = c.execute('SELECT t.* FROM teams t JOIN team_members m ON m.team_id=t.id WHERE m.user_id=?', (user_id,)).fetchone()
+                    if team and c.execute("SELECT 1 FROM round_players p JOIN rounds r ON r.id=p.round_id WHERE p.team_id=? AND r.status IN ('queued','running')", (team['id'],)).fetchone():
+                        raise Problem('Дождись завершения раунда команды перед удалением пользователя.', 409)
+                    if team and team['captain_id'] == user_id:
+                        c.execute('UPDATE teams SET dissolved=1 WHERE id=?', (team['id'],))
+                        c.execute('DELETE FROM team_members WHERE team_id=?', (team['id'],))
+                        c.execute("UPDATE team_invitations SET status='cancelled' WHERE team_id=? AND status='pending'", (team['id'],))
+                    else:
+                        c.execute('DELETE FROM team_members WHERE user_id=?', (user_id,))
+                    c.execute("UPDATE team_invitations SET status='cancelled' WHERE user_id=? AND status='pending'", (user_id,))
+                    c.execute('DELETE FROM sessions WHERE user_id=?', (user_id,))
+                    c.execute('DELETE FROM training_challenges WHERE user_id=?', (user_id,))
+                    c.execute('DELETE FROM progress WHERE user_id=?', (user_id,))
+                    c.execute("UPDATE users SET deleted=1,password='' WHERE id=?", (user_id,))
+                self.send_json({'ok': True})
             elif re.fullmatch(r'/api/admin/users/\d+/graduate', path):
                 self.admin()
                 user_id = int(path.split('/')[-2])
                 with db() as c:
                     c.execute('BEGIN IMMEDIATE')
-                    if not c.execute('SELECT 1 FROM users WHERE id=?', (user_id,)).fetchone():
+                    if not c.execute('SELECT 1 FROM users WHERE id=? AND deleted=0', (user_id,)).fetchone():
                         raise Problem('Пользователь не найден.', 404)
                     for level in range(1, LESSONS + 1):
                         c.execute('INSERT OR IGNORE INTO progress(user_id,level,code,xml,completed) VALUES(?,?,?,?,?)',
@@ -315,7 +344,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise Problem('Этот логин занят.')
                 user_id = c.execute('INSERT INTO users(login,password,role,created) VALUES(?,?,?,?)', (login, password_hash(password), 'student', time.time())).lastrowid
             else:
-                if not row or not password_matches(password, row['password']):
+                if not row or row['deleted'] or not password_matches(password, row['password']):
                     c.execute('INSERT INTO auth_failures VALUES(?,?)', (address, time.time()))
                     c.commit()
                     raise Problem('Неверный логин или пароль.', 401)

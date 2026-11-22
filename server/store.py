@@ -120,6 +120,8 @@ def initialize():
         from .sandbox import initialize as initialize_sandbox
         initialize_sandbox(c)
         c.execute('BEGIN IMMEDIATE')
+        if 'deleted' not in {r['name'] for r in c.execute('PRAGMA table_info(users)')}:
+            c.execute('ALTER TABLE users ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0')
         # Preserve existing accounts, individual teams and their tournament places.
         if 'team_id' not in {r['name'] for r in c.execute('PRAGMA table_info(jobs)')}:
             c.execute('ALTER TABLE jobs ADD COLUMN team_id INTEGER REFERENCES teams(id)')

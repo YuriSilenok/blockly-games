@@ -11,10 +11,17 @@
   function drawUsers(){
     var query=panel.querySelector('#training-search').value.trim().toLocaleLowerCase('ru-RU');
     var table=document.createElement('table'),head=table.insertRow();
-    ['Пользователь','Пройдено уровней','Допуск'].forEach(function(text){var th=document.createElement('th');th.textContent=text;head.appendChild(th);});
+    ['Пользователь','Пройдено уровней','Допуск','Действия'].forEach(function(text){var th=document.createElement('th');th.textContent=text;head.appendChild(th);});
     users.filter(function(user){return user.login.toLocaleLowerCase('ru-RU').includes(query);}).forEach(function(user){
       var row=table.insertRow();row.insertCell().textContent=user.login;row.insertCell().textContent=user.completed+' / '+lessons;
       var cell=row.insertCell();
+      var actions=row.insertCell(),remove=document.createElement('button');remove.className='quiet danger';remove.textContent='Удалить пользователя';actions.appendChild(remove);
+      remove.onclick=async function(){
+        var login=prompt('Удалить пользователя «'+user.login+'»? Вход и прогресс будут удалены, история боёв и алгоритмы сохранятся. Если пользователь — капитан, команда будет распущена. Для подтверждения введи его логин:');
+        if(login===null)return;if(login!==user.login){message('Логин не совпадает. Пользователь не удалён.');return;}
+        remove.disabled=true;
+        try{await api.request('/api/admin/users/'+user.id+'/delete',{login:login});await load();message('Пользователь «'+user.login+'» удалён. История соревнований сохранена.');}catch(error){message(error.message);}finally{remove.disabled=false;}
+      };
       if(user.completed===lessons){cell.textContent='Обучение пройдено';return;}
       var button=document.createElement('button');button.className='secondary';button.textContent='Отметить обучение пройденным';cell.appendChild(button);
       button.onclick=async function(){

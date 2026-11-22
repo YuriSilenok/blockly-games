@@ -24,6 +24,8 @@ def details(user_id):
 def change(user_id, action, value):
     with db() as c:
         c.execute('BEGIN IMMEDIATE')
+        if not c.execute('SELECT 1 FROM users WHERE id=? AND deleted=0', (user_id,)).fetchone():
+            raise TeamProblem('Учётная запись недоступна. Выполни вход заново.')
         team = c.execute('SELECT t.* FROM teams t JOIN team_members m ON m.team_id=t.id WHERE m.user_id=?', (user_id,)).fetchone()
         if action in ('accept', 'decline'):
             invitation = c.execute("SELECT i.* FROM team_invitations i JOIN teams t ON t.id=i.team_id WHERE i.id=? AND i.user_id=? AND i.status='pending' AND t.dissolved=0", (int(value.get('invitation_id', 0)), user_id)).fetchone()
@@ -52,7 +54,7 @@ def change(user_id, action, value):
             if not isinstance(logins, list) or len(logins) > 2:
                 raise TeamProblem('Можно пригласить не более двух игроков.')
             for login in logins:
-                member = c.execute('SELECT id FROM users WHERE login=? COLLATE NOCASE', (str(login).strip(),)).fetchone()
+                member = c.execute('SELECT id FROM users WHERE deleted=0 AND login=? COLLATE NOCASE', (str(login).strip(),)).fetchone()
                 if not member or member['id'] == user_id:
                     raise TeamProblem('Укажи логины других зарегистрированных игроков.')
                 if c.execute('SELECT 1 FROM team_members WHERE user_id=?', (member['id'],)).fetchone():
@@ -75,7 +77,7 @@ def change(user_id, action, value):
                 elif action == 'add':
                     if c.execute('SELECT count(*) FROM team_members WHERE team_id=?', (team['id'],)).fetchone()[0] >= 3:
                         raise TeamProblem('В команде уже три участника — это максимальный состав.')
-                    member = c.execute('SELECT id FROM users WHERE login=? COLLATE NOCASE', (str(value.get('login', '')).strip(),)).fetchone()
+                    member = c.execute('SELECT id FROM users WHERE deleted=0 AND login=? COLLATE NOCASE', (str(value.get('login', '')).strip(),)).fetchone()
                     if not member:
                         raise TeamProblem('Участник с таким логином не найден. Сначала ему нужно зарегистрироваться.')
                     if c.execute('SELECT 1 FROM team_members WHERE user_id=?', (member['id'],)).fetchone():

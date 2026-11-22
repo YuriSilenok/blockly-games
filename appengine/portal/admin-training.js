@@ -15,7 +15,14 @@
     users.filter(function(user){return user.login.toLocaleLowerCase('ru-RU').includes(query);}).forEach(function(user){
       var row=table.insertRow();row.insertCell().textContent=user.login;row.insertCell().textContent=user.completed+' / '+lessons;
       var cell=row.insertCell();
+      if(user.role==='admin'){cell.textContent='Администратор';row.insertCell().textContent='Права администратора выданы';return;}
       var actions=row.insertCell(),remove=document.createElement('button');remove.className='quiet danger';remove.textContent='Удалить пользователя';actions.appendChild(remove);
+      var promote=document.createElement('button');promote.className='secondary';promote.textContent='Назначить администратором';actions.prepend(promote);
+      promote.onclick=async function(){
+        if(!confirm('Назначить «'+user.login+'» администратором? Пользователь получит полный доступ к управлению турнирами, алгоритмами и пользователями, включая назначение администраторов.'))return;
+        promote.disabled=true;
+        try{await api.request('/api/admin/users/'+user.id+'/promote',{login:user.login});await load();message('Пользователь «'+user.login+'» назначен администратором. Доступ откроется после обновления страницы.');}catch(error){message(error.message);}finally{promote.disabled=false;}
+      };
       remove.onclick=async function(){
         var login=prompt('Удалить пользователя «'+user.login+'»? Вход и прогресс будут удалены, история боёв и алгоритмы сохранятся. Если пользователь — капитан, команда будет распущена. Для подтверждения введи его логин:');
         if(login===null)return;if(login!==user.login){message('Логин не совпадает. Пользователь не удалён.');return;}

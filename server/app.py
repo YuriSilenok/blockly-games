@@ -141,12 +141,13 @@ class Handler(BaseHTTPRequestHandler):
             elif path == '/api/admin/training':
                 self.admin()
                 with db() as c:
-                    users = [dict(r) for r in c.execute('''SELECT u.id,u.login,COUNT(p.level) AS completed
+                    users = [dict(r) for r in c.execute('''SELECT u.id,u.login,u.role,COUNT(p.level) AS completed
                       FROM users u LEFT JOIN progress p ON p.user_id=u.id AND p.level BETWEEN 1 AND ?
-                      WHERE u.role<>'admin' AND u.deleted=0 GROUP BY u.id ORDER BY u.login''', (LESSONS,))]
+                      WHERE u.deleted=0 GROUP BY u.id ORDER BY u.login''', (LESSONS,))]
                 histogram = [0] * (LESSONS + 1)
                 for item in users:
-                    histogram[item['completed']] += 1
+                    if item['role'] != 'admin':
+                        histogram[item['completed']] += 1
                 self.send_json({'users': users, 'histogram': histogram, 'lessons': LESSONS})
             elif path == '/api/admin/algorithms':
                 self.admin()
@@ -207,6 +208,18 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({'ok': True}, cookie='pond_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict')
             elif path == '/api/password':
                 self.change_password(user, value)
+            elif re.fullmatch(r'/api/admin/users/\d+/promote', path):
+                self.admin()
+                user_id = int(path.split('/')[-2])
+                with db() as c:
+                    c.execute('BEGIN IMMEDIATE')
+                    target = c.execute('SELECT login FROM users WHERE id=? AND deleted=0', (user_id,)).fetchone()
+                    if not target:
+                        raise Problem('Пользователь не найден.', 404)
+                    if value.get('login') != target['login']:
+                        raise Problem('Подтверди логин назначаемого администратора.')
+                    c.execute("UPDATE users SET role='admin' WHERE id=?", (user_id,))
+                self.send_json({'ok': True})
             elif re.fullmatch(r'/api/admin/users/\d+/delete', path):
                 self.admin()
                 user_id = int(path.split('/')[-2])

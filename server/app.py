@@ -15,7 +15,7 @@ from urllib.parse import unquote, urlsplit, quote, parse_qs
 import xml.etree.ElementTree as ET
 
 from .store import ROOT, db, initialize, password_hash, password_matches
-from .worker import LESSONS, work
+from .worker import LESSONS, work, live_frames
 from .blocks import block_errors, number_count, scan_in_cannon, lesson_four_problem, nested_loop_problem
 from . import challenges
 from . import arena
@@ -169,7 +169,10 @@ class Handler(BaseHTTPRequestHandler):
             elif path == '/api/admin/live':
                 self.admin()
                 try:
-                    tournament_id = int(parse_qs(urlsplit(self.path).query).get('tournament_id', ['0'])[0])
+                    query = parse_qs(urlsplit(self.path).query)
+                    tournament_id = int(query.get('tournament_id', ['0'])[0])
+                    previous_match = int(query.get('match_id', ['0'])[0])
+                    after = float(query.get('after', ['-1'])[0])
                 except ValueError:
                     raise Problem('Некорректный номер турнира.')
                 with db() as c:
@@ -178,6 +181,9 @@ class Handler(BaseHTTPRequestHandler):
                 match = dict(row) if row else None
                 if match:
                     match['snapshot'] = json.loads(match['snapshot']) if match['snapshot'] else None
+                    match['frames'] = live_frames(match['id'], after if previous_match == match['id'] else -1)
+                    if match['snapshot']:
+                        match['snapshot'].pop('metrics', None)
                 self.send_json({'match': match, 'waiting': waiting})
             else:
                 self.static(path)

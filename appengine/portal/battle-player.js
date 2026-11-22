@@ -5,7 +5,8 @@ window.PondBattlePlayer=function(options){
   options.element.innerHTML="<h2>\u0417\u0430\u043f\u0438\u0441\u044c \u0431\u043e\u044f</h2><p id=\"replay-title\">\u0412\u044b\u0431\u0435\u0440\u0438 \u043f\u0440\u043e\u0432\u0435\u0434\u0451\u043d\u043d\u044b\u0439 \u0431\u043e\u0439 \u0438\u0437 \u0441\u043f\u0438\u0441\u043a\u0430 \u043d\u0438\u0436\u0435.</p><canvas id=\"replay-pond\" width=\"400\" height=\"400\" aria-label=\"\u0412\u043e\u0441\u043f\u0440\u043e\u0438\u0437\u0432\u0435\u0434\u0435\u043d\u0438\u0435 \u0437\u0430\u043f\u0438\u0441\u0438 \u0441\u0435\u0440\u0432\u0435\u0440\u043d\u043e\u0433\u043e \u0431\u043e\u044f\"></canvas><div id=\"replay-controls\" hidden><div class=\"round-controls\"><button id=\"replay-play\" type=\"button\">\u0412\u043e\u0441\u043f\u0440\u043e\u0438\u0437\u0432\u0435\u0441\u0442\u0438</button><button id=\"replay-restart\" class=\"secondary\" type=\"button\">\u0421 \u043d\u0430\u0447\u0430\u043b\u0430</button><select id=\"replay-speed\" aria-label=\"\u0421\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u0432\u043e\u0441\u043f\u0440\u043e\u0438\u0437\u0432\u0435\u0434\u0435\u043d\u0438\u044f\"><option value=\"0.1\">0,1\u00d7</option><option value=\"0.25\">0,25\u00d7</option><option value=\"0.5\">0,5\u00d7</option><option value=\"1\" selected>1\u00d7</option><option value=\"2\">2\u00d7</option></select></div><label for=\"replay-seek\">\u041f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u0435 \u0432 \u0437\u0430\u043f\u0438\u0441\u0438</label><input id=\"replay-seek\" type=\"range\" min=\"0\" max=\"0\" step=\"0.02\" value=\"0\"><output id=\"replay-time\"></output><p id=\"replay-buffer\" class=\"muted\" role=\"status\" hidden>\u041f\u043e\u0434\u0433\u0440\u0443\u0436\u0430\u0435\u043c \u0437\u0430\u043f\u0438\u0441\u044c\u2026</p><ul id=\"replay-health\"></ul><p class=\"muted\">\u042d\u0442\u043e \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u044b\u0435 \u043a\u0430\u0434\u0440\u044b \u0440\u0430\u043d\u0435\u0435 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d\u043d\u043e\u0433\u043e \u0431\u043e\u044f. \u041f\u0440\u043e\u0441\u043c\u043e\u0442\u0440 \u0438 \u043f\u0435\u0440\u0435\u043c\u043e\u0442\u043a\u0430 \u043d\u0435 \u0437\u0430\u043f\u0443\u0441\u043a\u0430\u044e\u0442 \u043d\u043e\u0432\u0443\u044e \u0438\u0433\u0440\u0443 \u043d\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0435.</p></div>";
   var byId=function(id){return options.element.querySelector('#'+id);};
   options.element.appendChild(byId('replay-health'));
-  var liveMode=false,liveShown=null,liveTarget=null,liveAt=0,liveId=null;
+  options.element.appendChild(byId('replay-buffer'));
+  var liveMode=false,liveQueue=[],liveTime=null,liveRunning=false,liveWaiting=false,liveDirty=false,liveId=null;
   var playback=null,time=0,playing=false,lastWall=0,dirty=false,buffering=false,lastControls=0,replayRequest=0,pendingSeek=null,opening=false;
   var canvas=byId('replay-pond'),pondView=new PondRenderer(canvas),colors=PondRenderer.colors;
   function background(){pondView.draw({time:0,avatars:[],missiles:[]});}
@@ -18,8 +19,8 @@ window.PondBattlePlayer=function(options){
   var loader=null,loaderSequence=0,loaderPending=new Map();
   try{
     loader=new Worker('replay-loader.js');
-    loader.onmessage=function(event){var pending=loaderPending.get(event.data.id);if(!pending)return;loaderPending.delete(event.data.id);if(event.data.error)pending.reject(Error(event.data.error));else pending.resolve(event.data.frames);};
-    loader.onerror=function(){if(loader)loader.terminate();loader=null;loaderPending.forEach(function(pending){api.request(pending.url).then(function(data){pending.resolve(data.frames);},pending.reject);});loaderPending.clear();};
+    loader.onmessage=function(event){var pending=loaderPending.get(event.data.id);if(!pending)return;loaderPending.delete(event.data.id);if(event.data.error)pending.reject(Error(event.data.error));else pending.resolve(pending.live?event.data.payload:event.data.frames);};
+    loader.onerror=function(){if(loader)loader.terminate();loader=null;loaderPending.forEach(function(pending){api.request(pending.url).then(function(data){pending.resolve(pending.live?data:data.frames);},pending.reject);});loaderPending.clear();};
   }catch(error){loader=null;}
   function loadFrames(url){if(!loader)return api.request(url).then(function(data){if(!Array.isArray(data.frames)||!data.frames.length)throw Error('Фрагмент записи не содержит кадров.');return data.frames;});return new Promise(function(resolve,reject){var id=++loaderSequence;loaderPending.set(id,{resolve:resolve,reject:reject,url:url});loader.postMessage({id:id,url:url});});}
   function trim(record){record.cache.forEach(function(entry,index){if(record.cache.size>8&&Math.abs(index-record.cursor)>2&&entry.frames)record.cache.delete(index);});}
@@ -59,7 +60,7 @@ window.PondBattlePlayer=function(options){
   function tick(now){
     var elapsed=lastWall?Math.max(0,now-lastWall)/1000:0;lastWall=now;
     if(pendingSeek&&now>=pendingSeek.after){time=pendingSeek.at;playing=pendingSeek.resume;pendingSeek=null;dirty=true;elapsed=0;byId('replay-play').textContent=playing?'Пауза':'Воспроизвести';}
-    if(liveMode&&liveTarget){draw(PondRenderer.interpolate(liveShown,liveTarget,Math.min(1,Math.max(0,(now-liveAt)/250))));}
+    if(liveMode)drawLive(elapsed);
     if(!liveMode&&playback&&!opening&&!pendingSeek&&(playing||dirty||buffering)){
       var record=playback,at=playing?Math.min(record.duration,time+elapsed*Number(byId('replay-speed').value)):time;
       try{
@@ -72,15 +73,32 @@ window.PondBattlePlayer=function(options){
   background();requestAnimationFrame(tick);
 
   this.open=openReplay;
-  this.busy=function(){return playing||!!pendingSeek||opening;};
+  this.fetchLive=function(url){if(!loader)return api.request(url);return new Promise(function(resolve,reject){var id=++loaderSequence;loaderPending.set(id,{resolve:resolve,reject:reject,url:url,live:true});loader.postMessage({id:id,url:url,live:true});});};
+  this.busy=function(){return playing||!!pendingSeek||opening||(liveMode&&(liveRunning||liveTime!==null&&liveQueue.length&&liveTime<liveQueue[liveQueue.length-1].time));};
+  function drawLive(elapsed){
+    if(!liveQueue.length)return;
+    var first=liveQueue[0],last=liveQueue[liveQueue.length-1];
+    if(liveTime===null||liveTime<first.time){liveTime=Math.max(first.time,last.time-.5);liveDirty=true;}
+    if(liveWaiting&&liveRunning&&last.time-liveTime<.3){setBuffering(true);return;}
+    liveWaiting=false;
+    var at=Math.min(last.time,liveTime+elapsed);
+    if(at===last.time&&liveRunning)liveWaiting=true;
+    setBuffering(liveWaiting);
+    if(at===liveTime&&!liveDirty)return;
+    var index=lowerBound(liveQueue,at,'time'),right=liveQueue[index],left=index?liveQueue[index-1]:right;
+    draw(PondRenderer.interpolate(left,right,right.time>left.time?(at-left.time)/(right.time-left.time):1));liveTime=at;liveDirty=false;
+  }
   this.live=function(match){
-    if(!match||!match.snapshot)return;
-    var frame=match.snapshot,now=performance.now();
-    if(liveId!==match.id){liveShown=liveTarget=frame;liveId=match.id;liveAt=now;if(liveMode)pondView.reset();}
-    else if(!liveTarget||liveTarget.time!==frame.time){liveShown=PondRenderer.interpolate(liveShown,liveTarget,Math.min(1,Math.max(0,(now-liveAt)/250)));liveTarget=frame;liveAt=now;}
+    if(!match)return;
+    if(liveId!==match.id){liveQueue=[];liveTime=null;liveId=match.id;liveWaiting=false;if(liveMode)pondView.reset();}
+    liveRunning=match.status==='running';
+    var frames=match.frames&&match.frames.length?match.frames:match.snapshot?[match.snapshot]:[];
+    frames.forEach(function(frame){if(!liveQueue.length||frame.time>liveQueue[liveQueue.length-1].time){liveQueue.push(frame);liveDirty=true;}});
+    if(liveQueue.length>150)liveQueue.splice(0,liveQueue.length-150);
+    var frame=liveQueue[liveQueue.length-1];if(!frame)return;
     if(liveMode)byId('replay-title').textContent=match.title+' · '+frame.time.toFixed(1)+' с'+(match.status==='running'?' · Прямой показ':' · Бой завершён');
   };
-  this.followLive=function(){++replayRequest;liveMode=true;opening=false;playing=false;pendingSeek=null;setBuffering(false);pondView.reset();byId('replay-controls').hidden=true;byId('replay-title').textContent='Ожидание раунда';};
-  this.clearLive=function(){liveShown=liveTarget=null;liveId=null;if(liveMode){background();byId('replay-health').replaceChildren();byId('replay-title').textContent='Ожидание раунда';}};
+  this.followLive=function(){++replayRequest;liveMode=true;liveTime=null;liveDirty=true;opening=false;playing=false;pendingSeek=null;setBuffering(false);pondView.reset();byId('replay-controls').hidden=true;byId('replay-title').textContent='Ожидание раунда';};
+  this.clearLive=function(){liveQueue=[];liveTime=null;liveId=null;liveRunning=false;liveWaiting=false;if(liveMode){setBuffering(false);background();byId('replay-health').replaceChildren();byId('replay-title').textContent='Ожидание раунда';}};
   document.addEventListener('visibilitychange',function(){lastWall=0;});
 };

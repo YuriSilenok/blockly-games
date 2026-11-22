@@ -8,6 +8,7 @@ import threading
 import time
 import xml.etree.ElementTree as ET
 import zlib
+from collections import deque
 
 from .store import ROOT, db
 from .blocks import block_errors, active_nodes, number_count, scan_in_cannon, lesson_four_problem, nested_loop_problem
@@ -16,6 +17,16 @@ from . import arena
 from . import sandbox
 
 LESSONS = 20
+_live_lock = threading.Lock()
+_live_match = None
+_live_frames = deque(maxlen=150)
+
+
+def live_frames(match_id, after=-1):
+    with _live_lock:
+        return [frame for frame in _live_frames if frame['time'] > after] if _live_match == match_id else []
+
+
 PIXELS_PER_UNIT = (400 - 35) / 100  # Pond's canvas includes a half-duck inset at each edge.
 
 
@@ -51,6 +62,7 @@ def concept_error(level, xml, metrics):
 
 
 def duel(spec, job_id, title):
+    global _live_match
     with db() as c:
         match_id = c.execute('INSERT INTO matches(job_id,title,status,created) VALUES(?,?,?,?)',
                              (job_id, title, 'running', time.time())).lastrowid
@@ -69,6 +81,10 @@ def duel(spec, job_id, title):
     thread = threading.Thread(target=read_output, daemon=True)
     thread.start()
     snapshot = None
+    if spec.get('realtime'):
+        with _live_lock:
+            _live_match = match_id
+            _live_frames.clear()
     replay_frames = []
     replay_index = 0
 
@@ -99,6 +115,9 @@ def duel(spec, job_id, title):
             snapshot = json.loads(line)
             if snapshot.get('error'):
                 raise RuntimeError(snapshot['error'])
+            if spec.get('realtime'):
+                with _live_lock:
+                    _live_frames.append({key: value for key, value in snapshot.items() if key != 'metrics'})
             if spec.get('record_replay'):
                 replay_frames.append(snapshot)
                 if len(replay_frames) >= 200:

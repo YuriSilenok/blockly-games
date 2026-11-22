@@ -55,10 +55,12 @@
     try { await api.request('/api/admin/tournaments/' + t.id + '/status', {status: t.status === 'open' ? 'closed' : 'open'}); await load(); } catch (error) { fail(error); }
   };
   function fail(error) { status.textContent = error.message;status.hidden=false; }
+  var liveCursor=0,liveAfter=-1,liveTournament=null;
   async function live(){
-    var tournament=select.value;
-    try{if(tournament){var data=await api.request('/api/admin/live?tournament_id='+encodeURIComponent(tournament));if(select.value===tournament){document.getElementById('queue').textContent='Раундов в работе и очереди: '+data.waiting;if(data.match)player.live(data.match);else player.clearLive();}}}
-    catch(error){fail(error);}setTimeout(live,250);
+    var tournament=select.value,started=performance.now();
+    if(liveTournament!==tournament){liveCursor=0;liveAfter=-1;liveTournament=tournament;}
+    try{if(tournament){var data=await player.fetchLive('/api/admin/live?tournament_id='+encodeURIComponent(tournament)+'&match_id='+liveCursor+'&after='+liveAfter);if(select.value===tournament){document.getElementById('queue').textContent='Раундов в работе и очереди: '+data.waiting;if(data.match){var frames=data.match.frames||[];if(liveCursor!==data.match.id)liveAfter=-1;liveCursor=data.match.id;if(frames.length)liveAfter=frames[frames.length-1].time;player.live(data.match);}else player.clearLive();}}}
+    catch(error){fail(error);}setTimeout(live,Math.max(0,200-(performance.now()-started)));
   }
   document.getElementById('repeat-round').onclick=async function(){
     var last=currentData&&currentData.rounds[0],t=tournaments.find(function(t){return String(t.id)===select.value;});
@@ -68,5 +70,5 @@
     catch(error){fail(error);}finally{repeatBusy=false;await table(true);}
   };
   var lastStates='';
-  try { await load(); live(); setInterval(async function(){try{await table();if(!currentData||player.busy())return;var states=JSON.stringify(currentData.rounds.map(function(r){return [r.id,r.status];}));if(states!==lastStates){lastStates=states;var t=tournaments.find(function(t){return String(t.id)===select.value;});editors(currentData,t);}}catch(error){fail(error);}},3000); } catch (error) { fail(error); }
+  try { await load(); live(); setInterval(async function(){try{if(player.busy())return;await table();if(!currentData||player.busy())return;var states=JSON.stringify(currentData.rounds.map(function(r){return [r.id,r.status];}));if(states!==lastStates){lastStates=states;var t=tournaments.find(function(t){return String(t.id)===select.value;});editors(currentData,t);}}catch(error){fail(error);}},3000); } catch (error) { fail(error); }
 })();

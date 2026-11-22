@@ -7,13 +7,14 @@ self.onmessage=async function(event){
     var response=await fetch(url.href,{credentials:'same-origin'}),data;
     try{data=await response.json();}catch(error){throw Error('Не удалось загрузить фрагмент записи. Повтори воспроизведение.');}
     if(!response.ok)throw Error(data.error||'Не удалось загрузить фрагмент записи.');
-    if(!Array.isArray(data.frames)||!data.frames.length)throw Error('Фрагмент записи не содержит кадров.');
+    var frames=event.data.live?(data.match?data.match.frames||[]:[]):data.frames;
+    if(!Array.isArray(frames)||!event.data.live&&!frames.length)throw Error('Фрагмент записи не содержит кадров.');
     // Adjacent frames repeat the same events; preserve shared references in the clone.
     var scans=new Map(),flights=new Map();
-    data.frames.forEach(function(frame){
+    frames.forEach(function(frame){
       ['scans','flights'].forEach(function(key){var pool=key==='scans'?scans:flights;frame[key]=(frame[key]||[]).map(function(item){if(!pool.has(item.id))pool.set(item.id,item);return pool.get(item.id);});});
       delete frame.metrics;
     });
-    self.postMessage({id:id,frames:data.frames});
+    self.postMessage(event.data.live?{id:id,payload:data}:{id:id,frames:frames});
   }catch(error){self.postMessage({id:id,error:error.message||'Не удалось загрузить запись.'});}
 };

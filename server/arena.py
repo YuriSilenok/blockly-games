@@ -97,9 +97,13 @@ def report(c, tournament_id):
     rounds = []
     for row in c.execute('SELECT id,name,status,created,finished FROM rounds WHERE tournament_id=? ORDER BY id DESC', (tournament_id,)).fetchall():
         item = dict(row)
+        replay = c.execute('''SELECT m.id FROM matches m JOIN rounds r ON r.job_id=m.job_id
+          WHERE r.id=? AND m.status='done' AND EXISTS(SELECT 1 FROM match_replay_chunks c WHERE c.match_id=m.id)
+          ORDER BY m.id DESC LIMIT 1''', (row['id'],)).fetchone()
+        item['replay_match_id'] = replay['id'] if replay else None
         item['players'] = [dict(r) for r in c.execute('''SELECT p.team_id,COALESCE(p.team_name,t.name) AS team,
           p.algorithm_name,p.eliminated,p.health,p.kills,p.error FROM round_players p
-          JOIN teams t ON t.id=p.team_id WHERE round_id=? ORDER BY p.health DESC,p.kills DESC,t.name''', (row['id'],))]
+          JOIN teams t ON t.id=p.team_id WHERE round_id=? ORDER BY p.eliminated DESC,t.name''', (row['id'],))]
         rounds.append(item)
     return rounds
 
@@ -124,7 +128,7 @@ def run_round(job, duel):
     try:
         starts = positions(len(players))
         result = duel({'avatars': [dict(name=p['team_name'], code=p['code'], x=xy[0], y=xy[1])
-                                  for p, xy in zip(players, starts)], 'no_damage_seconds': 60, 'realtime': True}, job['id'], row['name'])
+                                  for p, xy in zip(players, starts)], 'no_damage_seconds': 60, 'realtime': True, 'record_replay': True}, job['id'], row['name'])
         with db() as c:
             for p, avatar in zip(players, result['avatars']):
                 c.execute('UPDATE round_players SET eliminated=?,health=?,kills=?,error=? WHERE round_id=? AND team_id=?',

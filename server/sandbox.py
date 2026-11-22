@@ -177,6 +177,31 @@ def get(h, path):
         raise h.problem('Адрес не найден.', 404)
 
 
+def admin_replay(h, path):
+    h.admin()
+    parts = path.split('/')
+    match_id = int(parts[4])
+    with db() as c:
+        match = c.execute('''SELECT m.* FROM matches m JOIN jobs j ON j.id=m.job_id
+          WHERE m.id=? AND j.kind IN ('round','tournament')''', (match_id,)).fetchone()
+        if not match:
+            raise h.problem('Запись боя недоступна.', 404)
+        if match['status'] != 'done':
+            raise h.problem('Запись доступна после завершения боя.', 409)
+        if len(parts) == 8:
+            row = c.execute('SELECT payload FROM match_replay_chunks WHERE match_id=? AND chunk_index=?', (match_id, int(parts[7]))).fetchone()
+            if not row:
+                raise h.problem('Фрагмент записи не найден.', 404)
+            h.send_json({'frames': json.loads(zlib.decompress(row['payload']).decode('utf-8'))})
+        else:
+            chunks = [dict(r) for r in c.execute('SELECT chunk_index,first_time,last_time,frame_count FROM match_replay_chunks WHERE match_id=? ORDER BY chunk_index', (match_id,))]
+            if not chunks:
+                raise h.problem('Этот бой прошёл до включения записи. Повтор недоступен.', 404)
+            result = json.loads(match['result'])
+            h.send_json({'id': match_id, 'title': match['title'], 'duration': result['time'],
+                         'visuals': result.get('replay_version', 0) >= 2, 'chunks': chunks})
+
+
 def submit(h, user, value):
     h.graduate()
     algorithm_id = int(value.get('algorithm_id', 0))

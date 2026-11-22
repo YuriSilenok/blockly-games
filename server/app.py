@@ -163,11 +163,17 @@ class Handler(BaseHTTPRequestHandler):
                 if not row:
                     raise Problem('Алгоритм не найден.', 404)
                 self.send_json({'algorithm': dict(row)})
+            elif re.fullmatch(r'/api/admin/matches/\d+/replay(?:/chunks/\d+)?', path):
+                sandbox.admin_replay(self, path)
             elif path == '/api/admin/live':
                 self.admin()
+                try:
+                    tournament_id = int(parse_qs(urlsplit(self.path).query).get('tournament_id', ['0'])[0])
+                except ValueError:
+                    raise Problem('Некорректный номер турнира.')
                 with db() as c:
-                    row = c.execute("SELECT m.id,m.title,m.status,m.snapshot,j.tournament_id,j.kind FROM matches m JOIN jobs j ON j.id=m.job_id WHERE j.kind IN ('tournament','round') ORDER BY CASE m.status WHEN 'running' THEN 0 ELSE 1 END,m.id DESC LIMIT 1").fetchone()
-                    waiting = c.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running') AND kind IN ('tournament','round')").fetchone()[0]
+                    row = c.execute("SELECT m.id,m.title,m.status,m.snapshot,j.tournament_id,j.kind FROM matches m JOIN jobs j ON j.id=m.job_id WHERE j.kind IN ('tournament','round') AND (?=0 OR j.tournament_id=?) ORDER BY CASE m.status WHEN 'running' THEN 0 ELSE 1 END,m.id DESC LIMIT 1", (tournament_id, tournament_id)).fetchone()
+                    waiting = c.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running') AND kind IN ('tournament','round') AND (?=0 OR tournament_id=?)", (tournament_id, tournament_id)).fetchone()[0]
                 match = dict(row) if row else None
                 if match:
                     match['snapshot'] = json.loads(match['snapshot']) if match['snapshot'] else None

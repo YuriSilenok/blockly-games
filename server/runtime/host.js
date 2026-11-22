@@ -34,6 +34,7 @@ function startMatch(spec) {
   battle.killTarget = spec.kill_target || 0;
   battle.killWinner = null;
   battle.restartOnRespawn = !!spec.restart_on_respawn;
+  battle.healthSettled = false;
   battle.nextMissileId = 0;
   battle.recordReplay = !!spec.record_replay;
   battle.captureVisuals = battle.recordReplay || !spec.level;
@@ -78,7 +79,7 @@ function startMatch(spec) {
       duck.die();
     }
   };
-  battle.AVATARS.forEach(function(duck,index){duck.respawnsLeft=spec.respawns||0;duck.respawnsUsed=0;duck.generation=0;battle.initializeDuck(duck,index);});
+  battle.AVATARS.forEach(function(duck,index){duck.respawnsLeft=spec.respawns||0;duck.respawnsUsed=0;duck.sunkCount=0;duck.victoryHealth=0;duck.generation=0;battle.initializeDuck(duck,index);});
 }
 function respawnDuck(b,duck,index){
   var point=null,best=-1;
@@ -92,6 +93,8 @@ function respawnDuck(b,duck,index){
   b.lastDamageAt=matchClock;b.initializeDuck(duck,index);
 }
 function restartDuel(b){
+  var survivors=b.AVATARS.filter(function(duck){return !duck.dead;});
+  if(survivors.length===1)survivors[0].victoryHealth+=Math.max(0,100-survivors[0].damage);
   var corners=[[10,10],[90,10],[90,90],[10,90]];
   for(var i=corners.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),point=corners[i];corners[i]=corners[j];corners[j]=point;}
   // Both algorithms and the physical encounter start again; lifetime scores
@@ -109,6 +112,13 @@ function restartDuel(b){
   });
 }
 function matchEnded(b){return !!b.killWinner||b.AVATARS.filter(function(a){return !a.dead;}).length<=1||matchClock>=b.clockLimit||matchClock-b.lastDamageAt>=b.idleLimit;}
+function settleVictoryHealth(b){
+  if(!b.restartOnRespawn||b.healthSettled||!matchEnded(b)||b.AVATARS.length!==2)return;
+  b.healthSettled=true;
+  var a=b.AVATARS[0],other=b.AVATARS[1],health=Math.max(0,100-a.damage),otherHealth=Math.max(0,100-other.damage);
+  if(health>otherHealth+.0001)a.victoryHealth+=health;
+  else if(otherHealth>health+.0001)other.victoryHealth+=otherHealth;
+}
 function advanceMatch(frames) {
   var b = Pond.Battle;
   for (var i = 0; i < frames; i++) {
@@ -149,6 +159,7 @@ function advanceMatch(frames) {
     if (matchEnded(b)) break;
   }
   var alive = b.AVATARS.filter(function (a) { return !a.dead; });
+  settleVictoryHealth(b);
   return JSON.stringify({
     done: matchEnded(b),
     winner: b.killWinner?b.AVATARS.indexOf(b.killWinner):!b.killTarget&&alive.length===1?b.AVATARS.indexOf(alive[0]):null,
@@ -159,7 +170,7 @@ function advanceMatch(frames) {
     visual_version: b.captureVisuals ? 2 : 0,
     scans: b.replayScans,
     flights: b.replayFlights,
-    avatars: b.AVATARS.map(function (a) { return {name: a.name, x: a.loc.x, y: a.loc.y, facing: a.facing, speed: a.speed, degree: a.degree, health: Math.max(0, 100 - a.damage), dead: a.dead, generation:a.generation||0,respawns_remaining:a.respawnsLeft||0,respawns_used:a.respawnsUsed||0,series_score:a.seriesScore, eliminated: a.eliminatedOrder || b.eliminationCount + 1, kills: a.kills || 0, error: a.loadError || null}; }),
+    avatars: b.AVATARS.map(function (a) { return {name: a.name, x: a.loc.x, y: a.loc.y, facing: a.facing, speed: a.speed, degree: a.degree, health: Math.max(0, 100 - a.damage), dead: a.dead, generation:a.generation||0,respawns_remaining:a.respawnsLeft||0,respawns_used:a.respawnsUsed||0,sunk_count:a.sunkCount||0,victory_health:a.victoryHealth||0,series_score:a.seriesScore, eliminated: a.eliminatedOrder || b.eliminationCount + 1, kills: a.kills || 0, error: a.loadError || null}; }),
     missiles: b.MISSILES.map(function (m) { return {id: m.replayId, avatar: b.AVATARS.indexOf(m.avatar), startX: m.startLoc.x, startY: m.startLoc.y, endX: m.endLoc.x, endY: m.endLoc.y, progress: m.progress, range: m.range, x: m.startLoc.x + (m.endLoc.x - m.startLoc.x) * Math.min(1, m.progress / Math.max(1, m.range)), y: m.startLoc.y + (m.endLoc.y - m.startLoc.y) * Math.min(1, m.progress / Math.max(1, m.range))}; })
   });
 }

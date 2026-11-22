@@ -138,13 +138,41 @@ def report(c, tournament_id):
           JOIN teams t ON t.id=p.team_id WHERE round_id=? ORDER BY p.eliminated DESC,t.name''', (row['id'],))]
         rounds.append(item)
         item['bouts'] = [dict(r) for r in c.execute('''SELECT b.sequence,b.match_id,b.left_team,b.right_team,b.winner_team,
-          COALESCE(lp.team_name,l.name) AS left_name,COALESCE(rp.team_name,r.name) AS right_name,b.result FROM round_bouts b
+          COALESCE(lp.team_name,l.name) AS left_name,COALESCE(rp.team_name,r.name) AS right_name,b.result,m.result AS battle_snapshot FROM round_bouts b
+          JOIN matches m ON m.id=b.match_id
           JOIN teams l ON l.id=b.left_team JOIN teams r ON r.id=b.right_team
           JOIN round_players lp ON lp.round_id=b.round_id AND lp.team_id=b.left_team
           JOIN round_players rp ON rp.round_id=b.round_id AND rp.team_id=b.right_team
           WHERE b.round_id=? ORDER BY b.sequence''', (row['id'],))]
         for bout in item['bouts']:
             bout['result'] = json.loads(bout['result'])
+        if row['mode'] == 'king':
+            totals = {p['team_id']: p for p in item['players']}
+            for player in item['players']:
+                player.update(sunk=0, health_total=0, opponent_kills=0, series_wins=player['kills'] or 0, stats_complete=True, health_complete=True)
+            for bout in item['bouts']:
+                snapshot = json.loads(bout.pop('battle_snapshot') or '{}')
+                avatars = snapshot.get('avatars', [])
+                for index, team_id in enumerate((bout['left_team'], bout['right_team'])):
+                    player = totals[team_id]
+                    if index < len(avatars):
+                        avatar = avatars[index]
+                        # Older recordings have life expenditure and final dead state.
+                        player['sunk'] += avatar.get('sunk_count', avatar.get('respawns_used', avatar.get('generation', 0)) + int(bool(avatar.get('dead'))))
+                        player['opponent_kills'] += avatar.get('kills', 0)
+                        if 'victory_health' in avatar:
+                            player['health_total'] += avatar['victory_health']
+                        else:
+                            if any(a.get('respawns_used', a.get('generation', 0)) for a in avatars):
+                                player['health_complete'] = False
+                            if bout['winner_team'] == team_id and not bout['result'].get('stopped'):
+                                player['health_total'] += bout['result']['health'][index]
+                    else:
+                        player['stats_complete'] = False
+                        player['health_complete'] = False
+        else:
+            for bout in item['bouts']:
+                bout.pop('battle_snapshot', None)
     return rounds
 
 

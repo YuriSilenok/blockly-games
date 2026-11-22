@@ -50,14 +50,15 @@
   api.roundReport=function(rounds,target,options){
     target.replaceChildren();var heading=document.createElement('h3');heading.textContent='Статистика раундов';target.appendChild(heading);
     if(!rounds.length){var empty=document.createElement('p');empty.className='empty-state';empty.textContent='Раунды пока не проводились.';target.appendChild(empty);return;}
-    var note=document.createElement('p');note.className='muted';note.textContent='«Выбыл» — номер выбытия. Оставшиеся к концу боя утки получают одинаковый следующий номер.';target.appendChild(note);
-    var scroll=document.createElement('div');scroll.className='table-scroll';var table=document.createElement('table'),head=table.createTHead().insertRow();
-    ['Команда','Алгоритм','Выбыл','Здоровье','Потоплений'].forEach(function(label){var th=document.createElement('th');th.scope='col';th.textContent=label;head.appendChild(th);});
     var states={draft:'Подготовка',queued:'В очереди',running:'Идёт бой',done:'Завершён',error:'Не завершён',stopped:'Остановлен'};
     rounds.forEach(function(round){
-      var group=table.createTBody(),heading=group.insertRow(),label=document.createElement('th');label.colSpan=5;label.scope='rowgroup';label.className='round-group-heading';heading.appendChild(label);
+      var section=document.createElement('section');section.className='round-report-group';var label=document.createElement('div');label.className='round-group-heading';section.appendChild(label);
+      var scroll=document.createElement('div');scroll.className='table-scroll';var table=document.createElement('table'),head=table.createTHead().insertRow(),group=table.createTBody();
+      ['Команда','Алгоритм',round.mode==='king'?'Утонул':'Выбыл','Здоровье','Потоплений'].forEach(function(text){var th=document.createElement('th');th.scope='col';th.textContent=text;head.appendChild(th);});
       var groupHeader=document.createElement('div'),groupContent=document.createElement('div'),groupActions=document.createElement('div'),groupTitle=document.createElement('strong');groupHeader.className='round-group-top';groupContent.className='round-group-content';groupActions.className='round-group-actions';groupTitle.textContent=round.name+' · '+(states[round.status]||round.status);groupContent.appendChild(groupTitle);groupHeader.appendChild(groupContent);groupHeader.appendChild(groupActions);label.appendChild(groupHeader);
-      var config=document.createElement('p');config.className='muted';config.textContent=(round.mode==='king'?'Царь горы':'Выживание')+' · Возрождений: '+(round.respawns||0)+(round.kill_target?' · До '+round.kill_target+' потоплений (побед)':'');groupContent.appendChild(config);
+      var config=document.createElement('p');config.className='muted';config.textContent=(round.mode==='king'?'Царь горы':'Выживание')+' · Возрождений: '+(round.respawns||0)+(round.kill_target?' · До '+round.kill_target+(round.mode==='king'?' побед в серии':' потоплений'):'');groupContent.appendChild(config);
+      if(round.mode==='king'){var metrics=document.createElement('p');metrics.className='muted';metrics.textContent='ХП суммируется после каждого потопления соперника перед перезапуском; потопления и утопления считаются за весь раунд. Победы серии — отдельный счёт в поединках.';groupContent.appendChild(metrics);if(round.players.some(function(player){return player.health_complete===false;})){var legacy=document.createElement('p');legacy.className='muted';legacy.textContent='В старых записях ХП перед возрождениями не сохранялось. Недостающая сумма обозначена «—».';groupContent.appendChild(legacy);}}
+      else{var eliminationNote=document.createElement('p');eliminationNote.className='muted';eliminationNote.textContent='«Выбыл» — номер окончательного выбытия; оставшиеся утки получают одинаковый следующий номер.';groupContent.appendChild(eliminationNote);}
       var winner=(round.players||[]).find(function(player){return player.team_id===round.winner_team_id;});
       if(winner){var winnerText=document.createElement('p');winnerText.textContent='Победитель: '+winner.team;groupContent.appendChild(winnerText);}
       if(round.end_reason==='all_disqualified'){var noWinner=document.createElement('p');noWinner.textContent='Все участники дисквалифицированы. Победителя нет.';groupContent.appendChild(noWinner);}
@@ -73,8 +74,11 @@
       if(options&&options.onDelete&&['done','error','stopped'].includes(round.status)){var remove=document.createElement('button');remove.className='quiet danger';remove.textContent='Удалить раунд';remove.onclick=async function(){remove.disabled=true;try{await options.onDelete(round.id);}finally{remove.disabled=false;}};groupActions.appendChild(remove);}
       var players=round.players.length?round.players.slice().sort(function(a,b){return (b.eliminated==null?-1:b.eliminated)-(a.eliminated==null?-1:a.eliminated)||a.team.localeCompare(b.team,'ru');}):[{team:'Состав не выбран'}];
       players.forEach(function(player){var row=group.insertRow();if(api.user&&player.team_id===api.user.team_id)row.className='my-team';
-        var health=player.health==null?'—':(player.health>0&&player.health<.001?'<0,001':Number(player.health.toFixed(3)).toLocaleString('ru-RU'))+' ХП';
-        [player.team+(player.disqualified?' · дисквалифицирован':''),player.algorithm_name||'—',player.eliminated==null?'—':player.eliminated,health+(player.respawns_used?' · возрождений: '+player.respawns_used:''),player.kills==null?'—':player.kills].forEach(function(value){row.insertCell().textContent=value;});
+        var healthValue=round.mode==='king'?(player.health_complete===false?null:player.health_total):player.health;
+        var health=healthValue==null?'—':(healthValue>0&&healthValue<.001?'<0,001':Number(healthValue.toFixed(3)).toLocaleString('ru-RU'))+' ХП';
+        var sunk=round.mode==='king'?(player.stats_complete===false?'—':player.sunk):player.eliminated;
+        var kills=round.mode==='king'?(player.stats_complete===false?'—':player.opponent_kills):player.kills;
+        [player.team+(player.disqualified?' · дисквалифицирован':''),player.algorithm_name||'—',sunk==null?'—':sunk,health,kills==null?'—':kills].forEach(function(value){row.insertCell().textContent=value;});
         if(player.error)row.title=player.error;
       });
       if(round.mode==='king'&&round.bouts&&round.bouts.length){
@@ -85,7 +89,8 @@
           list.appendChild(entry);
         });details.appendChild(list);detailCell.appendChild(details);
       }
-    });scroll.appendChild(table);target.appendChild(scroll);
+      scroll.appendChild(table);section.appendChild(scroll);target.appendChild(section);
+    });
   };
   api.wait = async function (id, changed) {
     for (;;) {

@@ -232,3 +232,5 @@ h1{letter-spacing:-1.3px;font-size:35px}
 .round-group-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.round-group-content{flex:1;min-width:0}.round-group-content p{margin:4px 0 0;font-size:13px;font-weight:400}.round-group-actions{display:flex;justify-content:flex-end;align-items:flex-start;gap:8px;margin-left:auto}.round-group-actions button{margin:0;white-space:nowrap;min-height:38px;padding:8px 14px}.tournament-rules{max-width:1040px}.tournament-rules .card{margin:24px 0;scroll-margin-top:24px}.tournament-rules li{margin:8px 0}.tournament-rules h3{margin-top:24px}.tournament-rules .admin-navigation{gap:4px}.tournament-rules .admin-navigation a{padding:10px 12px}
 
 .round-group-actions{flex-wrap:wrap;max-width:55%}.round-group-actions select{width:112px;min-height:38px;padding:8px 10px}.round-group-actions button:not(.secondary){white-space:normal}
+
+.round-report-group{margin:24px 0;border:1px solid #dce6e2;border-radius:12px;overflow:hidden}.round-report-group>.round-group-heading{border-top:0}.round-report-group table{margin:0}.round-report-group>.table-scroll{border-radius:0}

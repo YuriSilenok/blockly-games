@@ -140,6 +140,7 @@ Pond.Avatar = class {
    */
   die() {
     if (this.dead) return;
+    this.sunkCount = (this.sunkCount || 0) + 1;
     this.eliminatedAt = (Date.now() - 1000) / 1000;
     if (!(this.respawnsLeft > 0) || this.loadError) this.eliminatedOrder = ++this.battle_.eliminationCount;
     if (this.lastDamager && this.lastDamager !== this) {

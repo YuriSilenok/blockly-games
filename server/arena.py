@@ -66,15 +66,17 @@ def initialize(c):
 
 def settings(value, problem):
     mode = value.get('mode', 'survival')
+    if mode == 'king':
+        mode = 'king_elimination'
     respawns, target = value.get('respawns', 0), value.get('kill_target', 0)
-    if mode not in ('survival', 'king'):
-        raise problem('Выбери режим «Выживание» или «Царь горы».')
+    if mode not in ('survival', 'king_elimination'):
+        raise problem('Выбери режим «Выживание» или «Царь горы на вылет».')
     if any(type(number) is not int or not 0 <= number <= 1000 for number in (respawns, target)):
         raise problem('Возрождения и потопления должны быть целыми числами от 0 до 1000.')
-    if target and not respawns and mode != 'king':
-        raise problem('Победа по потоплениям доступна при возрождениях или в режиме «Царь горы».')
-    if mode == 'king' and not target:
-        raise problem('Для режима «Царь горы» укажи число потоплений (побед) для завершения.')
+    if mode == 'king_elimination':
+        target = 0
+    if target and not respawns:
+        raise problem('Победа по потоплениям доступна только в общем бою с возрождениями.')
     return mode, respawns, target
 
 
@@ -129,6 +131,8 @@ def report(c, tournament_id):
     rounds = []
     for row in c.execute('SELECT id,name,status,created,finished,mode,respawns,kill_target,winner_team_id,end_reason,stop_requested FROM rounds WHERE tournament_id=? AND deleted=0 ORDER BY id DESC', (tournament_id,)).fetchall():
         item = dict(row)
+        if row['mode'] == 'king' and row['status'] == 'draft':
+            item['mode'], item['kill_target'] = 'king_elimination', 0
         replay = c.execute('''SELECT m.id FROM matches m JOIN rounds r ON r.job_id=m.job_id
           WHERE r.id=? AND m.status IN ('done','stopped') AND EXISTS(SELECT 1 FROM match_replay_chunks c WHERE c.match_id=m.id)
           ORDER BY m.id DESC LIMIT 1''', (row['id'],)).fetchone()
@@ -146,7 +150,7 @@ def report(c, tournament_id):
           WHERE b.round_id=? ORDER BY b.sequence''', (row['id'],))]
         for bout in item['bouts']:
             bout['result'] = json.loads(bout['result'])
-        if row['mode'] == 'king':
+        if row['mode'] in ('king', 'king_elimination'):
             totals = {p['team_id']: p for p in item['players']}
             for player in item['players']:
                 player.update(sunk=0, health_total=0, opponent_kills=0, series_wins=player['kills'] or 0, stats_complete=True, health_complete=True)
@@ -196,7 +200,7 @@ def run_round(job, duel):
     try:
         if row['stop_requested']:
             raise RoundStopped()
-        if row['mode'] == 'king':
+        if row['mode'] in ('king', 'king_elimination'):
             from .king import run_series
             return run_series(dict(row), players, job, duel)
         starts = positions(len(players))
@@ -217,7 +221,7 @@ def run_round(job, duel):
             if error.snapshot:
                 selected = error.team_ids or [p['team_id'] for p in players]
                 for team_id, avatar in zip(selected, error.snapshot.get('avatars', [])):
-                    if row['mode'] == 'king':
+                    if row['mode'] in ('king', 'king_elimination'):
                         c.execute('UPDATE round_players SET health=?,respawns_used=respawns_used+? WHERE round_id=? AND team_id=?', (avatar['health'], avatar.get('respawns_used', avatar.get('generation', 0)), row['id'], team_id))
                     else:
                         c.execute('UPDATE round_players SET health=?,kills=?,eliminated=?,respawns_used=? WHERE round_id=? AND team_id=?',
@@ -362,7 +366,7 @@ def post(h, user, path, value):
             c.execute('BEGIN IMMEDIATE')
             row = c.execute('''SELECT r.*,t.status AS tournament_status,j.status AS job_status FROM rounds r
               JOIN tournaments t ON t.id=r.tournament_id JOIN jobs j ON j.id=r.job_id WHERE r.id=?''', (round_id,)).fetchone()
-            if not row or row['deleted'] or row['mode'] != 'king' or row['status'] != 'error' or row['job_status'] != 'error' or row['tournament_status'] == 'finished':
+            if not row or row['deleted'] or row['mode'] not in ('king', 'king_elimination') or row['status'] != 'error' or row['job_status'] != 'error' or row['tournament_status'] == 'finished':
                 raise h.problem('Продолжить можно только прерванную серию незавершённого турнира.', 409)
             c.execute("UPDATE jobs SET status='queued',result=NULL WHERE id=?", (row['job_id'],))
             c.execute("UPDATE rounds SET status='queued',finished=NULL,end_reason=NULL WHERE id=?", (round_id,))
@@ -377,7 +381,7 @@ def post(h, user, path, value):
                 raise h.problem('Менять состав и запускать можно только подготовленный раунд незавершённого турнира.', 409)
             if path.endswith('/teams'):
                 team_ids = value.get('team_ids', [])
-                limit = 64 if row['mode'] == 'king' else 4
+                limit = 64 if row['mode'] in ('king', 'king_elimination') else 4
                 if not isinstance(team_ids, list) or len(team_ids) > limit:
                     raise h.problem('В этом режиме допускается не более %s команд.' % limit)
                 team_ids = list(dict.fromkeys(int(i) for i in team_ids))
@@ -394,9 +398,9 @@ def post(h, user, path, value):
                 players = c.execute('SELECT team_id FROM round_players WHERE round_id=? ORDER BY team_id', (round_id,)).fetchall()
                 if len(players) < 2:
                     raise h.problem('Добавь в раунд хотя бы две команды.')
-                if len(players) > (64 if row['mode'] == 'king' else 4):
+                if len(players) > (64 if row['mode'] in ('king', 'king_elimination') else 4):
                     raise h.problem('В общем бою допускается до 4 команд, в «Царе горы» — до 64. Измени состав раунда.')
-                if row['mode'] != 'king' and row['kill_target'] > (len(players) - 1) * (row['respawns'] + 1):
+                if row['mode'] not in ('king', 'king_elimination') and row['kill_target'] > (len(players) - 1) * (row['respawns'] + 1):
                     raise h.problem('Такой счёт недостижим при выбранном составе и числе возрождений. Создай раунд с меньшим лимитом потоплений или большим числом возрождений.')
                 for p in players:
                     saved = c.execute('''SELECT s.*,t.name AS team FROM tournament_algorithms s JOIN teams t ON t.id=s.team_id
@@ -407,6 +411,8 @@ def post(h, user, path, value):
                               (saved['id'], saved['team'], saved['name'], saved['code'], saved['xml'], round_id, p['team_id']))
                 job_id = c.execute("INSERT INTO jobs(user_id,tournament_id,kind,code,xml,created) VALUES(?,?,'round','','',?)",
                                    (user['id'], row['tournament_id'], time.time())).lastrowid
+                if row['mode'] == 'king':
+                    c.execute("UPDATE rounds SET mode='king_elimination',kill_target=0 WHERE id=?", (round_id,))
                 c.execute("UPDATE rounds SET status='queued',job_id=?,playback_speed=? WHERE id=?", (job_id, speed, round_id))
         h.send_json({'ok': True})
     else:

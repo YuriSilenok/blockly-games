@@ -7,13 +7,16 @@
   panel.innerHTML='<h2>Прогресс обучения</h2><p>Распределение участников по количеству пройденных уровней. Администраторы не учитываются.</p><button id="training-refresh" class="secondary">Обновить</button><p id="training-status" role="status"></p><div id="training-histogram" class="training-histogram" aria-label="Гистограмма прогресса обучения"></div><h3>Допустить участника после обучения</h3><p>Отметка засчитает все уровни, сохранив существующие решения пользователя.</p><label>Поиск по логину<input id="training-search" type="search"></label><div id="training-users" class="table-scroll"></div>';
   document.getElementById('panel').appendChild(panel);
   var users=[],lessons=20;
+  var loginDate=new Intl.DateTimeFormat('ru-RU',{timeZone:'Europe/Moscow',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
   function message(text){panel.querySelector('#training-status').textContent=text;}
   function drawUsers(){
     var query=panel.querySelector('#training-search').value.trim().toLocaleLowerCase('ru-RU');
     var table=document.createElement('table'),head=table.insertRow();
-    ['Пользователь','Пройдено уровней','Допуск','Действия'].forEach(function(text){var th=document.createElement('th');th.textContent=text;head.appendChild(th);});
+    ['Пользователь','Последний вход (МСК)','Пройдено уровней','Допуск','Действия'].forEach(function(text){var th=document.createElement('th');th.textContent=text;head.appendChild(th);});
     users.filter(function(user){return user.login.toLocaleLowerCase('ru-RU').includes(query);}).forEach(function(user){
-      var row=table.insertRow();row.insertCell().textContent=user.login;row.insertCell().textContent=user.completed+' / '+lessons;
+      var row=table.insertRow();row.insertCell().textContent=user.login;
+      row.insertCell().textContent=user.last_login==null?'Нет данных':loginDate.format(new Date(user.last_login*1000));
+      row.insertCell().textContent=user.completed+' / '+lessons;
       var cell=row.insertCell();
       if(user.role==='admin'){cell.textContent='Администратор';row.insertCell().textContent='Права администратора выданы';return;}
       var actions=row.insertCell(),remove=document.createElement('button');remove.className='quiet danger';remove.textContent='Удалить пользователя';actions.appendChild(remove);

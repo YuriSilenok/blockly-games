@@ -142,7 +142,7 @@ class Handler(BaseHTTPRequestHandler):
             elif path == '/api/admin/training':
                 self.admin()
                 with db() as c:
-                    users = [dict(r) for r in c.execute('''SELECT u.id,u.login,u.role,COUNT(p.level) AS completed
+                    users = [dict(r) for r in c.execute('''SELECT u.id,u.login,u.role,u.last_login,COUNT(p.level) AS completed
                       FROM users u LEFT JOIN progress p ON p.user_id=u.id AND p.level BETWEEN 1 AND ?
                       WHERE u.deleted=0 GROUP BY u.id ORDER BY u.login''', (LESSONS,))]
                 histogram = [0] * (LESSONS + 1)
@@ -378,7 +378,9 @@ class Handler(BaseHTTPRequestHandler):
             raw = secrets.token_urlsafe(32)
             token = hashlib.sha256(raw.encode()).hexdigest()
             csrf = secrets.token_urlsafe(24)
-            c.execute('INSERT INTO sessions VALUES(?,?,?,?)', (token, user_id, csrf, time.time() + SESSION_LIFETIME))
+            signed_in_at = time.time()
+            c.execute('INSERT INTO sessions VALUES(?,?,?,?)', (token, user_id, csrf, signed_in_at + SESSION_LIFETIME))
+            c.execute('UPDATE users SET last_login=? WHERE id=?', (signed_in_at, user_id))
         cookie = 'pond_session=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=Strict%s' % (raw, SESSION_LIFETIME, '; Secure' if SECURE else '')
         self.send_json({'ok': True}, cookie=cookie)
 

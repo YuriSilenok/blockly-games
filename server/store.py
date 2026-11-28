@@ -126,6 +126,8 @@ def initialize():
         c.execute("INSERT OR IGNORE INTO course_migrations VALUES('tournament-modes-v1')")
         if 'deleted' not in {r['name'] for r in c.execute('PRAGMA table_info(users)')}:
             c.execute('ALTER TABLE users ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0')
+        if 'last_login' not in {r['name'] for r in c.execute('PRAGMA table_info(users)')}:
+            c.execute('ALTER TABLE users ADD COLUMN last_login REAL')
         # Preserve existing accounts, individual teams and their tournament places.
         if 'team_id' not in {r['name'] for r in c.execute('PRAGMA table_info(jobs)')}:
             c.execute('ALTER TABLE jobs ADD COLUMN team_id INTEGER REFERENCES teams(id)')

@@ -26,6 +26,7 @@ from .teams import details as team_details, change as change_team, TeamProblem
 STATIC = ROOT / 'appengine'
 ORIGIN = os.environ.get('POND_ORIGIN', 'http://localhost:8000').rstrip('/')
 SECURE = ORIGIN.startswith('https://')
+SESSION_LIFETIME = 90 * 60
 
 
 class Problem(Exception):
@@ -377,8 +378,8 @@ class Handler(BaseHTTPRequestHandler):
             raw = secrets.token_urlsafe(32)
             token = hashlib.sha256(raw.encode()).hexdigest()
             csrf = secrets.token_urlsafe(24)
-            c.execute('INSERT INTO sessions VALUES(?,?,?,?)', (token, user_id, csrf, time.time() + 7 * 86400))
-        cookie = 'pond_session=%s; Path=/; Max-Age=604800; HttpOnly; SameSite=Strict%s' % (raw, '; Secure' if SECURE else '')
+            c.execute('INSERT INTO sessions VALUES(?,?,?,?)', (token, user_id, csrf, time.time() + SESSION_LIFETIME))
+        cookie = 'pond_session=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=Strict%s' % (raw, SESSION_LIFETIME, '; Secure' if SECURE else '')
         self.send_json({'ok': True}, cookie=cookie)
 
     def change_password(self, user, value):

@@ -368,7 +368,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/register':
                 if row:
                     raise Problem('Этот логин занят.')
-                user_id = c.execute('INSERT INTO users(login,password,role,created) VALUES(?,?,?,?)', (login, password_hash(password), 'student', time.time())).lastrowid
+                user_id = c.execute('SELECT MAX(highest_id,COALESCE((SELECT MAX(id) FROM users),0))+1 FROM account_id_sequence WHERE singleton=1').fetchone()[0]
+                c.execute('INSERT INTO users(id,login,password,role,created) VALUES(?,?,?,?,?)', (user_id, login, password_hash(password), 'student', time.time()))
+                c.execute('UPDATE account_id_sequence SET highest_id=? WHERE singleton=1', (user_id,))
             else:
                 if not row or row['deleted'] or not password_matches(password, row['password']):
                     c.execute('INSERT INTO auth_failures VALUES(?,?)', (address, time.time()))

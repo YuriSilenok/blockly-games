@@ -1,4 +1,5 @@
 import json
+import logging
 import queue
 import random
 import math
@@ -324,7 +325,17 @@ def rank(job):
 
 
 def work(stop):
+    from .retention import purge_inactive
+    next_cleanup = 0
     while not stop.is_set():
+        if time.monotonic() >= next_cleanup:
+            try:
+                removed = purge_inactive()
+                if removed:
+                    print('Inactive account cleanup: removed=%s' % removed, file=sys.stderr, flush=True)
+            except Exception:
+                logging.exception('Inactive account cleanup failed; transaction rolled back')
+            next_cleanup = time.monotonic() + 3600
         with db() as c:
             c.execute('BEGIN IMMEDIATE')
             row = None

@@ -115,12 +115,16 @@ def initialize():
           program_hash TEXT NOT NULL, answer_hash TEXT NOT NULL, expires REAL NOT NULL,
           used INTEGER NOT NULL DEFAULT 0);
         CREATE TABLE IF NOT EXISTS course_migrations (name TEXT PRIMARY KEY);
+        CREATE TABLE IF NOT EXISTS account_id_sequence (
+          singleton INTEGER PRIMARY KEY CHECK(singleton=1), highest_id INTEGER NOT NULL);
         ''')
         from .arena import initialize as initialize_arena
         initialize_arena(c)
         from .sandbox import initialize as initialize_sandbox
         initialize_sandbox(c)
         c.execute('BEGIN IMMEDIATE')
+        c.execute('INSERT OR IGNORE INTO account_id_sequence VALUES(1,0)')
+        c.execute('UPDATE account_id_sequence SET highest_id=MAX(highest_id,COALESCE((SELECT MAX(id) FROM users),0))')
         if 'failure' not in {r['name'] for r in c.execute('PRAGMA table_info(matches)')}:
             c.execute('ALTER TABLE matches ADD COLUMN failure TEXT')
         c.execute("INSERT OR IGNORE INTO course_migrations VALUES('tournament-modes-v1')")
@@ -128,6 +132,8 @@ def initialize():
             c.execute('ALTER TABLE users ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0')
         if 'last_login' not in {r['name'] for r in c.execute('PRAGMA table_info(users)')}:
             c.execute('ALTER TABLE users ADD COLUMN last_login REAL')
+        # Give accounts created before login tracking a full inactivity period.
+        c.execute('UPDATE users SET last_login=? WHERE last_login IS NULL', (time.time(),))
         # Preserve existing accounts, individual teams and their tournament places.
         if 'team_id' not in {r['name'] for r in c.execute('PRAGMA table_info(jobs)')}:
             c.execute('ALTER TABLE jobs ADD COLUMN team_id INTEGER REFERENCES teams(id)')
